@@ -67,7 +67,7 @@ export default function Dashboard() {
               Getting Started
             </h3>
             <p className="text-slate-600 mb-4">
-              Welcome to your Tenant Portal. Here you can manage your tenancies,
+              Welcome to the Landlord Portal. Here you can manage your properties, tenants,
               view documents, report maintenance issues, and more.
             </p>
             <ul className="space-y-2 text-sm text-slate-600">

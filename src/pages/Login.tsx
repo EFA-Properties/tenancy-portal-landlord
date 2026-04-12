@@ -33,7 +33,7 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardBody className="p-8">
           <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-2">
-            Tenant Portal
+            Landlord Portal
           </h1>
           <p className="text-slate-600 mb-8">Sign in to your account</p>
 

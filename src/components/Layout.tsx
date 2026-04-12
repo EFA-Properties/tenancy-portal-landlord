@@ -42,7 +42,7 @@ export function Layout({ children }: LayoutProps) {
           {/* Logo */}
           <div className="px-6 py-4 border-b border-slate-200">
             <h1 className="text-xl font-fraunces font-bold text-slate-900">
-              Tenant Portal
+              Landlord Portal
             </h1>
           </div>
 

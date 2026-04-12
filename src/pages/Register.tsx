@@ -48,7 +48,7 @@ export default function Register() {
           <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-2">
             Create Account
           </h1>
-          <p className="text-slate-600 mb-8">Sign up for the Tenant Portal</p>
+          <p className="text-slate-600 mb-8">Sign up for the Landlord Portal</p>
 
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
