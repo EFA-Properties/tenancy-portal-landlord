@@ -14,7 +14,7 @@ export default function TenantDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-abode-teal" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     )
   }
@@ -33,7 +33,7 @@ export default function TenantDetail() {
       />
 
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-instrument font-bold text-abode-text">
+        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
           {tenant.first_name} {tenant.last_name}
         </h1>
         <Button variant="outline" onClick={() => navigate('/tenants')}>
@@ -44,27 +44,27 @@ export default function TenantDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-abode-text">
+            <h2 className="text-lg font-semibold text-slate-900">
               Personal Information
             </h2>
           </CardHeader>
           <CardBody className="space-y-4">
             <div>
-              <p className="text-sm text-abode-text2">Name</p>
-              <p className="font-medium text-abode-text">
+              <p className="text-sm text-slate-600">Name</p>
+              <p className="font-medium text-slate-900">
                 {tenant.first_name} {tenant.last_name}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Mail size={16} className="text-abode-text3" />
-              <a href={`mailto:${tenant.email}`} className="text-abode-teal hover:text-abode-teal">
+              <Mail size={16} className="text-slate-400" />
+              <a href={`mailto:${tenant.email}`} className="text-blue-600 hover:text-blue-600">
                 {tenant.email}
               </a>
             </div>
             {tenant.phone && (
               <div className="flex items-center gap-2">
-                <Phone size={16} className="text-abode-text3" />
-                <a href={`tel:${tenant.phone}`} className="text-abode-teal hover:text-abode-teal">
+                <Phone size={16} className="text-slate-400" />
+                <a href={`tel:${tenant.phone}`} className="text-blue-600 hover:text-blue-600">
                   {tenant.phone}
                 </a>
               </div>
@@ -74,7 +74,7 @@ export default function TenantDetail() {
 
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-abode-text">
+            <h2 className="text-lg font-semibold text-slate-900">
               Emergency Contact
             </h2>
           </CardHeader>
@@ -82,22 +82,22 @@ export default function TenantDetail() {
             {tenant.emergency_contact ? (
               <>
                 <div>
-                  <p className="text-sm text-abode-text2">Name</p>
-                  <p className="font-medium text-abode-text">
+                  <p className="text-sm text-slate-600">Name</p>
+                  <p className="font-medium text-slate-900">
                     {tenant.emergency_contact}
                   </p>
                 </div>
                 {tenant.emergency_phone && (
                   <div>
-                    <p className="text-sm text-abode-text2">Phone</p>
-                    <a href={`tel:${tenant.emergency_phone}`} className="text-abode-teal hover:text-abode-teal">
+                    <p className="text-sm text-slate-600">Phone</p>
+                    <a href={`tel:${tenant.emergency_phone}`} className="text-blue-600 hover:text-blue-600">
                       {tenant.emergency_phone}
                     </a>
                   </div>
                 )}
               </>
             ) : (
-              <p className="text-abode-text2">No emergency contact provided</p>
+              <p className="text-slate-600">No emergency contact provided</p>
             )}
           </CardBody>
         </Card>

@@ -38,17 +38,17 @@ export function Modal({
       />
       <div
         className={clsx(
-          'relative bg-abode-bg2 rounded-[14px] shadow-xl border border-abode-border',
+          'relative bg-white rounded-[12px] shadow-xl border border-slate-200',
           size === 'sm' && 'w-full mx-4 max-w-sm',
           size === 'md' && 'w-full mx-4 max-w-md',
           size === 'lg' && 'w-full mx-4 max-w-lg',
         )}
       >
-        <div className="flex items-center justify-between px-4 py-4 border-b border-abode-border">
-          <h2 className="text-lg font-semibold text-abode-text">{title}</h2>
+        <div className="flex items-center justify-between px-4 py-4 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
           <button
             onClick={onClose}
-            className="text-abode-text3 hover:text-abode-text2 transition-colors"
+            className="text-slate-400 hover:text-slate-600 transition-colors"
           >
             <X size={20} />
           </button>

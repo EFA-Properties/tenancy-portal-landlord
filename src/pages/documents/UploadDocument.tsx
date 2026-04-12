@@ -161,7 +161,7 @@ export default function UploadDocument() {
             { label: 'Upload Document' },
           ]}
         />
-        <h1 className="text-3xl font-instrument font-bold text-abode-text mb-8">
+        <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-8">
           Upload Document
         </h1>
         <p>Loading...</p>
@@ -178,20 +178,20 @@ export default function UploadDocument() {
         ]}
       />
 
-      <h1 className="text-3xl font-instrument font-bold text-abode-text mb-8">
+      <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-8">
         Upload Document
       </h1>
 
       <Card className="max-w-2xl">
         <CardHeader>
-          <h2 className="text-lg font-semibold text-abode-text">
+          <h2 className="text-lg font-semibold text-slate-900">
             Document Details
           </h2>
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-4 bg-abode-red-light border border-abode-red rounded-lg text-abode-red">
+              <div className="p-4 bg-red-50 border border-red-600 rounded-lg text-red-600">
                 {error}
               </div>
             )}
@@ -252,7 +252,7 @@ export default function UploadDocument() {
             />
 
             <div>
-              <label className="block text-sm font-medium text-abode-text mb-2">
+              <label className="block text-sm font-medium text-slate-900 mb-2">
                 Description
               </label>
               <textarea
@@ -261,7 +261,7 @@ export default function UploadDocument() {
                 onChange={handleChange}
                 placeholder="Add any additional details..."
                 rows={3}
-                className="w-full px-4 py-2 rounded-lg border border-abode-border focus:outline-none focus:ring-2 focus:ring-abode-teal"
+                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600"
               />
             </div>
 
@@ -283,24 +283,24 @@ export default function UploadDocument() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-abode-text mb-2">
+              <label className="block text-sm font-medium text-slate-900 mb-2">
                 Upload File
               </label>
-              <div className="border-2 border-dashed border-abode-border rounded-lg p-8 text-center relative overflow-hidden">
+              <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 text-center relative overflow-hidden">
                 {file ? (
                   <div>
-                    <p className="font-medium text-abode-text">{file.name}</p>
-                    <p className="text-sm text-abode-text2">
+                    <p className="font-medium text-slate-900">{file.name}</p>
+                    <p className="text-sm text-slate-600">
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                   </div>
                 ) : (
                   <div>
-                    <Upload className="mx-auto mb-2 text-abode-text3" size={32} />
-                    <p className="font-medium text-abode-text">
+                    <Upload className="mx-auto mb-2 text-slate-400" size={32} />
+                    <p className="font-medium text-slate-900">
                       Drag and drop or click to select
                     </p>
-                    <p className="text-sm text-abode-text2">
+                    <p className="text-sm text-slate-600">
                       PDF, DOC, DOCX up to 10 MB
                     </p>
                   </div>

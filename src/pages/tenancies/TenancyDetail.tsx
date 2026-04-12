@@ -15,7 +15,7 @@ export default function TenancyDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-abode-teal" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     )
   }
@@ -34,7 +34,7 @@ export default function TenancyDetail() {
       />
 
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-instrument font-bold text-abode-text">
+        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
           Tenancy Details
         </h1>
         <Button variant="outline" onClick={() => navigate('/tenancies')}>
@@ -45,21 +45,21 @@ export default function TenancyDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-abode-text">
+            <h2 className="text-lg font-semibold text-slate-900">
               Tenancy Information
             </h2>
           </CardHeader>
           <CardBody className="space-y-4">
             <div>
-              <p className="text-sm text-abode-text2">Property ID</p>
-              <p className="font-medium text-abode-text">{tenancy.property_id}</p>
+              <p className="text-sm text-slate-600">Property ID</p>
+              <p className="font-medium text-slate-900">{tenancy.property_id}</p>
             </div>
             <div>
-              <p className="text-sm text-abode-text2">Tenant ID</p>
-              <p className="font-medium text-abode-text">{tenancy.tenant_id}</p>
+              <p className="text-sm text-slate-600">Tenant ID</p>
+              <p className="font-medium text-slate-900">{tenancy.tenant_id}</p>
             </div>
             <div>
-              <p className="text-sm text-abode-text2">Status</p>
+              <p className="text-sm text-slate-600">Status</p>
               <Badge
                 variant={
                   tenancy.status === 'active'
@@ -77,27 +77,27 @@ export default function TenancyDetail() {
 
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-abode-text">
+            <h2 className="text-lg font-semibold text-slate-900">
               Financial Information
             </h2>
           </CardHeader>
           <CardBody className="space-y-4">
             <div>
-              <p className="text-sm text-abode-text2">Monthly Rent</p>
-              <p className="text-2xl font-bold text-abode-text">
+              <p className="text-sm text-slate-600">Monthly Rent</p>
+              <p className="text-2xl font-bold text-slate-900">
                 £{tenancy.monthly_rent.toFixed(2)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-abode-text2">Start Date</p>
-              <p className="font-medium text-abode-text">
+              <p className="text-sm text-slate-600">Start Date</p>
+              <p className="font-medium text-slate-900">
                 {format(new Date(tenancy.start_date), 'MMM d, yyyy')}
               </p>
             </div>
             {tenancy.end_date && (
               <div>
-                <p className="text-sm text-abode-text2">End Date</p>
-                <p className="font-medium text-abode-text">
+                <p className="text-sm text-slate-600">End Date</p>
+                <p className="font-medium text-slate-900">
                   {format(new Date(tenancy.end_date), 'MMM d, yyyy')}
                 </p>
               </div>
@@ -107,7 +107,7 @@ export default function TenancyDetail() {
 
         <Card className="md:col-span-2">
           <CardHeader>
-            <h2 className="text-lg font-semibold text-abode-text">
+            <h2 className="text-lg font-semibold text-slate-900">
               Related Items
             </h2>
           </CardHeader>

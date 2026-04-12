@@ -57,20 +57,20 @@ export default function InviteTenant() {
         ]}
       />
 
-      <h1 className="text-3xl font-instrument font-bold text-abode-text mb-8">
+      <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-8">
         Invite New Tenant
       </h1>
 
       <Card className="max-w-2xl">
         <CardHeader>
-          <h2 className="text-lg font-semibold text-abode-text">
+          <h2 className="text-lg font-semibold text-slate-900">
             Tenant Information
           </h2>
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-4 bg-abode-red-light border border-abode-red rounded-lg text-abode-red">
+              <div className="p-4 bg-red-50 border border-red-600 rounded-lg text-red-600">
                 {error}
               </div>
             )}

@@ -15,7 +15,7 @@ export default function DocumentsList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-abode-teal" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     )
   }
@@ -23,7 +23,7 @@ export default function DocumentsList() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-instrument font-bold text-abode-text">
+        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
           Documents
         </h1>
         <Link to="/documents/upload">
@@ -56,7 +56,7 @@ export default function DocumentsList() {
               {documents.map((doc) => (
                 <TableRow key={doc.id}>
                   <TableCell className="flex items-center gap-2">
-                    <FileText size={16} className="text-abode-text3" />
+                    <FileText size={16} className="text-slate-400" />
                     <span className="font-medium">{doc.name}</span>
                   </TableCell>
                   <TableCell>{doc.type}</TableCell>

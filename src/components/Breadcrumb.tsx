@@ -17,17 +17,17 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
       {items.map((item, index) => (
         <React.Fragment key={index}>
           {index > 0 && (
-            <ChevronRight size={16} className="text-abode-text3" />
+            <ChevronRight size={16} className="text-slate-400" />
           )}
           {item.href ? (
             <Link
               to={item.href}
-              className="text-abode-teal hover:text-abode-text text-sm font-medium"
+              className="text-blue-600 hover:text-slate-900 text-sm font-medium"
             >
               {item.label}
             </Link>
           ) : (
-            <span className="text-abode-text2 text-sm font-medium">
+            <span className="text-slate-600 text-sm font-medium">
               {item.label}
             </span>
           )}

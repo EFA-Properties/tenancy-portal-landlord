@@ -15,7 +15,7 @@ export default function MaintenanceDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-abode-teal" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     )
   }
@@ -53,7 +53,7 @@ export default function MaintenanceDetail() {
       />
 
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-instrument font-bold text-abode-text">
+        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
           {request.title}
         </h1>
         <Button variant="outline" onClick={() => navigate('/maintenance')}>
@@ -64,33 +64,33 @@ export default function MaintenanceDetail() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-abode-text">
+            <h2 className="text-lg font-semibold text-slate-900">
               Request Details
             </h2>
           </CardHeader>
           <CardBody className="space-y-4">
             <div>
-              <p className="text-sm text-abode-text2">Status</p>
+              <p className="text-sm text-slate-600">Status</p>
               <Badge variant={getStatusColor(request.status)}>
                 {request.status.replace('_', ' ').toUpperCase()}
               </Badge>
             </div>
             <div>
-              <p className="text-sm text-abode-text2">Priority</p>
+              <p className="text-sm text-slate-600">Priority</p>
               <Badge variant={getPriorityColor(request.priority)}>
                 {request.priority.toUpperCase()}
               </Badge>
             </div>
             <div>
-              <p className="text-sm text-abode-text2">Reported</p>
-              <p className="font-medium text-abode-text">
+              <p className="text-sm text-slate-600">Reported</p>
+              <p className="font-medium text-slate-900">
                 {format(new Date(request.created_at), 'MMM d, yyyy')}
               </p>
             </div>
             {request.resolved_at && (
               <div>
-                <p className="text-sm text-abode-text2">Resolved</p>
-                <p className="font-medium text-abode-text">
+                <p className="text-sm text-slate-600">Resolved</p>
+                <p className="font-medium text-slate-900">
                   {format(new Date(request.resolved_at), 'MMM d, yyyy')}
                 </p>
               </div>
@@ -100,12 +100,12 @@ export default function MaintenanceDetail() {
 
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-abode-text">
+            <h2 className="text-lg font-semibold text-slate-900">
               Description
             </h2>
           </CardHeader>
           <CardBody>
-            <p className="text-abode-text2">{request.description}</p>
+            <p className="text-slate-600">{request.description}</p>
           </CardBody>
         </Card>
       </div>

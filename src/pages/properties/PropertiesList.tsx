@@ -12,7 +12,7 @@ export default function PropertiesList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-abode-teal" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     )
   }
@@ -20,7 +20,7 @@ export default function PropertiesList() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-instrument font-bold text-abode-text">
+        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
           Properties
         </h1>
         <Link to="/properties/new">

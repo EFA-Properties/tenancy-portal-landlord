@@ -122,6 +122,8 @@ export default function AddProperty() {
 
       let legal_entity_id: string | null = null
 
+      if (!landlord) throw new Error('Landlord not found')
+
       // Create legal entity if company
       if (ownership === 'company') {
         if (!companyData.name || !companyData.company_number) {
@@ -194,20 +196,20 @@ export default function AddProperty() {
         ]}
       />
 
-      <h1 className="text-3xl font-instrument font-bold text-abode-text mb-8">
+      <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-8">
         Add New Property
       </h1>
 
       <Card className="max-w-2xl">
         <CardHeader>
-          <h2 className="text-lg font-semibold text-abode-text">
+          <h2 className="text-lg font-semibold text-slate-900">
             Property Information
           </h2>
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-4 bg-abode-red-light border border-abode-red rounded-lg text-abode-red">
+              <div className="p-4 bg-red-50 border border-red-600 rounded-lg text-red-600">
                 {error}
               </div>
             )}
@@ -266,19 +268,19 @@ export default function AddProperty() {
                 name="is_hmo"
                 checked={formData.is_hmo}
                 onChange={handleChange}
-                className="w-4 h-4 rounded border-abode-border"
+                className="w-4 h-4 rounded border-slate-200"
               />
-              <label className="ml-2 text-sm font-medium text-abode-text">
+              <label className="ml-2 text-sm font-medium text-slate-900">
                 Is this an HMO (House in Multiple Occupation)?
               </label>
             </div>
 
             {/* EPC Lookup Section */}
-            <div className="mt-8 pt-8 border-t border-abode-border">
-              <h3 className="text-lg font-semibold text-abode-text mb-4">EPC Data</h3>
+            <div className="mt-8 pt-8 border-t border-slate-200">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">EPC Data</h3>
               <div className="flex gap-3 items-end mb-4">
                 <div className="flex-1">
-                  <p className="text-sm text-abode-text2 mb-2">
+                  <p className="text-sm text-slate-600 mb-2">
                     Look up the latest EPC certificate for this property using the postcode above.
                   </p>
                 </div>
@@ -293,8 +295,8 @@ export default function AddProperty() {
               </div>
 
               {epcResults.length > 0 && (
-                <div className="space-y-2 max-h-64 overflow-y-auto border border-abode-border rounded-lg p-3">
-                  <p className="text-sm font-medium text-abode-text mb-2">
+                <div className="space-y-2 max-h-64 overflow-y-auto border border-slate-200 rounded-lg p-3">
+                  <p className="text-sm font-medium text-slate-900 mb-2">
                     Select the matching property ({epcResults.length} results):
                   </p>
                   {epcResults.map((epc, i) => (
@@ -302,11 +304,11 @@ export default function AddProperty() {
                       key={i}
                       type="button"
                       onClick={() => selectEpc(epc)}
-                      className="w-full text-left p-3 border border-abode-border rounded-lg hover:bg-abode-teal-light hover:border-blue-300 transition-colors"
+                      className="w-full text-left p-3 border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
                     >
-                      <p className="text-sm font-medium text-abode-text">{epc.address}</p>
-                      <div className="flex gap-4 mt-1 text-xs text-abode-text3">
-                        <span>Rating: <strong className="text-abode-text">{epc.current_rating}</strong></span>
+                      <p className="text-sm font-medium text-slate-900">{epc.address}</p>
+                      <div className="flex gap-4 mt-1 text-xs text-slate-400">
+                        <span>Rating: <strong className="text-slate-900">{epc.current_rating}</strong></span>
                         <span>Score: {epc.current_score}</span>
                         <span>Expires: {epc.expiry_date}</span>
                         <span>Type: {epc.property_type}</span>
@@ -317,9 +319,9 @@ export default function AddProperty() {
               )}
 
               {epcData && (
-                <div className="p-4 bg-abode-green-light border border-abode-green rounded-lg mt-3">
-                  <p className="text-sm font-medium text-abode-green mb-2">EPC data selected:</p>
-                  <div className="grid grid-cols-3 gap-4 text-sm text-abode-green">
+                <div className="p-4 bg-green-50 border border-green-600 rounded-lg mt-3">
+                  <p className="text-sm font-medium text-green-600 mb-2">EPC data selected:</p>
+                  <div className="grid grid-cols-3 gap-4 text-sm text-green-600">
                     <div>
                       <span className="font-medium">Rating:</span> {epcData.epc_rating}
                     </div>
@@ -335,8 +337,8 @@ export default function AddProperty() {
             </div>
 
             {/* Ownership Section */}
-            <div className="mt-8 pt-8 border-t border-abode-border">
-              <h3 className="text-lg font-semibold text-abode-text mb-4">Ownership</h3>
+            <div className="mt-8 pt-8 border-t border-slate-200">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Ownership</h3>
 
               <div className="space-y-3 mb-6">
                 <label className="flex items-center">
@@ -348,7 +350,7 @@ export default function AddProperty() {
                     onChange={(e) => setOwnership('individual')}
                     className="w-4 h-4"
                   />
-                  <span className="ml-2 text-sm font-medium text-abode-text">
+                  <span className="ml-2 text-sm font-medium text-slate-900">
                     Individual
                   </span>
                 </label>
@@ -361,14 +363,14 @@ export default function AddProperty() {
                     onChange={(e) => setOwnership('company')}
                     className="w-4 h-4"
                   />
-                  <span className="ml-2 text-sm font-medium text-abode-text">
+                  <span className="ml-2 text-sm font-medium text-slate-900">
                     Limited Company
                   </span>
                 </label>
               </div>
 
               {ownership === 'company' && (
-                <div className="space-y-4 p-4 bg-abode-bg3 rounded-lg">
+                <div className="space-y-4 p-4 bg-slate-100 rounded-lg">
                   <Input
                     label="Company Name"
                     name="name"
