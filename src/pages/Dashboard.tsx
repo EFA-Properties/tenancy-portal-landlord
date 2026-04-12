@@ -52,9 +52,9 @@ export default function Dashboard() {
                   Upload Document
                 </Button>
               </Link>
-              <Link to="/maintenance/new">
+              <Link to="/maintenance">
                 <Button variant="outline" className="w-full justify-start">
-                  Report Maintenance
+                  Maintenance Requests
                 </Button>
               </Link>
             </div>
@@ -68,7 +68,7 @@ export default function Dashboard() {
             </h3>
             <p className="text-slate-600 mb-4">
               Welcome to the Landlord Portal. Here you can manage your properties, tenants,
-              view documents, report maintenance issues, and more.
+              view documents, review maintenance requests, and more.
             </p>
             <ul className="space-y-2 text-sm text-slate-600">
               <li>• View and manage your active tenancies</li>
