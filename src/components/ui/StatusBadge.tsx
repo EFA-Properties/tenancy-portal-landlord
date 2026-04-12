@@ -5,14 +5,16 @@ interface StatusBadgeProps {
   status: string
 }
 
-function getStatusColor(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+function getStatusColor(status: string): 'default' | 'secondary' | 'destructive' | 'outline' | 'success' {
   switch (status.toLowerCase()) {
     case 'active':
     case 'resolved':
     case 'completed':
-      return 'default'
+    case 'confirmed':
+      return 'success'
     case 'pending':
     case 'in_progress':
+    case 'awaiting':
       return 'secondary'
     case 'closed':
     case 'ended':
@@ -20,6 +22,7 @@ function getStatusColor(status: string): 'default' | 'secondary' | 'destructive'
     case 'overdue':
     case 'urgent':
     case 'high':
+    case 'open':
       return 'destructive'
     default:
       return 'outline'
@@ -35,7 +38,7 @@ function getStatusLabel(status: string): string {
 
 export function StatusBadge({ status }: StatusBadgeProps) {
   return (
-    <Badge variant={getStatusColor(status)}>
+    <Badge variant={getStatusColor(status)} size="sm">
       {getStatusLabel(status)}
     </Badge>
   )

@@ -27,7 +27,7 @@ export function TableHead({
   return (
     <thead
       className={clsx(
-        'bg-slate-50 border-b border-slate-200',
+        'bg-abode-bg3 border-b border-abode-border',
         className,
       )}
     >
@@ -44,7 +44,7 @@ export function TableBody({
   className?: string
 }) {
   return (
-    <tbody className={clsx('divide-y divide-slate-200', className)}>
+    <tbody className={clsx('divide-y divide-abode-border', className)}>
       {children}
     </tbody>
   )
@@ -60,7 +60,7 @@ export function TableRow({
   return (
     <tr
       className={clsx(
-        'hover:bg-slate-50 transition-colors',
+        'hover:bg-abode-bg3 transition-colors',
         className,
       )}
     >
@@ -79,7 +79,7 @@ export function TableHeader({
   return (
     <th
       className={clsx(
-        'px-6 py-3 text-left text-sm font-semibold text-slate-700',
+        'px-4 py-3 text-left text-sm font-semibold text-abode-text2',
         className,
       )}
     >
@@ -96,7 +96,7 @@ export function TableCell({
   className?: string
 }) {
   return (
-    <td className={clsx('px-6 py-4 text-sm text-slate-600', className)}>
+    <td className={clsx('px-4 py-4 text-sm text-abode-text2', className)}>
       {children}
     </td>
   )

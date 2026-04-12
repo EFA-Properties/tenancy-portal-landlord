@@ -21,16 +21,16 @@ export function Button({
     <button
       disabled={disabled || loading}
       className={clsx(
-        'font-medium rounded-lg transition-colors inline-flex items-center justify-center gap-2',
+        'font-medium rounded-[8px] transition-colors inline-flex items-center justify-center gap-2',
         size === 'sm' && 'px-3 py-1.5 text-sm',
         size === 'md' && 'px-4 py-2 text-base',
         size === 'lg' && 'px-6 py-3 text-lg',
-        variant === 'default' && 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-400',
-        variant === 'secondary' && 'bg-slate-200 text-slate-900 hover:bg-slate-300 disabled:bg-slate-400',
-        variant === 'destructive' && 'bg-red-600 text-white hover:bg-red-700 disabled:bg-slate-400',
-        variant === 'outline' && 'border border-slate-300 text-slate-900 hover:bg-slate-50 disabled:bg-slate-100',
-        variant === 'ghost' && 'text-slate-700 hover:bg-slate-100 disabled:bg-transparent',
-        disabled && 'cursor-not-allowed opacity-50',
+        variant === 'default' && 'bg-abode-teal text-white hover:opacity-90 disabled:opacity-50',
+        variant === 'secondary' && 'bg-abode-bg3 text-abode-text hover:bg-abode-border disabled:opacity-50',
+        variant === 'destructive' && 'bg-abode-red text-white hover:opacity-90 disabled:opacity-50',
+        variant === 'outline' && 'border border-abode-border text-abode-text hover:bg-abode-bg3 disabled:opacity-50',
+        variant === 'ghost' && 'text-abode-text2 hover:text-abode-text disabled:opacity-50',
+        disabled && 'cursor-not-allowed',
         className,
       )}
       {...props}

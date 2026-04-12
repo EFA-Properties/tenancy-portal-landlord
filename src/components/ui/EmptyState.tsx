@@ -19,10 +19,10 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12">
-      {icon && <div className="mb-4 text-slate-400">{icon}</div>}
-      <h3 className="text-lg font-semibold text-slate-900 mb-2">{title}</h3>
+      {icon && <div className="mb-4 text-abode-text3">{icon}</div>}
+      <h3 className="text-lg font-semibold text-abode-text mb-2">{title}</h3>
       {description && (
-        <p className="text-slate-600 mb-6 max-w-sm text-center">
+        <p className="text-abode-text2 mb-6 max-w-sm text-center">
           {description}
         </p>
       )}

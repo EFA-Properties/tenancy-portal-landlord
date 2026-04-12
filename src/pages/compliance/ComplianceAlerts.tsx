@@ -16,7 +16,7 @@ export default function ComplianceAlerts() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-abode-teal" />
       </div>
     )
   }
@@ -32,7 +32,7 @@ export default function ComplianceAlerts() {
 
   return (
     <div>
-      <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-8">
+      <h1 className="text-3xl font-instrument font-bold text-abode-text mb-8">
         Compliance Alerts
       </h1>
 

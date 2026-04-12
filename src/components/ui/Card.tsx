@@ -9,7 +9,7 @@ export function Card({ children, className, ...props }: CardProps) {
   return (
     <div
       className={clsx(
-        'rounded-lg border border-slate-200 bg-white shadow-sm',
+        'rounded-[14px] border border-abode-border bg-abode-bg2',
         className,
       )}
       {...props}
@@ -26,7 +26,7 @@ interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
 export function CardHeader({ children, className, ...props }: CardHeaderProps) {
   return (
     <div
-      className={clsx('px-6 py-4 border-b border-slate-200', className)}
+      className={clsx('px-4 py-4 border-b border-abode-border', className)}
       {...props}
     >
       {children}
@@ -40,7 +40,7 @@ interface CardBodyProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function CardBody({ children, className, ...props }: CardBodyProps) {
   return (
-    <div className={clsx('px-6 py-4', className)} {...props}>
+    <div className={clsx('px-4 py-4', className)} {...props}>
       {children}
     </div>
   )
@@ -54,7 +54,7 @@ export function CardFooter({ children, className, ...props }: CardFooterProps) {
   return (
     <div
       className={clsx(
-        'px-6 py-4 border-t border-slate-200 bg-slate-50',
+        'px-4 py-4 border-t border-abode-border bg-abode-bg3',
         className,
       )}
       {...props}
