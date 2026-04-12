@@ -1,132 +1,112 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
-import { useMaintenanceRequest, useUpdateMaintenanceRequest } from '../../hooks/useMaintenanceRequests'
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
-import { StatusBadge } from '../../components/ui/StatusBadge'
-import { Select } from '../../components/ui/Select'
+import { useMaintenanceRequest } from '../../hooks/useMaintenanceRequests'
+import { Breadcrumb } from '../../components/Breadcrumb'
+import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
-import { formatDate } from 'date-fns'
+import { Badge } from '../../components/ui/Badge'
+import { format } from 'date-fns'
 
-export function MaintenanceDetail() {
+export default function MaintenanceDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { data: request, isLoading } = useMaintenanceRequest(id || '')
-  const { mutate: updateRequest, isPending } = useUpdateMaintenanceRequest()
-  const [newStatus, setNewStatus] = useState<string>('')
+  const { data: request, isLoading } = useMaintenanceRequest(id)
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-16">
-        <div className="text-slate-500">Loading...</div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     )
   }
 
   if (!request) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-slate-500">Maintenance request not found</p>
-      </div>
-    )
+    return <div className="text-center py-12">Request not found</div>
   }
 
-  const handleStatusChange = () => {
-    if (newStatus) {
-      updateRequest({
-        ...request,
-        status: newStatus as any,
-      })
-      setNewStatus('')
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent': return 'destructive'
+      case 'high': return 'destructive'
+      case 'medium': return 'secondary'
+      default: return 'outline'
+    }
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'open':
+      case 'in_progress': return 'secondary'
+      case 'resolved': return 'default'
+      case 'closed': return 'outline'
+      default: return 'outline'
     }
   }
 
   return (
     <div>
-      <button
-        onClick={() => navigate('/maintenance')}
-        className="flex items-center text-teal-700 hover:text-teal-800 mb-4"
-      >
-        <ChevronLeft size={20} />
-        Back to Maintenance
-      </button>
+      <Breadcrumb
+        items={[
+          { label: 'Maintenance', href: '/maintenance' },
+          { label: request.title },
+        ]}
+      />
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-2">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
           {request.title}
         </h1>
-        <p className="text-slate-500">Reported {formatDate(new Date(request.reported_at), 'MMM d, yyyy')}</p>
+        <Button variant="outline" onClick={() => navigate('/maintenance')}>
+          Back
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Request Details</CardTitle>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Request Details
+            </h2>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardBody className="space-y-4">
             <div>
-              <p className="text-sm text-slate-500 mb-1">Status</p>
-              <StatusBadge status={request.status} />
+              <p className="text-sm text-slate-600">Status</p>
+              <Badge variant={getStatusColor(request.status)}>
+                {request.status.replace('_', ' ').toUpperCase()}
+              </Badge>
             </div>
             <div>
-              <p className="text-sm text-slate-500 mb-1">Priority</p>
-              <StatusBadge status={request.priority} />
+              <p className="text-sm text-slate-600">Priority</p>
+              <Badge variant={getPriorityColor(request.priority)}>
+                {request.priority.toUpperCase()}
+              </Badge>
             </div>
             <div>
-              <p className="text-sm text-slate-500 mb-1">Description</p>
-              <p className="text-slate-900">{request.description}</p>
+              <p className="text-sm text-slate-600">Reported</p>
+              <p className="font-medium text-slate-900">
+                {format(new Date(request.created_at), 'MMM d, yyyy')}
+              </p>
             </div>
-            {request.is_awaab_applicable && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-sm text-red-700 font-medium">
-                  Awaab Applicable
+            {request.resolved_at && (
+              <div>
+                <p className="text-sm text-slate-600">Resolved</p>
+                <p className="font-medium text-slate-900">
+                  {format(new Date(request.resolved_at), 'MMM d, yyyy')}
                 </p>
-                {request.awaab_response_deadline && (
-                  <p className="text-xs text-red-600 mt-1">
-                    Deadline: {formatDate(new Date(request.awaab_response_deadline), 'MMM d, yyyy')}
-                  </p>
-                )}
               </div>
             )}
-          </CardContent>
+          </CardBody>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Update Status</CardTitle>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Description
+            </h2>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <Select
-              label="New Status"
-              options={[
-                { value: 'reported', label: 'Reported' },
-                { value: 'acknowledged', label: 'Acknowledged' },
-                { value: 'in_progress', label: 'In Progress' },
-                { value: 'resolved', label: 'Resolved' },
-                { value: 'closed', label: 'Closed' }
-              ]}
-              value={newStatus}
-              onChange={(e) => setNewStatus(e.target.value)}
-            />
-            <Button
-              onClick={handleStatusChange}
-              disabled={!newStatus || newStatus === request.status}
-              isLoading={isPending}
-              className="w-full"
-            >
-              Update Status
-            </Button>
-
-            {request.tenant && (
-              <div className="pt-4 border-t border-slate-200">
-                <p className="text-sm text-slate-500 mb-2">Reported By</p>
-                <p className="font-medium text-slate-900">
-                  {request.tenant.full_name}
-                </p>
-                <p className="text-sm text-slate-500">{request.tenant.email}</p>
-              </div>
-            )}
-          </CardContent>
+          <CardBody>
+            <p className="text-slate-600">{request.description}</p>
+          </CardBody>
         </Card>
       </div>
     </div>

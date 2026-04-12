@@ -1,64 +1,41 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { ComplianceAlert } from '../types/database'
-import { getCurrentUser } from '../lib/supabase'
+import type { ComplianceAlert } from '../types/database'
 
-export function useComplianceAlerts() {
+export function useComplianceAlerts(propertyId: string | undefined) {
   return useQuery({
-    queryKey: ['compliance_alerts'],
+    queryKey: ['compliance_alerts', propertyId],
     queryFn: async () => {
-      const user = await getCurrentUser()
-      if (!user) throw new Error('Not authenticated')
+      if (!propertyId) throw new Error('No property ID')
 
       const { data, error } = await supabase
         .from('compliance_alerts')
         .select('*')
-        .eq('landlord_id', user.id)
-        .eq('is_resolved', false)
-        .order('created_at', { ascending: false })
+        .eq('property_id', propertyId)
+        .order('due_date', { ascending: true })
 
       if (error) throw error
       return data as ComplianceAlert[]
     },
+    enabled: !!propertyId,
   })
 }
 
-export function useComplianceAlert(id: string) {
+export function useComplianceAlert(alertId: string | undefined) {
   return useQuery({
-    queryKey: ['compliance_alert', id],
+    queryKey: ['compliance_alerts', alertId],
     queryFn: async () => {
+      if (!alertId) throw new Error('No alert ID')
+
       const { data, error } = await supabase
         .from('compliance_alerts')
-        .select(`
-          *,
-          property:properties(id, address_line1, town)
-        `)
-        .eq('id', id)
+        .select('*')
+        .eq('id', alertId)
         .single()
-      if (error) throw error
-      return data
-    },
-    enabled: !!id,
-  })
-}
 
-export function useUpdateComplianceAlert() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ id, ...alert }: ComplianceAlert) => {
-      const { data, error } = await supabase
-        .from('compliance_alerts')
-        .update(alert)
-        .eq('id', id)
-        .select()
-        .single()
       if (error) throw error
-      return data
+      return data as ComplianceAlert
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['compliance_alerts'] })
-      queryClient.setQueryData(['compliance_alert', data.id], data)
-    },
+    enabled: !!alertId,
   })
 }

@@ -1,33 +1,33 @@
 import React from 'react'
-import { LucideIcon } from 'lucide-react'
+import { Button } from './Button'
 
 interface EmptyStateProps {
-  icon: LucideIcon
   title: string
-  description: string
+  description?: string
+  icon?: React.ReactNode
   action?: {
     label: string
     onClick: () => void
   }
 }
 
-export function EmptyState({ icon: Icon, title, description, action }: EmptyStateProps) {
+export function EmptyState({
+  title,
+  description,
+  icon,
+  action,
+}: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-center">
-      <Icon size={48} className="text-slate-300 mb-4" />
-      <h3 className="text-lg font-fraunces font-semibold text-slate-900 mb-2">
-        {title}
-      </h3>
-      <p className="text-slate-500 max-w-sm mb-6">
-        {description}
-      </p>
+    <div className="flex flex-col items-center justify-center py-12">
+      {icon && <div className="mb-4 text-slate-400">{icon}</div>}
+      <h3 className="text-lg font-semibold text-slate-900 mb-2">{title}</h3>
+      {description && (
+        <p className="text-slate-600 mb-6 max-w-sm text-center">
+          {description}
+        </p>
+      )}
       {action && (
-        <button
-          onClick={action.onClick}
-          className="px-4 py-2 bg-teal-700 text-white rounded-md hover:bg-teal-800 transition-colors"
-        >
-          {action.label}
-        </button>
+        <Button onClick={action.onClick}>{action.label}</Button>
       )}
     </div>
   )

@@ -4,24 +4,31 @@ import clsx from 'clsx'
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
   error?: string
-  options: Array<{ value: string; label: string }>
+  options: Array<{ value: string | number; label: string }>
 }
 
-export function Select({ label, error, options, className, ...props }: SelectProps) {
+export function Select({
+  label,
+  error,
+  options,
+  className,
+  ...props
+}: SelectProps) {
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-slate-900 mb-2">
+        <label className="block text-sm font-medium text-slate-700 mb-2">
           {label}
+          {props.required && <span className="text-red-600 ml-1">*</span>}
         </label>
       )}
       <select
         className={clsx(
-          'w-full px-4 py-2 border border-slate-200 rounded-md text-slate-900',
-          'focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2',
-          'transition-colors bg-white',
-          error && 'border-red-500 focus:ring-red-600',
-          className
+          'w-full px-4 py-2 rounded-lg border transition-colors',
+          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+          'bg-white cursor-pointer',
+          error ? 'border-red-300 bg-red-50' : 'border-slate-300',
+          className,
         )}
         {...props}
       >
@@ -32,9 +39,7 @@ export function Select({ label, error, options, className, ...props }: SelectPro
           </option>
         ))}
       </select>
-      {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   )
 }

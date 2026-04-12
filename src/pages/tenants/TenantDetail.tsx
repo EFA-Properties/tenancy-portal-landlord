@@ -1,88 +1,105 @@
 import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft } from 'lucide-react'
 import { useTenant } from '../../hooks/useTenants'
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
+import { Breadcrumb } from '../../components/Breadcrumb'
+import { Card, CardBody, CardHeader } from '../../components/ui/Card'
+import { Button } from '../../components/ui/Button'
+import { Mail, Phone } from 'lucide-react'
 
-export function TenantDetail() {
+export default function TenantDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { data: tenant, isLoading } = useTenant(id || '')
+  const { data: tenant, isLoading } = useTenant(id)
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-16">
-        <div className="text-slate-500">Loading...</div>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     )
   }
 
   if (!tenant) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-slate-500">Tenant not found</p>
-      </div>
-    )
+    return <div className="text-center py-12">Tenant not found</div>
   }
 
   return (
     <div>
-      <button
-        onClick={() => navigate('/tenants')}
-        className="flex items-center text-teal-700 hover:text-teal-800 mb-4"
-      >
-        <ChevronLeft size={20} />
-        Back to Tenants
-      </button>
+      <Breadcrumb
+        items={[
+          { label: 'Tenants', href: '/tenants' },
+          { label: `${tenant.first_name} ${tenant.last_name}` },
+        ]}
+      />
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-2">
-          {tenant.full_name}
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
+          {tenant.first_name} {tenant.last_name}
         </h1>
-        <p className="text-slate-500">{tenant.email}</p>
+        <Button variant="outline" onClick={() => navigate('/tenants')}>
+          Back
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Contact Information</CardTitle>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Personal Information
+            </h2>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardBody className="space-y-4">
             <div>
-              <p className="text-sm text-slate-500 mb-1">Email</p>
-              <p className="font-medium text-slate-900">{tenant.email}</p>
+              <p className="text-sm text-slate-600">Name</p>
+              <p className="font-medium text-slate-900">
+                {tenant.first_name} {tenant.last_name}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Mail size={16} className="text-slate-400" />
+              <a href={`mailto:${tenant.email}`} className="text-blue-600 hover:text-blue-700">
+                {tenant.email}
+              </a>
             </div>
             {tenant.phone && (
-              <div>
-                <p className="text-sm text-slate-500 mb-1">Phone</p>
-                <p className="font-medium text-slate-900">{tenant.phone}</p>
+              <div className="flex items-center gap-2">
+                <Phone size={16} className="text-slate-400" />
+                <a href={`tel:${tenant.phone}`} className="text-blue-600 hover:text-blue-700">
+                  {tenant.phone}
+                </a>
               </div>
             )}
-          </CardContent>
+          </CardBody>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Tenancies</CardTitle>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Emergency Contact
+            </h2>
           </CardHeader>
-          <CardContent>
-            {tenant.tenancy_tenants && tenant.tenancy_tenants.length > 0 ? (
-              <div className="space-y-2">
-                {tenant.tenancy_tenants.map((tt: any) => (
-                  <div key={tt.id} className="p-3 bg-slate-50 rounded-md">
-                    <p className="text-sm font-medium text-slate-900">
-                      {tt.tenancy?.unit?.name}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {tt.is_lead_tenant ? 'Lead tenant' : 'Co-tenant'}
-                    </p>
+          <CardBody className="space-y-4">
+            {tenant.emergency_contact ? (
+              <>
+                <div>
+                  <p className="text-sm text-slate-600">Name</p>
+                  <p className="font-medium text-slate-900">
+                    {tenant.emergency_contact}
+                  </p>
+                </div>
+                {tenant.emergency_phone && (
+                  <div>
+                    <p className="text-sm text-slate-600">Phone</p>
+                    <a href={`tel:${tenant.emergency_phone}`} className="text-blue-600 hover:text-blue-700">
+                      {tenant.emergency_phone}
+                    </a>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             ) : (
-              <p className="text-slate-500 text-sm">No active tenancies</p>
+              <p className="text-slate-600">No emergency contact provided</p>
             )}
-          </CardContent>
+          </CardBody>
         </Card>
       </div>
     </div>

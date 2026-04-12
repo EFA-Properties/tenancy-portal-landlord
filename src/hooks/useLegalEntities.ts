@@ -1,19 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { LegalEntity } from '../types/database'
-import { getCurrentUser } from '../lib/supabase'
+import type { LegalEntity } from '../types/database'
 
 export function useLegalEntities() {
   return useQuery({
     queryKey: ['legal_entities'],
     queryFn: async () => {
-      const user = await getCurrentUser()
-      if (!user) throw new Error('Not authenticated')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No user')
 
       const { data, error } = await supabase
         .from('legal_entities')
         .select('*')
-        .eq('landlord_id', user.id)
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -22,57 +21,21 @@ export function useLegalEntities() {
   })
 }
 
-export function useLegalEntity(id: string) {
+export function useLegalEntity(entityId: string | undefined) {
   return useQuery({
-    queryKey: ['legal_entity', id],
+    queryKey: ['legal_entities', entityId],
     queryFn: async () => {
+      if (!entityId) throw new Error('No entity ID')
+
       const { data, error } = await supabase
         .from('legal_entities')
         .select('*')
-        .eq('id', id)
+        .eq('id', entityId)
         .single()
+
       if (error) throw error
       return data as LegalEntity
     },
-    enabled: !!id,
-  })
-}
-
-export function useCreateLegalEntity() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (entity: Omit<LegalEntity, 'id' | 'created_at' | 'updated_at'>) => {
-      const { data, error } = await supabase
-        .from('legal_entities')
-        .insert([entity])
-        .select()
-        .single()
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['legal_entities'] })
-    },
-  })
-}
-
-export function useUpdateLegalEntity() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ id, ...entity }: LegalEntity) => {
-      const { data, error } = await supabase
-        .from('legal_entities')
-        .update(entity)
-        .eq('id', id)
-        .select()
-        .single()
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['legal_entities'] })
-    },
+    enabled: !!entityId,
   })
 }

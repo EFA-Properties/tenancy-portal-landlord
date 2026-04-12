@@ -1,179 +1,82 @@
 import React from 'react'
-import { AlertCircle, Building2, CheckCircle2, Wrench } from 'lucide-react'
-import { Breadcrumb } from '../components/Breadcrumb'
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
-import { Badge } from '../components/ui/Badge'
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '../components/ui/Table'
-import { StatusBadge } from '../components/ui/StatusBadge'
-import { EmptyState } from '../components/ui/EmptyState'
-import {
-  useDashboardStats,
-  useUpcomingDocumentExpiries,
-  useRecentMaintenanceRequests,
-} from '../hooks/useDashboardStats'
-import { formatDate } from 'date-fns'
+import { Link } from 'react-router-dom'
+import { useDashboardStats } from '../hooks/useDashboardStats'
+import { Card, CardBody } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
 
-export function Dashboard() {
-  const { data: stats, isLoading: statsLoading } = useDashboardStats()
-  const { data: expiries, isLoading: expiriesLoading } = useUpcomingDocumentExpiries()
-  const { data: maintenance, isLoading: maintenanceLoading } = useRecentMaintenanceRequests()
+export default function Dashboard() {
+  const { data: stats, isLoading } = useDashboardStats()
 
-  if (statsLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-teal-200 border-t-teal-700 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-500">Loading dashboard...</p>
-        </div>
-      </div>
-    )
-  }
+  const statCards = [
+    { label: 'Active Tenancies', value: stats?.activeTenancies ?? 0 },
+    { label: 'Total Tenancies', value: stats?.totalTenancies ?? 0 },
+    { label: 'Pending Requests', value: stats?.pendingRequests ?? 0 },
+    { label: 'Overdue Alerts', value: stats?.overdueAlerts ?? 0 },
+  ]
 
   return (
     <div>
-      <Breadcrumb items={[{ label: 'Dashboard' }]} />
-
       <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-8">
         Dashboard
       </h1>
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardContent className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm mb-1">Total Properties</p>
-              <p className="text-3xl font-bold text-slate-900">
-                {stats?.totalProperties || 0}
+        {statCards.map((stat) => (
+          <Card key={stat.label}>
+            <CardBody>
+              <p className="text-slate-600 text-sm font-medium mb-2">
+                {stat.label}
               </p>
-            </div>
-            <Building2 size={32} className="text-teal-200" />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm mb-1">Active Tenancies</p>
-              <p className="text-3xl font-bold text-slate-900">
-                {stats?.activeTenancies || 0}
+              <p className="text-4xl font-bold text-slate-900">
+                {isLoading ? '-' : stat.value}
               </p>
-            </div>
-            <CheckCircle2 size={32} className="text-green-200" />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm mb-1">Compliance Alerts</p>
-              <p className="text-3xl font-bold text-slate-900">
-                {stats?.complianceAlerts || 0}
-              </p>
-            </div>
-            <AlertCircle size={32} className="text-amber-200" />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm mb-1">Pending Maintenance</p>
-              <p className="text-3xl font-bold text-slate-900">
-                {stats?.pendingMaintenance || 0}
-              </p>
-            </div>
-            <Wrench size={32} className="text-blue-200" />
-          </CardContent>
-        </Card>
+            </CardBody>
+          </Card>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Upcoming Document Expiries */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Document Expiries</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {expiriesLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="text-slate-500">Loading...</div>
-              </div>
-            ) : !expiries || expiries.length === 0 ? (
-              <EmptyState
-                icon={CheckCircle2}
-                title="No Upcoming Expiries"
-                description="All your documents are up to date."
-              />
-            ) : (
-              <div className="space-y-3">
-                {expiries.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-start justify-between p-3 bg-slate-50 rounded-md border border-slate-200"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">
-                        {doc.file_name}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">
-                        {doc.document_type.toUpperCase()}
-                      </p>
-                    </div>
-                    <Badge variant="warning">
-                      {doc.valid_to && formatDate(new Date(doc.valid_to), 'MMM d')}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
+          <CardBody>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">
+              Quick Actions
+            </h3>
+            <div className="space-y-2">
+              <Link to="/tenancies/new">
+                <Button variant="outline" className="w-full justify-start">
+                  Add Tenancy
+                </Button>
+              </Link>
+              <Link to="/documents/upload">
+                <Button variant="outline" className="w-full justify-start">
+                  Upload Document
+                </Button>
+              </Link>
+              <Link to="/maintenance/new">
+                <Button variant="outline" className="w-full justify-start">
+                  Report Maintenance
+                </Button>
+              </Link>
+            </div>
+          </CardBody>
         </Card>
 
-        {/* Recent Maintenance Requests */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Maintenance Requests</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {maintenanceLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="text-slate-500">Loading...</div>
-              </div>
-            ) : !maintenance || maintenance.length === 0 ? (
-              <EmptyState
-                icon={Wrench}
-                title="No Maintenance Requests"
-                description="All properties are in good order."
-              />
-            ) : (
-              <div className="space-y-3">
-                {maintenance.slice(0, 5).map((req) => (
-                  <div
-                    key={req.id}
-                    className="flex items-start justify-between p-3 bg-slate-50 rounded-md border border-slate-200"
-                  >
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-900">
-                        {req.category.replace(/_/g, ' ').toUpperCase()}
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-1">
-                        {req.description}
-                      </p>
-                    </div>
-                    <StatusBadge status={req.status as any} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
+        <Card className="md:col-span-2">
+          <CardBody>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">
+              Getting Started
+            </h3>
+            <p className="text-slate-600 mb-4">
+              Welcome to your Tenant Portal. Here you can manage your tenancies,
+              view documents, report maintenance issues, and more.
+            </p>
+            <ul className="space-y-2 text-sm text-slate-600">
+              <li>• View and manage your active tenancies</li>
+              <li>• Access important documents and agreements</li>
+              <li>• Report and track maintenance requests</li>
+              <li>• Stay updated with compliance alerts</li>
+            </ul>
+          </CardBody>
         </Card>
       </div>
     </div>

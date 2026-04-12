@@ -1,81 +1,41 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { MaintenanceRequest } from '../types/database'
+import type { MaintenanceRequest } from '../types/database'
 
-export function useMaintenanceRequests(tenancyId?: string) {
+export function useMaintenanceRequests(tenancyId: string | undefined) {
   return useQuery({
-    queryKey: ['maintenance', tenancyId],
+    queryKey: ['maintenance_requests', tenancyId],
     queryFn: async () => {
-      let query = supabase.from('maintenance_requests').select('*')
-      if (tenancyId) {
-        query = query.eq('tenancy_id', tenancyId)
-      }
-      const { data, error } = await query.order('reported_at', { ascending: false })
+      if (!tenancyId) throw new Error('No tenancy ID')
+
+      const { data, error } = await supabase
+        .from('maintenance_requests')
+        .select('*')
+        .eq('tenancy_id', tenancyId)
+        .order('created_at', { ascending: false })
+
       if (error) throw error
       return data as MaintenanceRequest[]
     },
+    enabled: !!tenancyId,
   })
 }
 
-export function useMaintenanceRequest(id: string) {
+export function useMaintenanceRequest(requestId: string | undefined) {
   return useQuery({
-    queryKey: ['maintenance', id],
+    queryKey: ['maintenance_requests', requestId],
     queryFn: async () => {
+      if (!requestId) throw new Error('No request ID')
+
       const { data, error } = await supabase
         .from('maintenance_requests')
-        .select(`
-          *,
-          tenancy:tenancies(
-            id,
-            unit:units(id, name, property:properties(address_line1, town))
-          ),
-          tenant:tenants(id, full_name, email)
-        `)
-        .eq('id', id)
+        .select('*')
+        .eq('id', requestId)
         .single()
+
       if (error) throw error
-      return data
+      return data as MaintenanceRequest
     },
-    enabled: !!id,
-  })
-}
-
-export function useCreateMaintenanceRequest() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (request: Omit<MaintenanceRequest, 'id' | 'created_at' | 'updated_at'>) => {
-      const { data, error } = await supabase
-        .from('maintenance_requests')
-        .insert([request])
-        .select()
-        .single()
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['maintenance'] })
-    },
-  })
-}
-
-export function useUpdateMaintenanceRequest() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ id, ...request }: MaintenanceRequest) => {
-      const { data, error } = await supabase
-        .from('maintenance_requests')
-        .update(request)
-        .eq('id', id)
-        .select()
-        .single()
-      if (error) throw error
-      return data
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['maintenance'] })
-      queryClient.setQueryData(['maintenance', data.id], data)
-    },
+    enabled: !!requestId,
   })
 }

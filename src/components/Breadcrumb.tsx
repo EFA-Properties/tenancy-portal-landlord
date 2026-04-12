@@ -13,18 +13,25 @@ interface BreadcrumbProps {
 
 export function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <nav className="flex items-center gap-2 text-sm mb-6">
+    <nav className="flex items-center gap-2 mb-6">
       {items.map((item, index) => (
-        <div key={index} className="flex items-center gap-2">
-          {index > 0 && <ChevronRight size={16} className="text-slate-400" />}
+        <React.Fragment key={index}>
+          {index > 0 && (
+            <ChevronRight size={16} className="text-slate-400" />
+          )}
           {item.href ? (
-            <Link to={item.href} className="text-teal-700 hover:text-teal-800 transition-colors">
+            <Link
+              to={item.href}
+              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+            >
               {item.label}
             </Link>
           ) : (
-            <span className="text-slate-500">{item.label}</span>
+            <span className="text-slate-600 text-sm font-medium">
+              {item.label}
+            </span>
           )}
-        </div>
+        </React.Fragment>
       ))}
     </nav>
   )

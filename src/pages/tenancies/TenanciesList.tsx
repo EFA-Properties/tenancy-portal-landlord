@@ -1,101 +1,90 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Plus } from 'lucide-react'
-import { Breadcrumb } from '../../components/Breadcrumb'
-import { Button } from '../../components/ui/Button'
-import { Card, CardContent } from '../../components/ui/Card'
-import { StatusBadge } from '../../components/ui/StatusBadge'
-import { EmptyState } from '../../components/ui/EmptyState'
+import React from 'react'
+import { Link } from 'react-router-dom'
 import { useTenancies } from '../../hooks/useTenancies'
-import { FileText } from 'lucide-react'
-import { formatDate } from 'date-fns'
+import { Card, CardBody } from '../../components/ui/Card'
+import { Button } from '../../components/ui/Button'
+import { Badge } from '../../components/ui/Badge'
+import { EmptyState } from '../../components/ui/EmptyState'
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/ui/Table'
+import { format } from 'date-fns'
 
-export function TenanciesList() {
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  const { data: tenancies, isLoading } = useTenancies()
-  const navigate = useNavigate()
+export default function TenanciesList() {
+  const { data: tenancies = [], isLoading } = useTenancies()
 
-  const filtered = tenancies?.filter(t =>
-    !statusFilter || t.status === statusFilter
-  ) || []
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    )
+  }
 
   return (
     <div>
-      <Breadcrumb items={[
-        { label: 'Dashboard', href: '/dashboard' },
-        { label: 'Tenancies' }
-      ]} />
-
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-fraunces font-bold text-slate-900">
           Tenancies
         </h1>
-        <Button onClick={() => navigate('/tenancies/add')}>
-          <Plus size={20} className="mr-2" />
-          Add Tenancy
-        </Button>
+        <Link to="/tenancies/new">
+          <Button>Add Tenancy</Button>
+        </Link>
       </div>
 
-      {/* Status Filter */}
-      <div className="flex gap-2 mb-6">
-        {['', 'active', 'pending', 'ended'].map((status) => (
-          <button
-            key={status}
-            onClick={() => setStatusFilter(status)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              statusFilter === status
-                ? 'bg-teal-700 text-white'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            {status || 'All'}
-          </button>
-        ))}
-      </div>
-
-      {/* Tenancies Table */}
-      {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="text-slate-500">Loading tenancies...</div>
-        </div>
-      ) : filtered.length === 0 ? (
-        <EmptyState
-          icon={FileText}
-          title="No Tenancies"
-          description="Create your first tenancy to get started."
-          action={{ label: 'Add Tenancy', onClick: () => navigate('/tenancies/add') }}
-        />
+      {tenancies.length === 0 ? (
+        <Card>
+          <CardBody>
+            <EmptyState
+              title="No tenancies yet"
+              description="Create your first tenancy to get started."
+              action={{ label: 'Add Tenancy', onClick: () => window.location.href = '/tenancies/new' }}
+            />
+          </CardBody>
+        </Card>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((tenancy) => (
-            <Card
-              key={tenancy.id}
-              onClick={() => navigate(`/tenancies/${tenancy.id}`)}
-              className="cursor-pointer hover:shadow-md transition-shadow"
-            >
-              <CardContent className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-slate-900 mb-1">
-                    Tenancy #{tenancy.id.slice(0, 8)}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    From {formatDate(new Date(tenancy.start_date), 'MMM d, yyyy')}
-                    {tenancy.end_date && ` to ${formatDate(new Date(tenancy.end_date), 'MMM d, yyyy')}`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="font-semibold text-slate-900">
-                      £{tenancy.monthly_rent}
-                    </p>
-                    <p className="text-xs text-slate-500">per month</p>
-                  </div>
-                  <StatusBadge status={tenancy.status} />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Property</TableHeader>
+                <TableHeader>Tenant</TableHeader>
+                <TableHeader>Start Date</TableHeader>
+                <TableHeader>Monthly Rent</TableHeader>
+                <TableHeader>Status</TableHeader>
+                <TableHeader>Action</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {tenancies.map((tenancy) => (
+                <TableRow key={tenancy.id}>
+                  <TableCell className="font-medium">Property {tenancy.property_id}</TableCell>
+                  <TableCell>Tenant {tenancy.tenant_id}</TableCell>
+                  <TableCell>{format(new Date(tenancy.start_date), 'MMM d, yyyy')}</TableCell>
+                  <TableCell>£{tenancy.monthly_rent.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        tenancy.status === 'active'
+                          ? 'default'
+                          : tenancy.status === 'pending'
+                          ? 'secondary'
+                          : 'outline'
+                      }
+                    >
+                      {tenancy.status.charAt(0).toUpperCase() + tenancy.status.slice(1)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Link to={`/tenancies/${tenancy.id}`}>
+                      <Button variant="ghost" size="sm">
+                        View
+                      </Button>
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       )}
     </div>
   )

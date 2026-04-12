@@ -1,81 +1,74 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Plus, Search } from 'lucide-react'
-import { Breadcrumb } from '../../components/Breadcrumb'
+import React from 'react'
+import { Link } from 'react-router-dom'
+import { useTenants } from '../../hooks/useTenants'
+import { Card, CardBody } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
-import { Input } from '../../components/ui/Input'
-import { Card, CardContent } from '../../components/ui/Card'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { useTenants, useSearchTenants } from '../../hooks/useTenants'
-import { Users } from 'lucide-react'
+import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/ui/Table'
 
-export function TenantsList() {
-  const [search, setSearch] = useState('')
-  const { data: tenants, isLoading } = useTenants()
-  const { data: searchResults } = useSearchTenants(search)
-  const navigate = useNavigate()
+export default function TenantsList() {
+  const { data: tenants = [], isLoading } = useTenants()
 
-  const displayTenants = search ? searchResults : tenants
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    )
+  }
 
   return (
     <div>
-      <Breadcrumb items={[
-        { label: 'Dashboard', href: '/dashboard' },
-        { label: 'Tenants' }
-      ]} />
-
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-fraunces font-bold text-slate-900">
           Tenants
         </h1>
-        <Button onClick={() => navigate('/tenants/invite')}>
-          <Plus size={20} className="mr-2" />
-          Invite Tenant
-        </Button>
+        <Link to="/tenants/invite">
+          <Button>Invite Tenant</Button>
+        </Link>
       </div>
 
-      <div className="mb-6">
-        <Input
-          type="text"
-          placeholder="Search by name or email..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-16">
-          <div className="text-slate-500">Loading tenants...</div>
-        </div>
-      ) : !displayTenants || displayTenants.length === 0 ? (
-        <EmptyState
-          icon={Users}
-          title="No Tenants"
-          description="Invite your first tenant to get started."
-          action={{ label: 'Invite Tenant', onClick: () => navigate('/tenants/invite') }}
-        />
+      {tenants.length === 0 ? (
+        <Card>
+          <CardBody>
+            <EmptyState
+              title="No tenants yet"
+              description="Invite your first tenant to get started."
+              action={{ label: 'Invite Tenant', onClick: () => window.location.href = '/tenants/invite' }}
+            />
+          </CardBody>
+        </Card>
       ) : (
-        <div className="space-y-3">
-          {displayTenants.map((tenant) => (
-            <Card
-              key={tenant.id}
-              onClick={() => navigate(`/tenants/${tenant.id}`)}
-              className="cursor-pointer hover:shadow-md transition-shadow"
-            >
-              <CardContent className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-slate-900">
-                    {tenant.full_name}
-                  </p>
-                  <p className="text-sm text-slate-500">{tenant.email}</p>
-                </div>
-                {tenant.phone && (
-                  <p className="text-sm text-slate-500">{tenant.phone}</p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeader>Name</TableHeader>
+                <TableHeader>Email</TableHeader>
+                <TableHeader>Phone</TableHeader>
+                <TableHeader>Action</TableHeader>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {tenants.map((tenant) => (
+                <TableRow key={tenant.id}>
+                  <TableCell className="font-medium">
+                    {tenant.first_name} {tenant.last_name}
+                  </TableCell>
+                  <TableCell>{tenant.email}</TableCell>
+                  <TableCell>{tenant.phone || '-'}</TableCell>
+                  <TableCell>
+                    <Link to={`/tenants/${tenant.id}`}>
+                      <Button variant="ghost" size="sm">
+                        View
+                      </Button>
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       )}
     </div>
   )

@@ -1,40 +1,41 @@
 import React from 'react'
 import clsx from 'clsx'
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
-  icon?: React.ReactNode
+  helperText?: string
 }
 
-export function Input({ label, error, icon, className, ...props }: InputProps) {
+export function Input({
+  label,
+  error,
+  helperText,
+  className,
+  ...props
+}: InputProps) {
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-slate-900 mb-2">
+        <label className="block text-sm font-medium text-slate-700 mb-2">
           {label}
+          {props.required && <span className="text-red-600 ml-1">*</span>}
         </label>
       )}
-      <div className="relative">
-        {icon && (
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-            {icon}
-          </div>
+      <input
+        className={clsx(
+          'w-full px-4 py-2 rounded-lg border transition-colors',
+          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+          error
+            ? 'border-red-300 bg-red-50'
+            : 'border-slate-300 bg-white',
+          className,
         )}
-        <input
-          className={clsx(
-            'w-full px-4 py-2 border border-slate-200 rounded-md text-slate-900 placeholder-slate-400',
-            'focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2',
-            'transition-colors',
-            icon && 'pl-10',
-            error && 'border-red-500 focus:ring-red-600',
-            className
-          )}
-          {...props}
-        />
-      </div>
-      {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
+        {...props}
+      />
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {helperText && !error && (
+        <p className="mt-1 text-sm text-slate-500">{helperText}</p>
       )}
     </div>
   )

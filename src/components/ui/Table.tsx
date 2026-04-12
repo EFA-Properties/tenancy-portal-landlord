@@ -1,56 +1,103 @@
 import React from 'react'
 import clsx from 'clsx'
 
-export function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
+export function Table({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
   return (
-    <table
-      className={clsx('w-full text-sm', className)}
-      {...props}
-    />
+    <div className="overflow-x-auto">
+      <table className={clsx('w-full', className)}>
+        {children}
+      </table>
+    </div>
   )
 }
 
-export function TableHeader({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
+export function TableHead({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
   return (
     <thead
-      className={clsx('border-b border-slate-200 bg-slate-50', className)}
-      {...props}
-    />
+      className={clsx(
+        'bg-slate-50 border-b border-slate-200',
+        className,
+      )}
+    >
+      {children}
+    </thead>
   )
 }
 
-export function TableRow({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
+export function TableBody({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <tbody className={clsx('divide-y divide-slate-200', className)}>
+      {children}
+    </tbody>
+  )
+}
+
+export function TableRow({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
   return (
     <tr
-      className={clsx('border-b border-slate-200 hover:bg-slate-50 transition-colors', className)}
-      {...props}
-    />
+      className={clsx(
+        'hover:bg-slate-50 transition-colors',
+        className,
+      )}
+    >
+      {children}
+    </tr>
   )
 }
 
-export function TableHead({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
+export function TableHeader({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
   return (
     <th
-      className={clsx('text-left py-3 px-4 font-semibold text-slate-900', className)}
-      {...props}
-    />
+      className={clsx(
+        'px-6 py-3 text-left text-sm font-semibold text-slate-700',
+        className,
+      )}
+    >
+      {children}
+    </th>
   )
 }
 
-export function TableCell({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
+export function TableCell({
+  children,
+  className,
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
   return (
-    <td
-      className={clsx('py-3 px-4 text-slate-900', className)}
-      {...props}
-    />
-  )
-}
-
-export function TableBody({ className, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
-  return (
-    <tbody
-      className={clsx('', className)}
-      {...props}
-    />
+    <td className={clsx('px-6 py-4 text-sm text-slate-600', className)}>
+      {children}
+    </td>
   )
 }

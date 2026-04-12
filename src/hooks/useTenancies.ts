@@ -1,77 +1,40 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import { Tenancy } from '../types/database'
+import type { Tenancy } from '../types/database'
 
-export function useTenancies(unitId?: string) {
+export function useTenancies() {
   return useQuery({
-    queryKey: ['tenancies', unitId],
+    queryKey: ['tenancies'],
     queryFn: async () => {
-      let query = supabase.from('tenancies').select('*')
-      if (unitId) {
-        query = query.eq('unit_id', unitId)
-      }
-      const { data, error } = await query
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('No user')
+
+      const { data, error } = await supabase
+        .from('tenancies')
+        .select('*')
+        .order('created_at', { ascending: false })
+
       if (error) throw error
       return data as Tenancy[]
     },
   })
 }
 
-export function useTenancy(id: string) {
+export function useTenancy(tenancyId: string | undefined) {
   return useQuery({
-    queryKey: ['tenancy', id],
+    queryKey: ['tenancies', tenancyId],
     queryFn: async () => {
+      if (!tenancyId) throw new Error('No tenancy ID')
+
       const { data, error } = await supabase
         .from('tenancies')
-        .select(`
-          *,
-          unit:units(id, name, property:properties(id, address_line1, town, postcode))
-        `)
-        .eq('id', id)
+        .select('*')
+        .eq('id', tenancyId)
         .single()
+
       if (error) throw error
-      return data
+      return data as Tenancy
     },
-    enabled: !!id,
-  })
-}
-
-export function useCreateTenancy() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (tenancy: Omit<Tenancy, 'id' | 'created_at' | 'updated_at'>) => {
-      const { data, error } = await supabase
-        .from('tenancies')
-        .insert([tenancy])
-        .select()
-        .single()
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tenancies'] })
-    },
-  })
-}
-
-export function useUpdateTenancy() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ id, ...tenancy }: Tenancy) => {
-      const { data, error } = await supabase
-        .from('tenancies')
-        .update(tenancy)
-        .eq('id', id)
-        .select()
-        .single()
-      if (error) throw error
-      return data
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['tenancies'] })
-      queryClient.setQueryData(['tenancy', data.id], data)
-    },
+    enabled: !!tenancyId,
   })
 }
