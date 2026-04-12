@@ -98,10 +98,11 @@ export default function UploadDocument() {
 
       if (!landlord) throw new Error('Landlord not found')
 
-      // Upload file to storage
+      // Upload file to storage (use correct bucket based on scope)
+      const bucket = formData.scope === 'property' ? 'property-documents' : 'tenancy-documents'
       const fileName = `${Date.now()}-${file.name}`
       const { data: storageData, error: storageError } = await supabase.storage
-        .from('documents')
+        .from(bucket)
         .upload(`${landlord.id}/${fileName}`, file)
 
       if (storageError) throw storageError
