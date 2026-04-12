@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const register = async (email: string, password: string, fullName: string) => {
-    const { data: { user: newUser }, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -54,19 +54,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       },
     })
     if (error) throw error
-    
-    // Create tenant profile
-    if (newUser) {
-      const { error: profileError } = await supabase
-        .from('tenants')
-        .insert({
-          user_id: newUser.id,
-          first_name: fullName.split(' ')[0],
-          last_name: fullName.split(' ').slice(1).join(' '),
-          email: email,
-        })
-      if (profileError) throw profileError
-    }
   }
 
   const logout = async () => {
