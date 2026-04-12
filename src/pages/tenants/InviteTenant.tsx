@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../../lib/supabase'
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -8,12 +9,13 @@ import { Input } from '../../components/ui/Input'
 export default function InviteTenant() {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
+    full_name: '',
     email: '',
     phone: '',
+    date_of_birth: '',
   })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -23,9 +25,27 @@ export default function InviteTenant() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setTimeout(() => {
+    setError(null)
+
+    try {
+      const { error: tenantError } = await supabase
+        .from('tenants')
+        .insert({
+          full_name: formData.full_name,
+          email: formData.email,
+          phone: formData.phone || null,
+          date_of_birth: formData.date_of_birth || null,
+        })
+
+      if (tenantError) throw tenantError
+
       navigate('/tenants')
-    }, 1000)
+    } catch (err) {
+      console.error('Error creating tenant:', err)
+      setError(err instanceof Error ? err.message : 'Failed to create tenant')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -49,24 +69,21 @@ export default function InviteTenant() {
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="First Name"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleChange}
-                placeholder="John"
-                required
-              />
-              <Input
-                label="Last Name"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-                placeholder="Doe"
-                required
-              />
-            </div>
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                {error}
+              </div>
+            )}
+
+            <Input
+              label="Full Name"
+              name="full_name"
+              value={formData.full_name}
+              onChange={handleChange}
+              placeholder="John Doe"
+              required
+            />
+
             <Input
               label="Email Address"
               name="email"
@@ -76,6 +93,7 @@ export default function InviteTenant() {
               placeholder="john@example.com"
               required
             />
+
             <Input
               label="Phone Number"
               name="phone"
@@ -85,9 +103,17 @@ export default function InviteTenant() {
               placeholder="07700 000000"
             />
 
+            <Input
+              label="Date of Birth"
+              name="date_of_birth"
+              type="date"
+              value={formData.date_of_birth}
+              onChange={handleChange}
+            />
+
             <div className="flex gap-4 pt-4">
               <Button type="submit" loading={loading}>
-                Send Invite
+                Create Tenant
               </Button>
               <Button
                 type="button"
