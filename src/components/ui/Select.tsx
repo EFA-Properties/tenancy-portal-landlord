@@ -17,19 +17,23 @@ export function Select({
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-slate-900 mb-2">
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
           {label}
-          {props.required && <span className="text-red-600 ml-1">*</span>}
+          {props.required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
       )}
       <select
         className={clsx(
-          'w-full px-4 py-2 rounded-md border transition-colors',
-          'focus:outline-none focus:ring-2 focus:ring-teal-700 focus:border-transparent',
-          'bg-white cursor-pointer',
-          error ? 'border-red-600 bg-red-50' : 'border-slate-200',
+          'w-full px-4 py-2.5 rounded-lg border text-sm transition-all appearance-none',
+          'focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600',
+          'bg-white cursor-pointer hover:border-slate-300',
+          'bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat',
+          error ? 'border-red-400 bg-red-50' : 'border-slate-200',
           className,
         )}
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+        }}
         {...props}
       >
         <option value="">Select an option</option>
@@ -39,7 +43,7 @@ export function Select({
           </option>
         ))}
       </select>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
     </div>
   )
 }

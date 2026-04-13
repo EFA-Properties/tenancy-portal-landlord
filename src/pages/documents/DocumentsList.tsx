@@ -6,19 +6,48 @@ import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/ui/Table'
 import { formatDate } from '../../lib/utils'
 
 const docTypeLabels: Record<string, string> = {
   ast: 'Tenancy Agreement',
   epc: 'EPC Certificate',
-  gas_safety: 'Gas Safety (CP12)',
-  eicr: 'EICR (Electrical)',
+  gas_safety: 'Gas Safety Certificate (CP12)',
+  eicr: 'EICR (Electrical Safety)',
   inventory: 'Inventory',
-  deposit_certificate: 'Deposit Certificate',
-  how_to_rent: 'How to Rent',
-  renter_rights: 'Renter Rights',
-  other: 'Other',
+  deposit_certificate: 'Deposit Protection Certificate',
+  how_to_rent: 'How to Rent Guide',
+  renter_rights: "Renter's Rights",
+  other: 'Other Document',
+}
+
+const docTypeDescriptions: Record<string, string> = {
+  ast: 'Assured Shorthold Tenancy agreement',
+  epc: 'Minimum C rating required from 2028',
+  gas_safety: 'Annual renewal · Tenant must receive each year',
+  eicr: 'Every 5 years · Required before letting',
+  inventory: 'Property condition at check-in',
+  deposit_certificate: 'DPS / TDS / MyDeposits · Within 30 days',
+  how_to_rent: 'Gov.uk · Must be current edition',
+  renter_rights: 'Renters Reform Bill documentation',
+  other: 'Additional documentation',
+}
+
+function CheckCircle() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className="shrink-0">
+      <circle cx="11" cy="11" r="11" fill="#0f766e" />
+      <path d="M7 11l2.5 2.5L15 8.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function DocIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className="shrink-0">
+      <rect x="4" y="2" width="14" height="18" rx="2" stroke="#94a3b8" strokeWidth="1.5" />
+      <path d="M8 8h6M8 12h4" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
 }
 
 export default function DocumentsList() {
@@ -51,8 +80,6 @@ export default function DocumentsList() {
     }
   }
 
-  const scopeLabel = tenancyId ? 'Tenancy' : propertyId ? 'Property' : 'All'
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -64,9 +91,14 @@ export default function DocumentsList() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
-          {scopeLabel} Documents
-        </h1>
+        <div>
+          <h1 className="text-3xl font-fraunces font-semibold text-slate-900">
+            Documents
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            {documents.length} {documents.length === 1 ? 'document' : 'documents'} uploaded
+          </p>
+        </div>
         <Link to="/documents/upload">
           <Button>Upload Document</Button>
         </Link>
@@ -84,58 +116,40 @@ export default function DocumentsList() {
         </Card>
       ) : (
         <Card>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeader>Title</TableHeader>
-                <TableHeader>Type</TableHeader>
-                <TableHeader>Scope</TableHeader>
-                <TableHeader>Valid To</TableHeader>
-                <TableHeader>Uploaded</TableHeader>
-                <TableHeader>Action</TableHeader>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {documents.map((doc: any) => (
-                <TableRow key={doc.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                      <span>{doc.title || doc.file_name || 'Untitled'}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {docTypeLabels[doc.document_type] || doc.document_type || '—'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {doc.scope === 'property' ? (
-                      <span className="text-sm">
-                        {doc.properties ? `${doc.properties.address_line1}, ${doc.properties.town}` : 'Property'}
-                      </span>
-                    ) : (
-                      <span className="text-sm">Tenancy</span>
-                    )}
-                  </TableCell>
-                  <TableCell>{formatDate(doc.valid_to)}</TableCell>
-                  <TableCell>{formatDate(doc.created_at)}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDownload(doc)}
-                      loading={downloadingId === doc.id}
-                    >
-                      Download
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="divide-y divide-slate-100">
+            {documents.map((doc: any) => (
+              <div
+                key={doc.id}
+                className="flex items-center gap-4 px-8 py-5 hover:bg-slate-50/50 transition-colors"
+              >
+                <CheckCircle />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[15px] font-medium text-slate-900">
+                    {doc.title || docTypeLabels[doc.document_type] || doc.file_name || 'Untitled'}
+                  </p>
+                  <p className="text-sm text-slate-400 mt-0.5">
+                    {doc.scope === 'property' && doc.properties
+                      ? `${doc.properties.address_line1}, ${doc.properties.town}`
+                      : docTypeDescriptions[doc.document_type] || ''}
+                    {doc.valid_to ? ` · Valid to ${formatDate(doc.valid_to)}` : ''}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <Badge variant="secondary" size="sm">
+                    {docTypeLabels[doc.document_type] || doc.document_type || 'Other'}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDownload(doc)}
+                    loading={downloadingId === doc.id}
+                  >
+                    Download
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </Card>
       )}
     </div>

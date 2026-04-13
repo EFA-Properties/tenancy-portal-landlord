@@ -5,8 +5,18 @@ import { Card, CardBody } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/ui/Table'
 import { epcRatingColor } from '../../lib/utils'
+
+function PropertyIcon() {
+  return (
+    <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#0f766e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 10l7-7 7 7M5 8v8a1 1 0 001 1h8a1 1 0 001-1V8" />
+        <path d="M8 17v-5h4v5" />
+      </svg>
+    </div>
+  )
+}
 
 export default function PropertiesList() {
   const { data: properties = [], isLoading } = useProperties()
@@ -22,9 +32,14 @@ export default function PropertiesList() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
-          Properties
-        </h1>
+        <div>
+          <h1 className="text-3xl font-fraunces font-semibold text-slate-900">
+            Properties
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            {properties.length} {properties.length === 1 ? 'property' : 'properties'} in your portfolio
+          </p>
+        </div>
         <Link to="/properties/new">
           <Button>Add Property</Button>
         </Link>
@@ -41,51 +56,55 @@ export default function PropertiesList() {
           </CardBody>
         </Card>
       ) : (
-        <Card>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeader>Address</TableHeader>
-                <TableHeader>Type</TableHeader>
-                <TableHeader>EPC Rating</TableHeader>
-                <TableHeader>HMO</TableHeader>
-                <TableHeader>Action</TableHeader>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {properties.map((property) => (
-                <TableRow key={property.id} className="cursor-pointer hover:bg-slate-50">
-                  <TableCell className="font-medium">
-                    <Link to={`/properties/${property.id}`} className="hover:underline">
-                      {property.address_line1}{property.town ? `, ${property.town}` : ''}
-                    </Link>
-                    {property.postcode && (
-                      <span className="text-slate-400 text-xs ml-2">{property.postcode}</span>
+        <div className="space-y-3">
+          {properties.map((property) => (
+            <Link key={property.id} to={`/properties/${property.id}`}>
+              <Card className="hover:shadow-card-hover hover:border-slate-200 transition-all cursor-pointer">
+                <div className="flex items-center gap-5 px-6 py-5">
+                  <PropertyIcon />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-medium text-slate-900">
+                      {property.address_line1}
+                      {property.address_line2 ? `, ${property.address_line2}` : ''}
+                    </p>
+                    <p className="text-sm text-slate-400 mt-0.5">
+                      {property.town}
+                      {property.county ? `, ${property.county}` : ''}
+                      {property.postcode ? ` · ${property.postcode}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {property.is_hmo && (
+                      <Badge variant="secondary" size="sm">HMO</Badge>
                     )}
-                  </TableCell>
-                  <TableCell className="capitalize">{property.property_type?.replace('_', ' ') || '—'}</TableCell>
-                  <TableCell>
-                    {property.epc_rating ? (
-                      <Badge className={epcRatingColor(property.epc_rating)}>
-                        {property.epc_rating}
+                    {property.property_type && (
+                      <Badge variant="outline" size="sm">
+                        {property.property_type.replace('_', ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                       </Badge>
-                    ) : (
-                      <span className="text-slate-500">—</span>
                     )}
-                  </TableCell>
-                  <TableCell>{property.is_hmo ? 'HMO' : '—'}</TableCell>
-                  <TableCell>
-                    <Link to={`/properties/${property.id}`}>
-                      <Button variant="ghost" size="sm">
-                        View
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+                    {property.epc_rating && (
+                      <Badge
+                        size="sm"
+                        variant={
+                          ['A', 'B', 'C'].includes(property.epc_rating.toUpperCase())
+                            ? 'success'
+                            : ['D'].includes(property.epc_rating.toUpperCase())
+                            ? 'warning'
+                            : 'destructive'
+                        }
+                      >
+                        EPC {property.epc_rating}
+                      </Badge>
+                    )}
+                    <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 20 20">
+                      <path d="M8 4l6 6-6 6" />
+                    </svg>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </div>
       )}
     </div>
   )

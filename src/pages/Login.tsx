@@ -29,67 +29,73 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardBody className="p-8">
-          <div className="flex items-center gap-2 mb-4">
-            {/* Logo - teal square with house icon */}
-            <div className="w-10 h-10 bg-teal-600 rounded flex items-center justify-center shrink-0">
-              <svg width="22" height="22" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.5">
-                <path d="M2 9l7-7 7 7M4 8v7c0 .5.5 1 1 1h8c.5 0 1-.5 1-1V8" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-fraunces font-semibold text-slate-900">
-              Landlord Portal
-            </h1>
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#f8fafb' }}>
+      <div className="w-full max-w-md">
+        <div className="flex items-center gap-2.5 justify-center mb-8">
+          <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center shrink-0">
+            <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 9l7-7 7 7M4 8v7c0 .5.5 1 1 1h8c.5 0 1-.5 1-1V8" />
+            </svg>
           </div>
-          <p className="text-slate-600 mb-8">Sign in to your account</p>
+          <span className="text-xl font-fraunces font-semibold text-slate-900">
+            TenancyPortal
+          </span>
+        </div>
 
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-600 rounded-lg text-red-600 text-sm">
-              {error}
-            </div>
-          )}
+        <Card>
+          <CardBody className="!p-8">
+            <h2 className="text-xl font-fraunces font-semibold text-slate-900 mb-1">
+              Welcome back
+            </h2>
+            <p className="text-slate-400 text-sm mb-7">Sign in to your landlord account</p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="name@example.com"
-            />
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
-            <Button
-              type="submit"
-              loading={loading}
-              className="w-full"
-            >
-              Sign In
-            </Button>
-          </form>
+            {error && (
+              <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                {error}
+              </div>
+            )}
 
-          <div className="mt-6 pt-6 border-t border-slate-200">
-            <p className="text-slate-600 text-sm text-center">
-              Don't have an account?{' '}
-              <button
-                onClick={() => navigate('/register')}
-                className="text-teal-700 hover:text-slate-900 font-medium"
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <Input
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="name@example.com"
+              />
+              <Input
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="Enter your password"
+              />
+              <Button
+                type="submit"
+                loading={loading}
+                className="w-full"
+                size="lg"
               >
-                Sign up
-              </button>
-            </p>
-          </div>
-        </CardBody>
-      </Card>
+                Sign In
+              </Button>
+            </form>
+
+            <div className="mt-7 pt-6 border-t border-slate-100">
+              <p className="text-slate-400 text-sm text-center">
+                Don't have an account?{' '}
+                <button
+                  onClick={() => navigate('/register')}
+                  className="text-teal-700 hover:text-teal-800 font-medium"
+                >
+                  Sign up
+                </button>
+              </p>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
     </div>
   )
 }

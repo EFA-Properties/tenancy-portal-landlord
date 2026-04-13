@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTenancy, useLinkTenant } from '../../hooks/useTenancies'
 import { supabase } from '../../lib/supabase'
@@ -49,7 +49,7 @@ export default function TenancyDetail() {
   }
 
   if (!tenancy) {
-    return <div className="text-center py-12">Tenancy not found</div>
+    return <div className="text-center py-12 text-slate-500">Tenancy not found</div>
   }
 
   const tenant = (tenancy as any).tenants
@@ -62,63 +62,68 @@ export default function TenancyDetail() {
           { label: 'Tenancies', href: '/tenancies' },
           { label: property
             ? `${property.address_line1}, ${property.town}`
-            : `Tenancy ${tenancy.id.slice(0, 8)}`
+            : `Tenancy`
           },
         ]}
       />
 
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
-          {property
-            ? `${property.address_line1}, ${property.town}`
-            : 'Tenancy Details'}
-        </h1>
+        <div>
+          <h1 className="text-3xl font-fraunces font-semibold text-slate-900">
+            {property
+              ? `${property.address_line1}, ${property.town}`
+              : 'Tenancy Details'}
+          </h1>
+          <div className="flex items-center gap-3 mt-2">
+            <Badge
+              variant={
+                tenancy.status === 'active'
+                  ? 'success'
+                  : tenancy.status === 'pending'
+                  ? 'warning'
+                  : 'secondary'
+              }
+            >
+              {tenancy.status.charAt(0).toUpperCase() + tenancy.status.slice(1)}
+            </Badge>
+            {property?.postcode && (
+              <span className="text-sm text-slate-400">{property.postcode}</span>
+            )}
+          </div>
+        </div>
         <Button variant="outline" onClick={() => navigate('/tenancies')}>
           Back
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Property Info */}
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-slate-900">
-              Property Information
+            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+              Property
             </h2>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardBody className="space-y-5">
             <div>
-              <p className="text-sm text-slate-600">Address</p>
-              <p className="font-medium text-slate-900">
+              <p className="text-xs text-slate-400 mb-1">Address</p>
+              <p className="text-[15px] font-medium text-slate-900">
                 {property
                   ? `${property.address_line1}${property.address_line2 ? `, ${property.address_line2}` : ''}, ${property.town}${property.county ? `, ${property.county}` : ''}, ${property.postcode}`
                   : 'Unknown'}
               </p>
             </div>
             <div>
-              <p className="text-sm text-slate-600">Property Type</p>
-              <p className="font-medium text-slate-900">
+              <p className="text-xs text-slate-400 mb-1">Type</p>
+              <p className="text-[15px] text-slate-700">
                 {property?.property_type
                   ? property.property_type.replace('_', ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
                   : '—'}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-slate-600">Status</p>
-              <Badge
-                variant={
-                  tenancy.status === 'active'
-                    ? 'default'
-                    : tenancy.status === 'pending'
-                    ? 'secondary'
-                    : 'outline'
-                }
-              >
-                {tenancy.status.charAt(0).toUpperCase() + tenancy.status.slice(1)}
-              </Badge>
-            </div>
             {property && (
               <Link to={`/properties/${property.id}`}>
-                <Button variant="ghost" size="sm" className="mt-2">
+                <Button variant="ghost" size="sm" className="mt-1">
                   View Full Property Details
                 </Button>
               </Link>
@@ -126,41 +131,41 @@ export default function TenancyDetail() {
           </CardBody>
         </Card>
 
+        {/* Financial */}
         <Card>
           <CardHeader>
-            <h2 className="text-lg font-semibold text-slate-900">
-              Financial Information
+            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+              Financial
             </h2>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardBody className="space-y-5">
             <div>
-              <p className="text-sm text-slate-600">Monthly Rent</p>
+              <p className="text-xs text-slate-400 mb-1">Monthly Rent</p>
               <p className="text-2xl font-bold text-slate-900">
                 £{tenancy.monthly_rent.toFixed(2)}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-slate-600">Start Date</p>
-              <p className="font-medium text-slate-900">
-                {formatDate(tenancy.start_date)}
-              </p>
-            </div>
-            {tenancy.end_date && (
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-slate-600">End Date</p>
-                <p className="font-medium text-slate-900">
-                  {formatDate(tenancy.end_date)}
-                </p>
+                <p className="text-xs text-slate-400 mb-1">Start Date</p>
+                <p className="text-[15px] text-slate-700">{formatDate(tenancy.start_date)}</p>
               </div>
-            )}
+              {tenancy.end_date && (
+                <div>
+                  <p className="text-xs text-slate-400 mb-1">End Date</p>
+                  <p className="text-[15px] text-slate-700">{formatDate(tenancy.end_date)}</p>
+                </div>
+              )}
+            </div>
           </CardBody>
         </Card>
 
-        <Card className="md:col-span-2">
+        {/* Tenant Info */}
+        <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">
-                Tenant Information
+              <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+                Tenant
               </h2>
               {!tenant && !showLinkForm && (
                 <Button
@@ -176,30 +181,30 @@ export default function TenancyDetail() {
               )}
             </div>
           </CardHeader>
-          <CardBody className="space-y-4">
+          <CardBody>
             {tenant ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
-                  <p className="text-sm text-slate-600">Name</p>
-                  <p className="font-medium text-slate-900">{tenant.full_name}</p>
+                  <p className="text-xs text-slate-400 mb-1">Name</p>
+                  <p className="text-[15px] font-medium text-slate-900">{tenant.full_name}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600">Email</p>
-                  <p className="font-medium text-slate-900">{tenant.email}</p>
+                  <p className="text-xs text-slate-400 mb-1">Email</p>
+                  <p className="text-[15px] text-slate-700">{tenant.email}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-600">Phone</p>
-                  <p className="font-medium text-slate-900">{tenant.phone || '—'}</p>
+                  <p className="text-xs text-slate-400 mb-1">Phone</p>
+                  <p className="text-[15px] text-slate-700">{tenant.phone || '—'}</p>
                 </div>
               </div>
             ) : showLinkForm ? (
               <div className="space-y-4">
                 {loadingTenants ? (
-                  <p className="text-sm text-slate-600">Loading tenants...</p>
+                  <p className="text-sm text-slate-500">Loading tenants...</p>
                 ) : tenants.length === 0 ? (
                   <div>
-                    <p className="text-sm text-slate-600 mb-3">
-                      No tenants found. You need to invite a tenant first.
+                    <p className="text-sm text-slate-500 mb-3">
+                      No tenants found. Invite a tenant first.
                     </p>
                     <Link to="/tenants/invite">
                       <Button size="sm">Invite Tenant</Button>
@@ -238,17 +243,13 @@ export default function TenancyDetail() {
                 )}
               </div>
             ) : (
-              <p className="text-sm text-slate-600">No tenant linked to this tenancy.</p>
+              <p className="text-sm text-slate-400">No tenant linked to this tenancy.</p>
             )}
           </CardBody>
         </Card>
 
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <h2 className="text-lg font-semibold text-slate-900">
-              Related Items
-            </h2>
-          </CardHeader>
+        {/* Actions */}
+        <Card className="lg:col-span-2">
           <CardBody>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Link to={`/documents?tenancy_id=${tenancy.id}`}>

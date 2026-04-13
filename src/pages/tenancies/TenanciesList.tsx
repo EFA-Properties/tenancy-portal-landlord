@@ -5,8 +5,22 @@ import { Card, CardBody } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/ui/Table'
 import { formatDate } from '../../lib/utils'
+
+function TenancyIcon({ status }: { status: string }) {
+  const color = status === 'active' ? '#0f766e' : status === 'pending' ? '#d97706' : '#94a3b8'
+  return (
+    <div
+      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+      style={{ backgroundColor: `${color}10` }}
+    >
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="4" y="3" width="12" height="14" rx="1" />
+        <path d="M8 7h4M8 10h4M8 13h2" />
+      </svg>
+    </div>
+  )
+}
 
 export default function TenanciesList() {
   const { data: tenancies = [], isLoading } = useTenancies()
@@ -22,9 +36,14 @@ export default function TenanciesList() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
-          Tenancies
-        </h1>
+        <div>
+          <h1 className="text-3xl font-fraunces font-semibold text-slate-900">
+            Tenancies
+          </h1>
+          <p className="text-slate-500 text-sm mt-1">
+            {tenancies.length} {tenancies.length === 1 ? 'tenancy' : 'tenancies'} total
+          </p>
+        </div>
         <Link to="/tenancies/new">
           <Button>Add Tenancy</Button>
         </Link>
@@ -41,65 +60,54 @@ export default function TenanciesList() {
           </CardBody>
         </Card>
       ) : (
-        <Card>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeader>Property</TableHeader>
-                <TableHeader>Tenant</TableHeader>
-                <TableHeader>Start Date</TableHeader>
-                <TableHeader>Monthly Rent</TableHeader>
-                <TableHeader>Status</TableHeader>
-                <TableHeader>Action</TableHeader>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {tenancies.map((tenancy) => {
-                const property = (tenancy as any).properties
-                const propertyAddress = property
-                  ? `${property.address_line1}${property.town ? `, ${property.town}` : ''}`
-                  : 'Unknown Property'
+        <div className="space-y-3">
+          {tenancies.map((tenancy) => {
+            const property = (tenancy as any).properties
+            const tenant = (tenancy as any).tenants
+            const propertyAddress = property
+              ? `${property.address_line1}${property.town ? `, ${property.town}` : ''}`
+              : 'Unknown Property'
 
-                return (
-                  <TableRow key={tenancy.id} className="cursor-pointer hover:bg-slate-50">
-                    <TableCell className="font-medium">
-                      <Link to={`/tenancies/${tenancy.id}`} className="hover:underline">
+            return (
+              <Link key={tenancy.id} to={`/tenancies/${tenancy.id}`}>
+                <Card className="hover:shadow-card-hover hover:border-slate-200 transition-all cursor-pointer">
+                  <div className="flex items-center gap-5 px-6 py-5">
+                    <TenancyIcon status={tenancy.status} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-medium text-slate-900">
                         {propertyAddress}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      {(tenancy as any).tenants
-                        ? (tenancy as any).tenants.full_name
-                        : '—'}
-                    </TableCell>
-                    <TableCell>{formatDate(tenancy.start_date)}</TableCell>
-                    <TableCell>£{tenancy.monthly_rent.toFixed(2)}</TableCell>
-                    <TableCell>
+                      </p>
+                      <p className="text-sm text-slate-400 mt-0.5">
+                        {tenant ? tenant.full_name : 'No tenant linked'}
+                        {' · '}
+                        £{tenancy.monthly_rent.toFixed(2)}/month
+                        {' · '}
+                        Started {formatDate(tenancy.start_date)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
                       <Badge
+                        size="sm"
                         variant={
                           tenancy.status === 'active'
-                            ? 'default'
+                            ? 'success'
                             : tenancy.status === 'pending'
-                            ? 'secondary'
-                            : 'outline'
+                            ? 'warning'
+                            : 'secondary'
                         }
                       >
                         {tenancy.status.charAt(0).toUpperCase() + tenancy.status.slice(1)}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Link to={`/tenancies/${tenancy.id}`}>
-                        <Button variant="ghost" size="sm">
-                          View
-                        </Button>
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+                      <svg className="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 20 20">
+                        <path d="M8 4l6 6-6 6" />
+                      </svg>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            )
+          })}
+        </div>
       )}
     </div>
   )
