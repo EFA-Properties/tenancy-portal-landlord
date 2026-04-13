@@ -433,7 +433,7 @@ export default function AddTenancy() {
                       key={i}
                       type="button"
                       onClick={() => selectEpc(epc)}
-                      className="w-full text-left p-3 border border-slate-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                      className="w-full text-left p-3 border border-slate-200 rounded-lg hover:bg-teal-50 hover:border-teal-300 transition-colors"
                     >
                       <p className="text-sm font-medium text-slate-900">{epc.address}</p>
                       <div className="flex gap-4 mt-1 text-xs text-slate-400">
@@ -539,7 +539,7 @@ export default function AddTenancy() {
               ) : (
                 <p className="text-sm text-slate-600">
                   No tenants yet.{' '}
-                  <a href="/tenants/invite" className="text-blue-600 hover:underline">
+                  <a href="/tenants/invite" className="text-teal-700 hover:underline">
                     Invite a tenant
                   </a>{' '}
                   first, or you can add a tenant after creating this tenancy.

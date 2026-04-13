@@ -24,8 +24,8 @@ export function Select({
       )}
       <select
         className={clsx(
-          'w-full px-4 py-2 rounded-[8px] border transition-colors',
-          'focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent',
+          'w-full px-4 py-2 rounded-md border transition-colors',
+          'focus:outline-none focus:ring-2 focus:ring-teal-700 focus:border-transparent',
           'bg-white cursor-pointer',
           error ? 'border-red-600 bg-red-50' : 'border-slate-200',
           className,

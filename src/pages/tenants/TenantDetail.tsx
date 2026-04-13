@@ -14,7 +14,7 @@ export default function TenantDetail() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
       </div>
     )
   }
@@ -57,14 +57,14 @@ export default function TenantDetail() {
             </div>
             <div className="flex items-center gap-2">
               <Mail size={16} className="text-slate-400" />
-              <a href={`mailto:${tenant.email}`} className="text-blue-600 hover:text-blue-600">
+              <a href={`mailto:${tenant.email}`} className="text-teal-700 hover:text-teal-700">
                 {tenant.email}
               </a>
             </div>
             {tenant.phone && (
               <div className="flex items-center gap-2">
                 <Phone size={16} className="text-slate-400" />
-                <a href={`tel:${tenant.phone}`} className="text-blue-600 hover:text-blue-600">
+                <a href={`tel:${tenant.phone}`} className="text-teal-700 hover:text-teal-700">
                   {tenant.phone}
                 </a>
               </div>
@@ -90,7 +90,7 @@ export default function TenantDetail() {
                 {tenant.emergency_phone && (
                   <div>
                     <p className="text-sm text-slate-600">Phone</p>
-                    <a href={`tel:${tenant.emergency_phone}`} className="text-blue-600 hover:text-blue-600">
+                    <a href={`tel:${tenant.emergency_phone}`} className="text-teal-700 hover:text-teal-700">
                       {tenant.emergency_phone}
                     </a>
                   </div>

@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/ui/Table'
-import { format } from 'date-fns'
+import { formatDate } from '../../lib/utils'
 
 export default function TenanciesList() {
   const { data: tenancies = [], isLoading } = useTenancies()
@@ -14,7 +14,7 @@ export default function TenanciesList() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
       </div>
     )
   }
@@ -54,34 +54,45 @@ export default function TenanciesList() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {tenancies.map((tenancy) => (
-                <TableRow key={tenancy.id}>
-                  <TableCell className="font-medium">Property {tenancy.property_id}</TableCell>
-                  <TableCell>Tenant {tenancy.tenant_id}</TableCell>
-                  <TableCell>{format(new Date(tenancy.start_date), 'MMM d, yyyy')}</TableCell>
-                  <TableCell>£{tenancy.monthly_rent.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        tenancy.status === 'active'
-                          ? 'default'
-                          : tenancy.status === 'pending'
-                          ? 'secondary'
-                          : 'outline'
-                      }
-                    >
-                      {tenancy.status.charAt(0).toUpperCase() + tenancy.status.slice(1)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Link to={`/tenancies/${tenancy.id}`}>
-                      <Button variant="ghost" size="sm">
-                        View
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {tenancies.map((tenancy) => {
+                const property = (tenancy as any).properties
+                const propertyAddress = property
+                  ? `${property.address}, ${property.city}`
+                  : 'Unknown Property'
+
+                return (
+                  <TableRow key={tenancy.id} className="cursor-pointer hover:bg-slate-50">
+                    <TableCell className="font-medium">
+                      <Link to={`/tenancies/${tenancy.id}`} className="hover:underline">
+                        {propertyAddress}
+                      </Link>
+                    </TableCell>
+                    <TableCell>Tenant {tenancy.tenant_id || '—'}</TableCell>
+                    <TableCell>{formatDate(tenancy.start_date)}</TableCell>
+                    <TableCell>£{tenancy.monthly_rent.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          tenancy.status === 'active'
+                            ? 'default'
+                            : tenancy.status === 'pending'
+                            ? 'secondary'
+                            : 'outline'
+                        }
+                      >
+                        {tenancy.status.charAt(0).toUpperCase() + tenancy.status.slice(1)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Link to={`/tenancies/${tenancy.id}`}>
+                        <Button variant="ghost" size="sm">
+                          View
+                        </Button>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </Card>

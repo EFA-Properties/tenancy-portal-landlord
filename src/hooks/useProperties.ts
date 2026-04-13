@@ -39,3 +39,22 @@ export function useProperty(propertyId: string | undefined) {
     enabled: !!propertyId,
   })
 }
+
+export function usePropertyTenancies(propertyId: string | undefined) {
+  return useQuery({
+    queryKey: ['property-tenancies', propertyId],
+    queryFn: async () => {
+      if (!propertyId) throw new Error('No property ID')
+
+      const { data, error } = await supabase
+        .from('tenancies')
+        .select('*')
+        .eq('property_id', propertyId)
+        .order('start_date', { ascending: false })
+
+      if (error) throw error
+      return data
+    },
+    enabled: !!propertyId,
+  })
+}

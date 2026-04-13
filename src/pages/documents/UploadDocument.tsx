@@ -261,7 +261,7 @@ export default function UploadDocument() {
                 onChange={handleChange}
                 placeholder="Add any additional details..."
                 rows={3}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-700"
               />
             </div>
 

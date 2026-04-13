@@ -11,11 +11,11 @@ export function useTenancies() {
 
       const { data, error } = await supabase
         .from('tenancies')
-        .select('*')
+        .select('*, properties(*)')
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      return data as Tenancy[]
+      return data as (Tenancy & { properties: any })[]
     },
   })
 }
@@ -28,12 +28,12 @@ export function useTenancy(tenancyId: string | undefined) {
 
       const { data, error } = await supabase
         .from('tenancies')
-        .select('*')
+        .select('*, properties(*)')
         .eq('id', tenancyId)
         .single()
 
       if (error) throw error
-      return data as Tenancy
+      return data as Tenancy & { properties: any }
     },
     enabled: !!tenancyId,
   })

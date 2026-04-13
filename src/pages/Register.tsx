@@ -42,12 +42,12 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardBody className="p-8">
           <div className="flex items-center gap-2 mb-4">
-            {/* Logo - blue square with house icon */}
-            <div className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center shrink-0">
+            {/* Logo - teal square with house icon */}
+            <div className="w-10 h-10 bg-teal-600 rounded flex items-center justify-center shrink-0">
               <svg width="22" height="22" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.5">
                 <path d="M2 9l7-7 7 7M4 8v7c0 .5.5 1 1 1h8c.5 0 1-.5 1-1V8" />
               </svg>
@@ -111,7 +111,7 @@ export default function Register() {
               Already have an account?{' '}
               <button
                 onClick={() => navigate('/login')}
-                className="text-blue-600 hover:text-slate-900 font-medium"
+                className="text-teal-700 hover:text-slate-900 font-medium"
               >
                 Sign in
               </button>

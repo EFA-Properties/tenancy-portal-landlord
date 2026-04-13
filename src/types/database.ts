@@ -13,6 +13,9 @@ export interface Database {
           bedrooms: number
           bathrooms: number
           description: string | null
+          epc_rating: string | null
+          epc_score: number | null
+          epc_expiry: string | null
           created_at: string
           updated_at: string
         }
@@ -27,6 +30,9 @@ export interface Database {
           bedrooms: number
           bathrooms: number
           description?: string | null
+          epc_rating?: string | null
+          epc_score?: number | null
+          epc_expiry?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -41,6 +47,9 @@ export interface Database {
           bedrooms?: number
           bathrooms?: number
           description?: string | null
+          epc_rating?: string | null
+          epc_score?: number | null
+          epc_expiry?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -268,6 +277,9 @@ export interface Property {
   bedrooms: number
   bathrooms: number
   description: string | null
+  epc_rating: string | null
+  epc_score: number | null
+  epc_expiry: string | null
   created_at: string
   updated_at: string
 }

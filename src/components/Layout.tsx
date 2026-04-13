@@ -33,8 +33,17 @@ function DocumentIcon() {
 
 function MaintenanceIcon() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <path d="M3 14l2-2M6 14l6-6M12 14l2-2M4 7.5l2-2 4 4" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5z"/>
+      <path d="M12 6v6l4 2" />
+    </svg>
+  )
+}
+
+function WrenchIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
     </svg>
   )
 }
@@ -56,14 +65,14 @@ export function Layout({ children }: LayoutProps) {
     { label: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { label: 'Tenancies', href: '/tenancies', icon: TenanciesIcon },
     { label: 'Documents', href: '/documents', icon: DocumentIcon },
-    { label: 'Maintenance', href: '/maintenance', icon: MaintenanceIcon },
+    { label: 'Maintenance', href: '/maintenance', icon: WrenchIcon },
     { label: 'Settings', href: '/settings', icon: SettingsIcon },
   ]
 
   const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + '/')
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -74,29 +83,29 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 transform transition-transform lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 border-r border-slate-800 transform transition-transform lg:relative lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="px-6 py-4 border-b border-slate-200">
+          <div className="px-6 py-4 border-b border-slate-800">
             <div className="flex items-center gap-2">
-              {/* Logo - blue square with house icon */}
-              <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center shrink-0">
+              {/* Logo - teal square with house icon */}
+              <div className="w-8 h-8 bg-teal-600 rounded flex items-center justify-center shrink-0">
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.5">
                   <path d="M2 9l7-7 7 7M4 8v7c0 .5.5 1 1 1h8c.5 0 1-.5 1-1V8" />
                 </svg>
               </div>
-              <h1 className="font-fraunces font-semibold text-slate-900">
-                Landlord Portal
+              <h1 className="font-fraunces font-semibold text-white">
+                TenancyPortal
               </h1>
             </div>
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6">
-            <p className="text-xs font-mono uppercase tracking-[1.5px] text-slate-400 mb-4 px-2">
+            <p className="text-xs font-mono uppercase tracking-[1.5px] text-slate-500 mb-4 px-2">
               Navigation
             </p>
             <ul className="space-y-2">
@@ -109,8 +118,8 @@ export function Layout({ children }: LayoutProps) {
                       onClick={() => setSidebarOpen(false)}
                       className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
                         isActive(item.href)
-                          ? 'bg-blue-50 text-blue-600 font-medium'
-                          : 'text-slate-600 hover:text-slate-900'
+                          ? 'bg-teal-600 text-white font-medium'
+                          : 'text-slate-300 hover:text-white'
                       }`}
                     >
                       <ItemIcon />
@@ -123,20 +132,20 @@ export function Layout({ children }: LayoutProps) {
           </nav>
 
           {/* User info and logout */}
-          <div className="border-t border-slate-200 px-4 py-4">
+          <div className="border-t border-slate-800 px-4 py-4">
             {user && (
               <div className="mb-4 text-sm">
-                <p className="text-slate-400 text-xs font-mono uppercase tracking-[0.5px] mb-1">
+                <p className="text-slate-500 text-xs font-mono uppercase tracking-[0.5px] mb-1">
                   Signed in as
                 </p>
-                <p className="font-medium text-slate-900 truncate text-sm">
+                <p className="font-medium text-white truncate text-sm">
                   {user.email}
                 </p>
               </div>
             )}
             <button
               onClick={logout}
-              className="w-full flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium"
+              className="w-full flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-colors text-sm font-medium"
             >
               <LogOut size={16} />
               Sign Out
@@ -148,7 +157,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shrink-0">
+        <header className="bg-white border-b border-slate-200 px-6 py-4 h-16 flex items-center justify-between shrink-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="lg:hidden text-slate-600 hover:text-slate-900"

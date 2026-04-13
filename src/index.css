@@ -7,8 +7,8 @@ html {
 }
 
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #f8f9fb;
+  color: #141820;
   font-family: 'DM Sans', sans-serif;
 }
 
@@ -35,21 +35,21 @@ select:focus {
 }
 
 .text-secondary {
-  color: #64748b;
+  color: #4a5268;
 }
 
 .text-muted {
-  color: #94a3b8;
+  color: #8a90a0;
 }
 
 .border-light {
-  border-color: #e2e8f0;
+  border-color: #e2e6ec;
 }
 
 .card {
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid #e2e6ec;
+  border-radius: 12px;
 }
 
 /* Hide scrollbar for scroll areas */
