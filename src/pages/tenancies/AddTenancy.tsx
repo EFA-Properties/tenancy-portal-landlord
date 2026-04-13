@@ -54,6 +54,7 @@ export default function AddTenancy() {
     epc_rating: string
     epc_score: number | null
     epc_expiry: string
+    lmk_key: string | null
   } | null>(null)
 
   // UI state
@@ -130,6 +131,7 @@ export default function AddTenancy() {
       epc_rating: epc.current_rating || '',
       epc_score: epc.current_score ? parseInt(epc.current_score) : null,
       epc_expiry: epc.expiry_date || '',
+      lmk_key: epc.lmk_key || null,
     })
     // Auto-fill address from selected EPC if address_line1 is empty
     if (!addressData.address_line1 && epc.address) {
@@ -227,6 +229,7 @@ export default function AddTenancy() {
               epc_rating: epcData.epc_rating,
               epc_score: epcData.epc_score,
               epc_expiry: epcData.epc_expiry,
+              uprn: epcData.lmk_key || null,
             }
           : {}),
       }
@@ -440,7 +443,7 @@ export default function AddTenancy() {
                       <div className="flex gap-4 mt-1 text-xs text-slate-400">
                         <span>Rating: <strong className="text-slate-900">{epc.current_rating}</strong></span>
                         <span>Score: {epc.current_score}</span>
-                        <span>Expires: {epc.expiry_date}</span>
+                        <span>Expires: {epc.expiry_date ? new Date(epc.expiry_date).toLocaleDateString('en-GB') : '—'}</span>
                         <span>Type: {epc.property_type}</span>
                       </div>
                     </button>
@@ -459,9 +462,19 @@ export default function AddTenancy() {
                       <span className="font-medium">Score:</span> {epcData.epc_score}
                     </div>
                     <div>
-                      <span className="font-medium">Expires:</span> {epcData.epc_expiry}
+                      <span className="font-medium">Expires:</span> {epcData.epc_expiry ? new Date(epcData.epc_expiry).toLocaleDateString('en-GB') : '—'}
                     </div>
                   </div>
+                  {epcData.lmk_key && (
+                    <a
+                      href={`https://find-energy-certificate.service.gov.uk/energy-certificate/${epcData.lmk_key}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-3 text-sm font-medium text-teal-700 hover:text-teal-800 underline"
+                    >
+                      View Full EPC Certificate
+                    </a>
+                  )}
                 </div>
               )}
             </div>

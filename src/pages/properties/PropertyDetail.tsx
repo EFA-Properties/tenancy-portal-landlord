@@ -101,6 +101,21 @@ export default function PropertyDetail() {
                     <p className="font-medium text-slate-900">{formatDate(property.epc_expiry)}</p>
                   </div>
                 )}
+                {property.uprn && (
+                  <div>
+                    <a
+                      href={`https://find-energy-certificate.service.gov.uk/energy-certificate/${property.uprn}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 mt-2 text-sm font-medium text-teal-700 bg-teal-50 rounded-lg hover:bg-teal-100 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      View Full EPC Certificate
+                    </a>
+                  </div>
+                )}
               </>
             ) : (
               <p className="text-sm text-slate-600">No EPC data available.</p>
