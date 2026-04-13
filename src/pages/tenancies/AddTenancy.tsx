@@ -212,50 +212,64 @@ export default function AddTenancy() {
       }
 
       // Create property from inline address
+      const propertyPayload = {
+        landlord_id: landlord.id,
+        legal_entity_id,
+        address_line1: addressData.address_line1,
+        address_line2: addressData.address_line2 || null,
+        town: addressData.town,
+        county: addressData.county || null,
+        postcode: addressData.postcode,
+        property_type: addressData.property_type || null,
+        is_hmo: addressData.is_hmo,
+        ...(epcData
+          ? {
+              epc_rating: epcData.epc_rating,
+              epc_score: epcData.epc_score,
+              epc_expiry: epcData.epc_expiry,
+            }
+          : {}),
+      }
+
+      console.log('Creating property with:', propertyPayload)
       const { data: property, error: propertyError } = await supabase
         .from('properties')
-        .insert({
-          landlord_id: landlord.id,
-          legal_entity_id,
-          address_line1: addressData.address_line1,
-          address_line2: addressData.address_line2,
-          town: addressData.town,
-          county: addressData.county,
-          postcode: addressData.postcode,
-          property_type: addressData.property_type,
-          is_hmo: addressData.is_hmo,
-          ...(epcData
-            ? {
-                epc_rating: epcData.epc_rating,
-                epc_score: epcData.epc_score,
-                epc_expiry: epcData.epc_expiry,
-              }
-            : {}),
-        })
+        .insert(propertyPayload)
         .select()
         .single()
 
-      if (propertyError) throw propertyError
+      if (propertyError) {
+        console.error('Property creation failed:', propertyError)
+        throw new Error(`Property creation failed: ${propertyError.message} (${propertyError.code})`)
+      }
+
+      console.log('Property created:', property.id)
 
       // Create tenancy linked to the new property
+      const tenancyPayload = {
+        landlord_id: landlord.id,
+        property_id: property.id,
+        unit_id: null,
+        legal_entity_id,
+        tenancy_type: formData.tenancy_type,
+        start_date: formData.start_date,
+        end_date: formData.tenancy_type === 'fixed_term' ? formData.end_date : null,
+        monthly_rent: parseFloat(formData.monthly_rent),
+        rent_due_day: parseInt(formData.rent_due_day),
+        deposit_amount: formData.deposit_amount ? parseFloat(formData.deposit_amount) : null,
+        deposit_scheme: formData.deposit_scheme || null,
+        deposit_scheme_ref: formData.deposit_scheme_ref || null,
+      }
+
+      console.log('Creating tenancy with:', tenancyPayload)
       const { error: tenancyError } = await supabase
         .from('tenancies')
-        .insert({
-          landlord_id: landlord.id,
-          property_id: property.id,
-          unit_id: null,
-          legal_entity_id,
-          tenancy_type: formData.tenancy_type,
-          start_date: formData.start_date,
-          end_date: formData.tenancy_type === 'fixed' ? formData.end_date : null,
-          monthly_rent: parseFloat(formData.monthly_rent),
-          rent_due_day: parseInt(formData.rent_due_day),
-          deposit_amount: formData.deposit_amount ? parseFloat(formData.deposit_amount) : null,
-          deposit_scheme: formData.deposit_scheme || null,
-          deposit_scheme_ref: formData.deposit_scheme_ref || null,
-        })
+        .insert(tenancyPayload)
 
-      if (tenancyError) throw tenancyError
+      if (tenancyError) {
+        console.error('Tenancy creation failed:', tenancyError)
+        throw new Error(`Tenancy creation failed: ${tenancyError.message} (${tenancyError.code})`)
+      }
 
       navigate('/tenancies')
     } catch (err) {
@@ -267,22 +281,21 @@ export default function AddTenancy() {
   }
 
   const propertyTypes = [
-    { value: 'house', label: 'House' },
-    { value: 'flat', label: 'Flat' },
-    { value: 'bungalow', label: 'Bungalow' },
-    { value: 'commercial', label: 'Commercial' },
+    { value: 'btl', label: 'Buy to Let' },
     { value: 'hmo', label: 'HMO' },
+    { value: 'commercial', label: 'Commercial' },
+    { value: 'holiday_let', label: 'Holiday Let' },
   ]
 
   const tenancyTypes = [
     { value: 'periodic', label: 'Periodic' },
-    { value: 'fixed', label: 'Fixed Term' },
+    { value: 'fixed_term', label: 'Fixed Term' },
   ]
 
   const depositSchemes = [
-    { value: 'DPS', label: 'DPS' },
-    { value: 'TDS', label: 'TDS' },
-    { value: 'MyDeposits', label: 'MyDeposits' },
+    { value: 'dps', label: 'DPS' },
+    { value: 'tds', label: 'TDS' },
+    { value: 'mydeposits', label: 'MyDeposits' },
   ]
 
   if (loadingData) {
@@ -557,7 +570,7 @@ export default function AddTenancy() {
                   required
                 />
 
-                {formData.tenancy_type === 'fixed' && (
+                {formData.tenancy_type === 'fixed_term' && (
                   <Input
                     label="End Date"
                     name="end_date"

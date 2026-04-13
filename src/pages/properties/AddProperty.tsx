@@ -180,11 +180,10 @@ export default function AddProperty() {
   }
 
   const propertyTypes = [
-    { value: 'house', label: 'House' },
-    { value: 'flat', label: 'Flat' },
-    { value: 'bungalow', label: 'Bungalow' },
-    { value: 'commercial', label: 'Commercial' },
+    { value: 'btl', label: 'Buy to Let' },
     { value: 'hmo', label: 'HMO' },
+    { value: 'commercial', label: 'Commercial' },
+    { value: 'holiday_let', label: 'Holiday Let' },
   ]
 
   return (
