@@ -25,8 +25,8 @@ export default function UploadDocument() {
   const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [properties, setProperties] = useState<Array<{ id: string; address_line1: string }>>([])
-  const [tenancies, setTenancies] = useState<Array<{ id: string; property_id: string }>>([])
+  const [properties, setProperties] = useState<Array<{ id: string; address_line1: string; town: string }>>([])
+  const [tenancies, setTenancies] = useState<Array<{ id: string; property_id: string; properties: any; tenants: any }>>([])
   const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => {
@@ -49,11 +49,11 @@ export default function UploadDocument() {
         const [{ data: propsData }, { data: tenanciesData }] = await Promise.all([
           supabase
             .from('properties')
-            .select('id, address_line1')
+            .select('id, address_line1, town')
             .eq('landlord_id', landlord.id),
           supabase
             .from('tenancies')
-            .select('id, property_id')
+            .select('id, property_id, properties(address_line1, town), tenants(full_name)')
             .eq('landlord_id', landlord.id),
         ])
 
@@ -144,6 +144,7 @@ export default function UploadDocument() {
     { value: 'inventory', label: 'Inventory' },
     { value: 'deposit_certificate', label: 'Deposit Certificate' },
     { value: 'how_to_rent', label: 'How to Rent Guide' },
+    { value: 'renter_rights', label: "Renter's Rights" },
     { value: 'other', label: 'Other' },
   ]
 
@@ -213,7 +214,7 @@ export default function UploadDocument() {
                 onChange={handleChange}
                 options={properties.map((p) => ({
                   value: p.id,
-                  label: p.address_line1,
+                  label: `${p.address_line1}, ${p.town}`,
                 }))}
                 required
               />
@@ -227,7 +228,7 @@ export default function UploadDocument() {
                 onChange={handleChange}
                 options={tenancies.map((t) => ({
                   value: t.id,
-                  label: `Tenancy - ${t.property_id.substring(0, 8)}...`,
+                  label: `${(t as any).properties?.address_line1 || 'Unknown'}, ${(t as any).properties?.town || ''}${(t as any).tenants ? ` — ${(t as any).tenants.full_name}` : ''}`,
                 }))}
                 required
               />
@@ -301,7 +302,7 @@ export default function UploadDocument() {
                       Drag and drop or click to select
                     </p>
                     <p className="text-sm text-slate-600">
-                      PDF, DOC, DOCX up to 10 MB
+                      PDF, DOC, DOCX, JPG, PNG up to 10 MB
                     </p>
                   </div>
                 )}
@@ -309,7 +310,7 @@ export default function UploadDocument() {
                   type="file"
                   onChange={handleFileChange}
                   className="absolute inset-0 opacity-0 cursor-pointer"
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   required
                 />
               </div>

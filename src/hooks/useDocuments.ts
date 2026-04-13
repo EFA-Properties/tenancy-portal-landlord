@@ -1,23 +1,29 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
-import type { Document } from '../types/database'
 
-export function useDocuments(tenancyId: string | undefined) {
+export function useDocuments(filters?: { tenancy_id?: string; property_id?: string; scope?: string }) {
   return useQuery({
-    queryKey: ['documents', tenancyId],
+    queryKey: ['documents', filters],
     queryFn: async () => {
-      if (!tenancyId) throw new Error('No tenancy ID')
-
-      const { data, error } = await supabase
+      let query = supabase
         .from('documents')
-        .select('*')
-        .eq('tenancy_id', tenancyId)
+        .select('*, properties(address_line1, town)')
         .order('created_at', { ascending: false })
 
+      if (filters?.tenancy_id) {
+        query = query.eq('tenancy_id', filters.tenancy_id)
+      }
+      if (filters?.property_id) {
+        query = query.eq('property_id', filters.property_id)
+      }
+      if (filters?.scope) {
+        query = query.eq('scope', filters.scope)
+      }
+
+      const { data, error } = await query
       if (error) throw error
-      return data as Document[]
+      return data as any[]
     },
-    enabled: !!tenancyId,
   })
 }
 
@@ -34,7 +40,7 @@ export function useDocument(documentId: string | undefined) {
         .single()
 
       if (error) throw error
-      return data as Document
+      return data as any
     },
     enabled: !!documentId,
   })
