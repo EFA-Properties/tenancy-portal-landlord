@@ -65,6 +65,11 @@ export default function PropertyDetail() {
             {property.is_hmo && (
               <Badge variant="secondary" size="sm">HMO</Badge>
             )}
+            {(property as any).legal_entities && (
+              <Badge variant="default" size="sm">
+                {(property as any).legal_entities.name}
+              </Badge>
+            )}
             <span className="text-sm text-slate-400">{property.postcode}</span>
           </div>
         </div>

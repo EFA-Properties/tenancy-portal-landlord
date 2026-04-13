@@ -8,11 +8,11 @@ export function useProperties() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('properties')
-        .select('*')
+        .select('*, legal_entities(id, name, company_number)')
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      return data as Property[]
+      return data as (Property & { legal_entities: any })[]
     },
   })
 }
@@ -25,12 +25,12 @@ export function useProperty(propertyId: string | undefined) {
 
       const { data, error } = await supabase
         .from('properties')
-        .select('*')
+        .select('*, legal_entities(id, name, company_number)')
         .eq('id', propertyId)
         .single()
 
       if (error) throw error
-      return data as Property
+      return data as Property & { legal_entities: any }
     },
     enabled: !!propertyId,
   })

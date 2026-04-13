@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
@@ -7,6 +7,7 @@ import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
+import { formatDate } from '../../lib/utils'
 
 export default function AddProperty() {
   const navigate = useNavigate()
@@ -21,6 +22,9 @@ export default function AddProperty() {
     is_hmo: false,
   })
   const [ownership, setOwnership] = useState<'individual' | 'company'>('individual')
+  const [companyMode, setCompanyMode] = useState<'existing' | 'new'>('existing')
+  const [selectedEntityId, setSelectedEntityId] = useState('')
+  const [existingEntities, setExistingEntities] = useState<Array<{ id: string; name: string; company_number: string }>>([])
   const [companyData, setCompanyData] = useState({
     name: '',
     company_number: '',
@@ -34,7 +38,38 @@ export default function AddProperty() {
     epc_rating: string
     epc_score: number | null
     epc_expiry: string
+    lmk_key: string | null
   } | null>(null)
+
+  // Load existing legal entities
+  useEffect(() => {
+    const loadEntities = async () => {
+      if (!user) return
+      try {
+        const { data: landlord } = await supabase
+          .from('landlords')
+          .select('id')
+          .eq('auth_user_id', user.id)
+          .single()
+        if (!landlord) return
+
+        const { data: entities } = await supabase
+          .from('legal_entities')
+          .select('id, name, company_number')
+          .eq('landlord_id', landlord.id)
+          .eq('is_company', true)
+          .order('name')
+
+        setExistingEntities(entities || [])
+        if (entities && entities.length > 0) {
+          setCompanyMode('existing')
+        }
+      } catch (err) {
+        console.error('Error loading entities:', err)
+      }
+    }
+    loadEntities()
+  }, [user])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -83,7 +118,17 @@ export default function AddProperty() {
       epc_rating: epc.current_rating || '',
       epc_score: epc.current_score ? parseInt(epc.current_score) : null,
       epc_expiry: epc.expiry_date || '',
+      lmk_key: epc.lmk_key || null,
     })
+    if (!formData.address_line1 && epc.address) {
+      const parts = epc.address.split(',').map((p: string) => p.trim())
+      setFormData((prev) => ({
+        ...prev,
+        address_line1: parts[0] || prev.address_line1,
+        address_line2: parts.length > 2 ? parts[1] : prev.address_line2,
+        town: parts[parts.length - 1] || prev.town,
+      }))
+    }
     setEpcResults([])
   }
 
@@ -98,7 +143,6 @@ export default function AddProperty() {
     setError(null)
 
     try {
-      // Get or create landlord record
       let { data: landlord } = await supabase
         .from('landlords')
         .select('id')
@@ -120,55 +164,91 @@ export default function AddProperty() {
         landlord = newLandlord
       }
 
-      let legal_entity_id: string | null = null
-
       if (!landlord) throw new Error('Landlord not found')
 
-      // Create legal entity if company
+      let legal_entity_id: string | null = null
+
       if (ownership === 'company') {
-        if (!companyData.name || !companyData.company_number) {
-          setError('Company name and number are required')
-          setLoading(false)
-          return
+        if (companyMode === 'existing' && selectedEntityId) {
+          legal_entity_id = selectedEntityId
+        } else if (companyMode === 'new') {
+          if (!companyData.name || !companyData.company_number) {
+            setError('Company name and number are required')
+            setLoading(false)
+            return
+          }
+
+          const { data: entity, error: entityError } = await supabase
+            .from('legal_entities')
+            .insert({
+              landlord_id: landlord.id,
+              name: companyData.name,
+              company_number: companyData.company_number,
+              registered_address: companyData.registered_address || null,
+              is_company: true,
+            })
+            .select()
+            .single()
+
+          if (entityError) throw entityError
+          legal_entity_id = entity.id
         }
-
-        const { data: entity, error: entityError } = await supabase
-          .from('legal_entities')
-          .insert({
-            landlord_id: landlord.id,
-            name: companyData.name,
-            company_number: companyData.company_number,
-            registered_address: companyData.registered_address,
-            is_company: true,
-          })
-          .select()
-          .single()
-
-        if (entityError) throw entityError
-        legal_entity_id = entity.id
       }
 
-      // Create property
-      const { error: propertyError } = await supabase
-        .from('properties')
-        .insert({
-          landlord_id: landlord.id,
-          legal_entity_id,
-          address_line1: formData.address_line1,
-          address_line2: formData.address_line2,
-          town: formData.town,
-          county: formData.county,
-          postcode: formData.postcode,
-          property_type: formData.property_type,
-          is_hmo: formData.is_hmo,
-          ...(epcData ? {
-            epc_rating: epcData.epc_rating,
-            epc_score: epcData.epc_score,
-            epc_expiry: epcData.epc_expiry,
-          } : {}),
-        })
+      const propertyPayload = {
+        landlord_id: landlord.id,
+        legal_entity_id,
+        address_line1: formData.address_line1,
+        address_line2: formData.address_line2 || null,
+        town: formData.town,
+        county: formData.county || null,
+        postcode: formData.postcode,
+        property_type: formData.property_type || null,
+        is_hmo: formData.is_hmo,
+        ...(epcData ? {
+          epc_rating: epcData.epc_rating || null,
+          epc_score: epcData.epc_score,
+          epc_expiry: epcData.epc_expiry || null,
+          uprn: epcData.lmk_key || null,
+        } : {}),
+      }
 
-      if (propertyError) throw propertyError
+      console.log('Creating property with:', propertyPayload)
+      const { data: property, error: propertyError } = await supabase
+        .from('properties')
+        .insert(propertyPayload)
+        .select()
+        .single()
+
+      if (propertyError) {
+        console.error('Property creation failed:', propertyError)
+        throw new Error(`Property creation failed: ${propertyError.message} (${propertyError.code})`)
+      }
+
+      // Auto-create EPC document record
+      if (epcData && epcData.lmk_key && property) {
+        const epcCertUrl = `https://find-energy-certificate.service.gov.uk/energy-certificate/${epcData.lmk_key}`
+        try {
+          await supabase.from('documents').insert({
+            landlord_id: landlord.id,
+            scope: 'property',
+            property_id: property.id,
+            tenancy_id: null,
+            document_type: 'epc',
+            title: `EPC Certificate — Rating ${epcData.epc_rating}${epcData.epc_score ? ` (${epcData.epc_score})` : ''}`,
+            description: `Auto-imported from gov.uk EPC register. Valid to ${formatDate(epcData.epc_expiry)}.`,
+            file_path: epcCertUrl,
+            file_name: `epc-certificate-${epcData.lmk_key}.pdf`,
+            file_size: 0,
+            mime_type: 'text/html',
+            valid_from: null,
+            valid_to: epcData.epc_expiry || null,
+            uploaded_by: user.id,
+          })
+        } catch (docErr) {
+          console.warn('Failed to auto-create EPC document:', docErr)
+        }
+      }
 
       navigate('/properties')
     } catch (err) {
@@ -195,20 +275,20 @@ export default function AddProperty() {
         ]}
       />
 
-      <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-8">
+      <h1 className="text-3xl font-fraunces font-semibold text-slate-900 mb-8">
         Add New Property
       </h1>
 
       <Card className="max-w-2xl">
         <CardHeader>
-          <h2 className="text-lg font-semibold text-slate-900">
-            Property Information
+          <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+            Property Address
           </h2>
         </CardHeader>
         <CardBody>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-4 bg-red-50 border border-red-600 rounded-lg text-red-600">
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
                 {error}
               </div>
             )}
@@ -259,7 +339,6 @@ export default function AddProperty() {
               value={formData.property_type}
               onChange={handleChange}
               options={propertyTypes}
-              required
             />
             <div className="flex items-center">
               <input
@@ -269,18 +348,20 @@ export default function AddProperty() {
                 onChange={handleChange}
                 className="w-4 h-4 rounded border-slate-200"
               />
-              <label className="ml-2 text-sm font-medium text-slate-900">
+              <label className="ml-2 text-sm font-medium text-slate-700">
                 Is this an HMO (House in Multiple Occupation)?
               </label>
             </div>
 
-            {/* EPC Lookup Section */}
-            <div className="mt-8 pt-8 border-t border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">EPC Data</h3>
+            {/* EPC Lookup */}
+            <div className="mt-8 pt-8 border-t border-slate-100">
+              <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-4">
+                EPC Data
+              </h3>
               <div className="flex gap-3 items-end mb-4">
                 <div className="flex-1">
-                  <p className="text-sm text-slate-600 mb-2">
-                    Look up the latest EPC certificate for this property using the postcode above.
+                  <p className="text-sm text-slate-500">
+                    Look up the latest EPC certificate using the postcode above.
                   </p>
                 </div>
                 <Button
@@ -294,8 +375,8 @@ export default function AddProperty() {
               </div>
 
               {epcResults.length > 0 && (
-                <div className="space-y-2 max-h-64 overflow-y-auto border border-slate-200 rounded-lg p-3">
-                  <p className="text-sm font-medium text-slate-900 mb-2">
+                <div className="space-y-2 max-h-64 overflow-y-auto border border-slate-100 rounded-xl p-3">
+                  <p className="text-sm font-medium text-slate-700 mb-2">
                     Select the matching property ({epcResults.length} results):
                   </p>
                   {epcResults.map((epc, i) => (
@@ -303,13 +384,13 @@ export default function AddProperty() {
                       key={i}
                       type="button"
                       onClick={() => selectEpc(epc)}
-                      className="w-full text-left p-3 border border-slate-200 rounded-lg hover:bg-teal-50 hover:border-teal-300 transition-colors"
+                      className="w-full text-left p-4 border border-slate-100 rounded-xl hover:bg-teal-50 hover:border-teal-200 transition-colors"
                     >
                       <p className="text-sm font-medium text-slate-900">{epc.address}</p>
-                      <div className="flex gap-4 mt-1 text-xs text-slate-400">
-                        <span>Rating: <strong className="text-slate-900">{epc.current_rating}</strong></span>
+                      <div className="flex gap-4 mt-1.5 text-xs text-slate-400">
+                        <span>Rating: <strong className="text-slate-700">{epc.current_rating}</strong></span>
                         <span>Score: {epc.current_score}</span>
-                        <span>Expires: {epc.expiry_date}</span>
+                        <span>Expires: {epc.expiry_date ? new Date(epc.expiry_date).toLocaleDateString('en-GB') : '—'}</span>
                         <span>Type: {epc.property_type}</span>
                       </div>
                     </button>
@@ -318,81 +399,148 @@ export default function AddProperty() {
               )}
 
               {epcData && (
-                <div className="p-4 bg-green-50 border border-green-600 rounded-lg mt-3">
-                  <p className="text-sm font-medium text-green-600 mb-2">EPC data selected:</p>
-                  <div className="grid grid-cols-3 gap-4 text-sm text-green-600">
+                <div className="p-5 bg-teal-50 border border-teal-100 rounded-xl mt-3">
+                  <p className="text-sm font-medium text-teal-800 mb-3">EPC data selected:</p>
+                  <div className="grid grid-cols-3 gap-4 text-sm text-teal-700">
                     <div>
-                      <span className="font-medium">Rating:</span> {epcData.epc_rating}
+                      <span className="text-xs text-teal-600 block mb-0.5">Rating</span>
+                      <span className="font-semibold text-lg">{epcData.epc_rating}</span>
                     </div>
                     <div>
-                      <span className="font-medium">Score:</span> {epcData.epc_score}
+                      <span className="text-xs text-teal-600 block mb-0.5">Score</span>
+                      <span className="font-semibold text-lg">{epcData.epc_score}</span>
                     </div>
                     <div>
-                      <span className="font-medium">Expires:</span> {epcData.epc_expiry}
+                      <span className="text-xs text-teal-600 block mb-0.5">Expires</span>
+                      <span className="font-medium">{formatDate(epcData.epc_expiry)}</span>
                     </div>
                   </div>
+                  {epcData.lmk_key && (
+                    <div className="mt-3 pt-3 border-t border-teal-200 flex items-center gap-3">
+                      <a
+                        href={`https://find-energy-certificate.service.gov.uk/energy-certificate/${epcData.lmk_key}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-teal-700 hover:text-teal-800 underline"
+                      >
+                        View Full EPC Certificate
+                      </a>
+                      <span className="text-xs text-teal-500">
+                        Certificate will be saved to documents automatically
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Ownership Section */}
-            <div className="mt-8 pt-8 border-t border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Ownership</h3>
+            <div className="mt-8 pt-8 border-t border-slate-100">
+              <h3 className="text-sm font-medium text-slate-400 uppercase tracking-wider mb-4">
+                Ownership
+              </h3>
 
               <div className="space-y-3 mb-6">
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="ownership"
                     value="individual"
                     checked={ownership === 'individual'}
-                    onChange={(e) => setOwnership('individual')}
-                    className="w-4 h-4"
+                    onChange={() => setOwnership('individual')}
+                    className="w-4 h-4 text-teal-600"
                   />
-                  <span className="ml-2 text-sm font-medium text-slate-900">
+                  <span className="ml-2.5 text-sm font-medium text-slate-700">
                     Individual
                   </span>
                 </label>
-                <label className="flex items-center">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="radio"
                     name="ownership"
                     value="company"
                     checked={ownership === 'company'}
-                    onChange={(e) => setOwnership('company')}
-                    className="w-4 h-4"
+                    onChange={() => setOwnership('company')}
+                    className="w-4 h-4 text-teal-600"
                   />
-                  <span className="ml-2 text-sm font-medium text-slate-900">
+                  <span className="ml-2.5 text-sm font-medium text-slate-700">
                     Limited Company
                   </span>
                 </label>
               </div>
 
               {ownership === 'company' && (
-                <div className="space-y-4 p-4 bg-slate-100 rounded-lg">
-                  <Input
-                    label="Company Name"
-                    name="name"
-                    value={companyData.name}
-                    onChange={handleCompanyChange}
-                    placeholder="e.g., Acme Ltd"
-                    required
-                  />
-                  <Input
-                    label="Company Number"
-                    name="company_number"
-                    value={companyData.company_number}
-                    onChange={handleCompanyChange}
-                    placeholder="e.g., 12345678"
-                    required
-                  />
-                  <Input
-                    label="Registered Address"
-                    name="registered_address"
-                    value={companyData.registered_address}
-                    onChange={handleCompanyChange}
-                    placeholder="Company registered address"
-                  />
+                <div className="p-5 bg-slate-50 rounded-xl space-y-5">
+                  {existingEntities.length > 0 && (
+                    <div className="space-y-3 mb-2">
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="companyMode"
+                          value="existing"
+                          checked={companyMode === 'existing'}
+                          onChange={() => setCompanyMode('existing')}
+                          className="w-4 h-4 text-teal-600"
+                        />
+                        <span className="ml-2.5 text-sm font-medium text-slate-700">
+                          Select existing company
+                        </span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name="companyMode"
+                          value="new"
+                          checked={companyMode === 'new'}
+                          onChange={() => setCompanyMode('new')}
+                          className="w-4 h-4 text-teal-600"
+                        />
+                        <span className="ml-2.5 text-sm font-medium text-slate-700">
+                          Add new company
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
+                  {companyMode === 'existing' && existingEntities.length > 0 ? (
+                    <Select
+                      label="Select Company"
+                      name="entity_id"
+                      value={selectedEntityId}
+                      onChange={(e) => setSelectedEntityId(e.target.value)}
+                      options={existingEntities.map((e) => ({
+                        value: e.id,
+                        label: `${e.name} (${e.company_number})`,
+                      }))}
+                      required
+                    />
+                  ) : (
+                    <div className="space-y-4">
+                      <Input
+                        label="Company Name"
+                        name="name"
+                        value={companyData.name}
+                        onChange={handleCompanyChange}
+                        placeholder="e.g., Acme Properties Ltd"
+                        required
+                      />
+                      <Input
+                        label="Company Number"
+                        name="company_number"
+                        value={companyData.company_number}
+                        onChange={handleCompanyChange}
+                        placeholder="e.g., 12345678"
+                        required
+                      />
+                      <Input
+                        label="Registered Address"
+                        name="registered_address"
+                        value={companyData.registered_address}
+                        onChange={handleCompanyChange}
+                        placeholder="Company registered address"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
