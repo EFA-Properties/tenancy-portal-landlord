@@ -54,7 +54,7 @@ export default function TenancyDetail() {
               <p className="text-sm text-slate-600">Address</p>
               <p className="font-medium text-slate-900">
                 {(tenancy as any).properties
-                  ? `${(tenancy as any).properties.address}, ${(tenancy as any).properties.city}, ${(tenancy as any).properties.postcode}`
+                  ? `${(tenancy as any).properties.address_line1}, ${(tenancy as any).properties.town}, ${(tenancy as any).properties.postcode}`
                   : 'Unknown'}
               </p>
             </div>

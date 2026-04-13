@@ -6,9 +6,6 @@ export function useTenancies() {
   return useQuery({
     queryKey: ['tenancies'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No user')
-
       const { data, error } = await supabase
         .from('tenancies')
         .select('*, properties(*)')

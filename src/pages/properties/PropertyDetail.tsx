@@ -55,7 +55,7 @@ export default function PropertyDetail() {
             <div>
               <p className="text-sm text-slate-600">Address</p>
               <p className="font-medium text-slate-900">
-                {property.address}, {property.city}, {property.postcode}
+                {property.address_line1}{property.address_line2 ? `, ${property.address_line2}` : ''}, {property.town}{property.county ? `, ${property.county}` : ''}, {property.postcode}
               </p>
             </div>
             <div>

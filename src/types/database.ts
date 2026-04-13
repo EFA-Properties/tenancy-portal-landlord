@@ -268,18 +268,27 @@ export interface Database {
 // Application types
 export interface Property {
   id: string
-  user_id: string
-  name: string
-  address: string
-  city: string
+  landlord_id: string | null
+  legal_entity_id: string | null
+  address_line1: string
+  address_line2: string | null
+  town: string
+  county: string | null
   postcode: string
-  property_type: string
-  bedrooms: number
-  bathrooms: number
-  description: string | null
+  uprn: string | null
+  property_type: string | null
+  is_hmo: boolean
+  hmo_licence_number: string | null
+  hmo_licence_expiry: string | null
+  max_occupants: number | null
   epc_rating: string | null
   epc_score: number | null
   epc_expiry: string | null
+  eicr_status: string | null
+  eicr_expiry: string | null
+  gas_safety_expiry: string | null
+  fire_risk_expiry: string | null
+  pat_expiry: string | null
   created_at: string
   updated_at: string
 }

@@ -57,7 +57,7 @@ export default function TenanciesList() {
               {tenancies.map((tenancy) => {
                 const property = (tenancy as any).properties
                 const propertyAddress = property
-                  ? `${property.address}, ${property.city}`
+                  ? `${property.address_line1}${property.town ? `, ${property.town}` : ''}`
                   : 'Unknown Property'
 
                 return (
@@ -67,7 +67,7 @@ export default function TenanciesList() {
                         {propertyAddress}
                       </Link>
                     </TableCell>
-                    <TableCell>Tenant {tenancy.tenant_id || '—'}</TableCell>
+                    <TableCell>{(tenancy as any).tenant_id ? 'Linked' : '—'}</TableCell>
                     <TableCell>{formatDate(tenancy.start_date)}</TableCell>
                     <TableCell>£{tenancy.monthly_rent.toFixed(2)}</TableCell>
                     <TableCell>

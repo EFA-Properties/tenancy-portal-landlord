@@ -48,7 +48,7 @@ export default function PropertiesList() {
                 <TableHeader>Address</TableHeader>
                 <TableHeader>Type</TableHeader>
                 <TableHeader>EPC Rating</TableHeader>
-                <TableHeader>Bedrooms</TableHeader>
+                <TableHeader>HMO</TableHeader>
                 <TableHeader>Action</TableHeader>
               </TableRow>
             </TableHead>
@@ -57,10 +57,13 @@ export default function PropertiesList() {
                 <TableRow key={property.id} className="cursor-pointer hover:bg-slate-50">
                   <TableCell className="font-medium">
                     <Link to={`/properties/${property.id}`} className="hover:underline">
-                      {property.address}, {property.city}
+                      {property.address_line1}{property.town ? `, ${property.town}` : ''}
                     </Link>
+                    {property.postcode && (
+                      <span className="text-slate-400 text-xs ml-2">{property.postcode}</span>
+                    )}
                   </TableCell>
-                  <TableCell>{property.property_type}</TableCell>
+                  <TableCell className="capitalize">{property.property_type?.replace('_', ' ') || '—'}</TableCell>
                   <TableCell>
                     {property.epc_rating ? (
                       <Badge className={epcRatingColor(property.epc_rating)}>
@@ -70,7 +73,7 @@ export default function PropertiesList() {
                       <span className="text-slate-500">—</span>
                     )}
                   </TableCell>
-                  <TableCell>{property.bedrooms}</TableCell>
+                  <TableCell>{property.is_hmo ? 'HMO' : '—'}</TableCell>
                   <TableCell>
                     <Link to={`/properties/${property.id}`}>
                       <Button variant="ghost" size="sm">
