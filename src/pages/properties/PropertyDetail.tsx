@@ -31,13 +31,13 @@ export default function PropertyDetail() {
       <Breadcrumb
         items={[
           { label: 'Properties', href: '/properties' },
-          { label: property.name },
+          { label: `${property.address_line1}, ${property.town}` },
         ]}
       />
 
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-fraunces font-bold text-slate-900">
-          {property.name}
+          {property.address_line1}, {property.town}
         </h1>
         <Button variant="outline" onClick={() => navigate('/properties')}>
           Back
@@ -60,50 +60,61 @@ export default function PropertyDetail() {
             </div>
             <div>
               <p className="text-sm text-slate-600">Type</p>
-              <p className="font-medium text-slate-900">{property.property_type}</p>
+              <p className="font-medium text-slate-900">
+                {property.property_type
+                  ? property.property_type.replace('_', ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+                  : '—'}
+              </p>
             </div>
+            {property.is_hmo && (
+              <div>
+                <Badge variant="secondary">HMO</Badge>
+              </div>
+            )}
           </CardBody>
         </Card>
 
         <Card>
           <CardHeader>
             <h2 className="text-lg font-semibold text-slate-900">
-              Specifications & EPC
+              EPC & Compliance
             </h2>
           </CardHeader>
           <CardBody className="space-y-4">
-            <div>
-              <p className="text-sm text-slate-600">Bedrooms</p>
-              <p className="font-medium text-slate-900">{property.bedrooms}</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600">Bathrooms</p>
-              <p className="font-medium text-slate-900">{property.bathrooms}</p>
-            </div>
-            {property.description && (
+            {property.epc_rating ? (
+              <>
+                <div>
+                  <p className="text-sm text-slate-600">EPC Rating</p>
+                  <Badge className={epcRatingColor(property.epc_rating)}>
+                    {property.epc_rating}
+                  </Badge>
+                </div>
+                {property.epc_score && (
+                  <div>
+                    <p className="text-sm text-slate-600">EPC Score</p>
+                    <p className="font-medium text-slate-900">{property.epc_score}</p>
+                  </div>
+                )}
+                {property.epc_expiry && (
+                  <div>
+                    <p className="text-sm text-slate-600">EPC Expiry</p>
+                    <p className="font-medium text-slate-900">{formatDate(property.epc_expiry)}</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-slate-600">No EPC data available.</p>
+            )}
+            {property.gas_safety_expiry && (
               <div>
-                <p className="text-sm text-slate-600">Description</p>
-                <p className="font-medium text-slate-900">{property.description}</p>
+                <p className="text-sm text-slate-600">Gas Safety (CP12) Expiry</p>
+                <p className="font-medium text-slate-900">{formatDate(property.gas_safety_expiry)}</p>
               </div>
             )}
-            {property.epc_rating && (
+            {property.eicr_expiry && (
               <div>
-                <p className="text-sm text-slate-600">EPC Rating</p>
-                <Badge className={epcRatingColor(property.epc_rating)}>
-                  {property.epc_rating}
-                </Badge>
-              </div>
-            )}
-            {property.epc_score && (
-              <div>
-                <p className="text-sm text-slate-600">EPC Score</p>
-                <p className="font-medium text-slate-900">{property.epc_score}</p>
-              </div>
-            )}
-            {property.epc_expiry && (
-              <div>
-                <p className="text-sm text-slate-600">EPC Expiry</p>
-                <p className="font-medium text-slate-900">{formatDate(property.epc_expiry)}</p>
+                <p className="text-sm text-slate-600">EICR Expiry</p>
+                <p className="font-medium text-slate-900">{formatDate(property.eicr_expiry)}</p>
               </div>
             )}
           </CardBody>
@@ -131,6 +142,7 @@ export default function PropertyDetail() {
               <Table>
                 <TableHead>
                   <TableRow>
+                    <TableHeader>Tenant</TableHeader>
                     <TableHeader>Start Date</TableHeader>
                     <TableHeader>End Date</TableHeader>
                     <TableHeader>Monthly Rent</TableHeader>
@@ -141,6 +153,9 @@ export default function PropertyDetail() {
                 <TableBody>
                   {tenancies.map((tenancy: any) => (
                     <TableRow key={tenancy.id}>
+                      <TableCell className="font-medium">
+                        {tenancy.tenants ? tenancy.tenants.full_name : '—'}
+                      </TableCell>
                       <TableCell>{formatDate(tenancy.start_date)}</TableCell>
                       <TableCell>{formatDate(tenancy.end_date)}</TableCell>
                       <TableCell>£{tenancy.monthly_rent.toFixed(2)}</TableCell>
@@ -175,15 +190,22 @@ export default function PropertyDetail() {
         <Card className="md:col-span-2">
           <CardHeader>
             <h2 className="text-lg font-semibold text-slate-900">
-              Compliance
+              Documents & Compliance
             </h2>
           </CardHeader>
           <CardBody>
-            <Link to={`/documents?property_id=${property.id}`}>
-              <Button variant="outline" className="w-full">
-                View Compliance Documents
-              </Button>
-            </Link>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Link to={`/documents?property_id=${property.id}`}>
+                <Button variant="outline" className="w-full">
+                  View Property Documents
+                </Button>
+              </Link>
+              <Link to={`/maintenance?property_id=${property.id}`}>
+                <Button variant="outline" className="w-full">
+                  Maintenance Requests
+                </Button>
+              </Link>
+            </div>
           </CardBody>
         </Card>
       </div>

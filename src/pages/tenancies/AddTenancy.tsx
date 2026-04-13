@@ -249,6 +249,7 @@ export default function AddTenancy() {
       const tenancyPayload = {
         landlord_id: landlord.id,
         property_id: property.id,
+        tenant_id: tenantId || null,
         unit_id: null,
         legal_entity_id,
         tenancy_type: formData.tenancy_type,

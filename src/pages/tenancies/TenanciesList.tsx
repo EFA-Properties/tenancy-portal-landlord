@@ -67,7 +67,11 @@ export default function TenanciesList() {
                         {propertyAddress}
                       </Link>
                     </TableCell>
-                    <TableCell>{(tenancy as any).tenant_id ? 'Linked' : '—'}</TableCell>
+                    <TableCell>
+                      {(tenancy as any).tenants
+                        ? (tenancy as any).tenants.full_name
+                        : '—'}
+                    </TableCell>
                     <TableCell>{formatDate(tenancy.start_date)}</TableCell>
                     <TableCell>£{tenancy.monthly_rent.toFixed(2)}</TableCell>
                     <TableCell>

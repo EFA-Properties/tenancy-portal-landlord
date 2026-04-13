@@ -44,7 +44,7 @@ export function usePropertyTenancies(propertyId: string | undefined) {
 
       const { data, error } = await supabase
         .from('tenancies')
-        .select('*')
+        .select('*, tenants(*)')
         .eq('property_id', propertyId)
         .order('start_date', { ascending: false })
 
