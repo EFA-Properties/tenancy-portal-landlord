@@ -42,19 +42,24 @@ export default function Dashboard() {
               Quick Actions
             </h3>
             <div className="space-y-2">
+              <Link to="/properties/new">
+                <Button variant="outline" className="w-full justify-start">
+                  Add Property
+                </Button>
+              </Link>
               <Link to="/tenancies/new">
                 <Button variant="outline" className="w-full justify-start">
                   Add Tenancy
                 </Button>
               </Link>
+              <Link to="/tenants/invite">
+                <Button variant="outline" className="w-full justify-start">
+                  Invite Tenant
+                </Button>
+              </Link>
               <Link to="/documents/upload">
                 <Button variant="outline" className="w-full justify-start">
                   Upload Document
-                </Button>
-              </Link>
-              <Link to="/maintenance">
-                <Button variant="outline" className="w-full justify-start">
-                  Maintenance Requests
                 </Button>
               </Link>
             </div>
