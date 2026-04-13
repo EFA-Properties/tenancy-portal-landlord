@@ -48,6 +48,24 @@ function WrenchIcon() {
   )
 }
 
+function PropertiesIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 10l7-7 7 7M5 8v8a1 1 0 001 1h8a1 1 0 001-1V8" />
+      <path d="M8 17v-5h4v5" />
+    </svg>
+  )
+}
+
+function TenantsIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="10" cy="6" r="3" />
+      <path d="M4 17c0-3.314 2.686-6 6-6s6 2.686 6 6" />
+    </svg>
+  )
+}
+
 function SettingsIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -63,7 +81,9 @@ export function Layout({ children }: LayoutProps) {
 
   const navigationItems = [
     { label: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+    { label: 'Properties', href: '/properties', icon: PropertiesIcon },
     { label: 'Tenancies', href: '/tenancies', icon: TenanciesIcon },
+    { label: 'Tenants', href: '/tenants', icon: TenantsIcon },
     { label: 'Documents', href: '/documents', icon: DocumentIcon },
     { label: 'Maintenance', href: '/maintenance', icon: WrenchIcon },
     { label: 'Settings', href: '/settings', icon: SettingsIcon },
