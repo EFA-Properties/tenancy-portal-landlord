@@ -63,9 +63,9 @@ export function usePropertyDocuments(propertyId: string | undefined) {
 
       const { data, error } = await supabase
         .from('documents')
-        .select('id, document_type, title, valid_to, file_path, created_at, served_at, served_to_tenant_id, tenant_opened_at, tenant_confirmed_at, tenants:served_to_tenant_id(full_name)')
+        .select('id, document_type, title, valid_to, file_path, uploaded_at, served_at, served_to_tenant_id, tenant_opened_at, tenant_confirmed_at, tenants:served_to_tenant_id(full_name)')
         .eq('property_id', propertyId)
-        .order('created_at', { ascending: false })
+        .order('uploaded_at', { ascending: false })
 
       if (error) throw error
       return data as Array<{
@@ -74,7 +74,7 @@ export function usePropertyDocuments(propertyId: string | undefined) {
         title: string
         valid_to: string | null
         file_path: string
-        created_at: string
+        uploaded_at: string
         served_at: string | null
         served_to_tenant_id: string | null
         tenant_opened_at: string | null

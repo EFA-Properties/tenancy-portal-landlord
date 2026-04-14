@@ -8,7 +8,7 @@ export function useDocuments(filters?: { tenancy_id?: string; property_id?: stri
       let query = supabase
         .from('documents')
         .select('*, properties(address_line1, town)')
-        .order('created_at', { ascending: false })
+        .order('uploaded_at', { ascending: false })
 
       if (filters?.tenancy_id) {
         query = query.eq('tenancy_id', filters.tenancy_id)
