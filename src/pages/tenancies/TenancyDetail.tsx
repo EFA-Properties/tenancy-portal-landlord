@@ -107,7 +107,7 @@ export default function TenancyDetail() {
           <CardBody className="space-y-5">
             <div>
               <p className="text-xs text-slate-400 mb-1">Address</p>
-              <p className="text-[15px] font-medium text-slate-900">
+              <p className="text-body font-medium text-slate-900">
                 {property
                   ? `${property.address_line1}${property.address_line2 ? `, ${property.address_line2}` : ''}, ${property.town}${property.county ? `, ${property.county}` : ''}, ${property.postcode}`
                   : 'Unknown'}
@@ -115,7 +115,7 @@ export default function TenancyDetail() {
             </div>
             <div>
               <p className="text-xs text-slate-400 mb-1">Type</p>
-              <p className="text-[15px] text-slate-700">
+              <p className="text-body text-slate-700">
                 {property?.property_type
                   ? property.property_type.replace('_', ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
                   : '—'}
@@ -148,12 +148,12 @@ export default function TenancyDetail() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xs text-slate-400 mb-1">Start Date</p>
-                <p className="text-[15px] text-slate-700">{formatDate(tenancy.start_date)}</p>
+                <p className="text-body text-slate-700">{formatDate(tenancy.start_date)}</p>
               </div>
               {tenancy.end_date && (
                 <div>
                   <p className="text-xs text-slate-400 mb-1">End Date</p>
-                  <p className="text-[15px] text-slate-700">{formatDate(tenancy.end_date)}</p>
+                  <p className="text-body text-slate-700">{formatDate(tenancy.end_date)}</p>
                 </div>
               )}
             </div>
@@ -186,15 +186,15 @@ export default function TenancyDetail() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <p className="text-xs text-slate-400 mb-1">Name</p>
-                  <p className="text-[15px] font-medium text-slate-900">{tenant.full_name}</p>
+                  <p className="text-body font-medium text-slate-900">{tenant.full_name}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 mb-1">Email</p>
-                  <p className="text-[15px] text-slate-700">{tenant.email}</p>
+                  <p className="text-body text-slate-700">{tenant.email}</p>
                 </div>
                 <div>
                   <p className="text-xs text-slate-400 mb-1">Phone</p>
-                  <p className="text-[15px] text-slate-700">{tenant.phone || '—'}</p>
+                  <p className="text-body text-slate-700">{tenant.phone || '—'}</p>
                 </div>
               </div>
             ) : showLinkForm ? (

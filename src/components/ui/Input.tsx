@@ -24,12 +24,12 @@ export function Input({
       )}
       <input
         className={clsx(
-          'w-full px-4 py-2.5 rounded-lg border text-sm transition-all',
+          'w-full px-4 py-2.5 rounded-md border text-[15px] transition-all',
           'focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600',
-          'placeholder:text-slate-300',
+          'placeholder:text-textMuted',
           error
-            ? 'border-red-400 bg-red-50'
-            : 'border-slate-200 bg-white hover:border-slate-300',
+            ? 'border-error/40 bg-errorLight'
+            : 'border-border bg-white hover:border-border2',
           className,
         )}
         {...props}

@@ -87,7 +87,7 @@ export default function PropertyDetail() {
             </h2>
           </CardHeader>
           <CardBody className="space-y-4">
-            <p className="text-[15px] text-slate-700 leading-relaxed">
+            <p className="text-body text-textSecondary leading-relaxed">
               {property.address_line1}
               {property.address_line2 ? <><br />{property.address_line2}</> : null}
               <br />{property.town}
@@ -120,7 +120,7 @@ export default function PropertyDetail() {
                     {property.epc_rating}
                   </div>
                   <div>
-                    <p className="text-[15px] font-medium text-slate-900">
+                    <p className="text-body font-medium text-textPrimary">
                       EPC Rating {property.epc_rating}
                       {property.epc_score ? ` (${property.epc_score})` : ''}
                     </p>
@@ -166,7 +166,7 @@ export default function PropertyDetail() {
               </Link>
             </div>
           </CardHeader>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-border">
             {[
               { title: 'Gas Safety Certificate (CP12)', desc: 'Annual renewal required', hasExpiry: !!property.gas_safety_expiry, expiry: property.gas_safety_expiry },
               { title: 'EPC Certificate', desc: 'Minimum C rating from 2028', hasExpiry: !!property.epc_rating, expiry: property.epc_expiry },
@@ -175,8 +175,8 @@ export default function PropertyDetail() {
               <div key={item.title} className="flex items-center gap-4 px-8 py-5">
                 {item.hasExpiry ? <CheckCircle /> : <EmptyCircle />}
                 <div className="flex-1">
-                  <p className="text-[15px] font-medium text-slate-900">{item.title}</p>
-                  <p className="text-sm text-slate-400 mt-0.5">{item.desc}</p>
+                  <p className="text-body font-medium text-textPrimary">{item.title}</p>
+                  <p className="text-small text-textMuted mt-0.5">{item.desc}</p>
                 </div>
                 {item.expiry && (
                   <Badge variant="success" size="sm">

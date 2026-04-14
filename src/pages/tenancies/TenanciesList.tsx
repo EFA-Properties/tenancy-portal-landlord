@@ -40,7 +40,7 @@ export default function TenanciesList() {
           <h1 className="text-3xl font-fraunces font-semibold text-slate-900">
             Tenancies
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-textMuted text-small mt-1">
             {tenancies.length} {tenancies.length === 1 ? 'tenancy' : 'tenancies'} total
           </p>
         </div>
@@ -70,14 +70,14 @@ export default function TenanciesList() {
 
             return (
               <Link key={tenancy.id} to={`/tenancies/${tenancy.id}`}>
-                <Card className="hover:shadow-card-hover hover:border-slate-200 transition-all cursor-pointer">
+                <Card className="hover:shadow-card-hover hover:border-teal-700 transition-all cursor-pointer">
                   <div className="flex items-center gap-5 px-6 py-5">
                     <TenancyIcon status={tenancy.status} />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-medium text-slate-900">
+                      <p className="text-body font-medium text-textPrimary">
                         {propertyAddress}
                       </p>
-                      <p className="text-sm text-slate-400 mt-0.5">
+                      <p className="text-small text-textMuted mt-0.5">
                         {tenant ? tenant.full_name : 'No tenant linked'}
                         {' · '}
                         £{tenancy.monthly_rent.toFixed(2)}/month

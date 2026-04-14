@@ -24,11 +24,11 @@ export function Select({
       )}
       <select
         className={clsx(
-          'w-full px-4 py-2.5 rounded-lg border text-sm transition-all appearance-none',
+          'w-full px-4 py-2.5 rounded-md border text-[15px] transition-all appearance-none',
           'focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600',
-          'bg-white cursor-pointer hover:border-slate-300',
+          'bg-white cursor-pointer hover:border-border2',
           'bg-[length:16px_16px] bg-[right_12px_center] bg-no-repeat',
-          error ? 'border-red-400 bg-red-50' : 'border-slate-200',
+          error ? 'border-error/40 bg-errorLight' : 'border-border',
           className,
         )}
         style={{

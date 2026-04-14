@@ -29,15 +29,15 @@ function CompanyIcon() {
 function PropertyRow({ property }: { property: any }) {
   return (
     <Link to={`/properties/${property.id}`}>
-      <Card className="hover:shadow-card-hover hover:border-slate-200 transition-all cursor-pointer">
+      <Card className="hover:shadow-card-hover hover:border-teal-700 transition-all cursor-pointer">
         <div className="flex items-center gap-5 px-6 py-5">
           <PropertyIcon />
           <div className="flex-1 min-w-0">
-            <p className="text-[15px] font-medium text-slate-900">
+            <p className="text-body font-medium text-textPrimary">
               {property.address_line1}
               {property.address_line2 ? `, ${property.address_line2}` : ''}
             </p>
-            <p className="text-sm text-slate-400 mt-0.5">
+            <p className="text-small text-textMuted mt-0.5">
               {property.town}
               {property.county ? `, ${property.county}` : ''}
               {property.postcode ? ` · ${property.postcode}` : ''}

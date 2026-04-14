@@ -116,7 +116,7 @@ export default function DocumentsList() {
         </Card>
       ) : (
         <Card>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-border">
             {documents.map((doc: any) => (
               <div
                 key={doc.id}
@@ -124,10 +124,10 @@ export default function DocumentsList() {
               >
                 <CheckCircle />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[15px] font-medium text-slate-900">
+                  <p className="text-body font-medium text-textPrimary">
                     {doc.title || docTypeLabels[doc.document_type] || doc.file_name || 'Untitled'}
                   </p>
-                  <p className="text-sm text-slate-400 mt-0.5">
+                  <p className="text-small text-textMuted mt-0.5">
                     {doc.scope === 'property' && doc.properties
                       ? `${doc.properties.address_line1}, ${doc.properties.town}`
                       : docTypeDescriptions[doc.document_type] || ''}

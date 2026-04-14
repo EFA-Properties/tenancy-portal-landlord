@@ -44,8 +44,8 @@ export default function Dashboard() {
   const statCards = [
     { label: 'Active Tenancies', value: stats?.activeTenancies ?? 0, color: 'text-teal-700' },
     { label: 'Properties', value: properties.length, color: 'text-slate-900' },
-    { label: 'Pending', value: stats?.pendingRequests ?? 0, color: 'text-amber-600' },
-    { label: 'Alerts', value: stats?.overdueAlerts ?? 0, color: 'text-red-600' },
+    { label: 'Pending', value: stats?.pendingRequests ?? 0, color: 'text-warning' },
+    { label: 'Alerts', value: stats?.overdueAlerts ?? 0, color: 'text-error' },
   ]
 
   const complianceItems = [
@@ -118,15 +118,15 @@ export default function Dashboard() {
               </h2>
             </div>
           </CardHeader>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-border">
             {complianceItems.map((item) => (
               <div key={item.title} className="flex items-start gap-4 px-8 py-5">
                 <div className="mt-0.5 shrink-0">
                   {item.done ? <CheckCircle /> : <EmptyCircle />}
                 </div>
                 <div>
-                  <p className="text-[15px] font-medium text-slate-900">{item.title}</p>
-                  <p className="text-sm text-slate-400 mt-0.5">{item.description}</p>
+                  <p className="text-body font-medium text-textPrimary">{item.title}</p>
+                  <p className="text-small text-textMuted mt-0.5">{item.description}</p>
                 </div>
               </div>
             ))}

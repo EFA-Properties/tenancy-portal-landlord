@@ -86,7 +86,7 @@ export function Layout({ children }: LayoutProps) {
   const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + '/')
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#f8fafb' }}>
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#f8f9fb' }}>
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -168,7 +168,7 @@ export function Layout({ children }: LayoutProps) {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-slate-100 px-8 h-16 flex items-center justify-between shrink-0">
+        <header className="bg-white/80 backdrop-blur-md border-b border-border px-8 h-16 flex items-center justify-between shrink-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="lg:hidden text-slate-500 hover:text-slate-900"

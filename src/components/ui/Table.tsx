@@ -27,7 +27,7 @@ export function TableHead({
   return (
     <thead
       className={clsx(
-        'border-b border-slate-100',
+        'border-b border-border',
         className,
       )}
     >
@@ -96,7 +96,7 @@ export function TableCell({
   className?: string
 }) {
   return (
-    <td className={clsx('px-6 py-5 text-sm text-slate-600', className)}>
+    <td className={clsx('px-6 py-5 text-body text-textSecondary', className)}>
       {children}
     </td>
   )

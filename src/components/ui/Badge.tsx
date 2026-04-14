@@ -17,14 +17,14 @@ export function Badge({
   return (
     <span
       className={clsx(
-        'rounded-full font-medium inline-flex items-center justify-center',
-        size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-xs',
+        'rounded-pill font-mono font-medium uppercase tracking-wider inline-flex items-center justify-center',
+        size === 'sm' ? 'px-2.5 py-0.5 text-[9px] tracking-[0.1em]' : 'px-3 py-1 text-[9px] tracking-[0.1em]',
         variant === 'default' && 'bg-teal-50 text-teal-700',
-        variant === 'secondary' && 'bg-slate-100 text-slate-600',
-        variant === 'destructive' && 'bg-red-50 text-red-600',
-        variant === 'success' && 'bg-emerald-50 text-emerald-700',
-        variant === 'warning' && 'bg-amber-50 text-amber-700',
-        variant === 'outline' && 'border border-slate-200 text-slate-600 bg-white',
+        variant === 'secondary' && 'bg-surface text-textSecondary',
+        variant === 'destructive' && 'bg-errorLight text-error',
+        variant === 'success' && 'bg-successLight text-success',
+        variant === 'warning' && 'bg-warningLight text-warning',
+        variant === 'outline' && 'border border-border2 text-textSecondary bg-white',
         className,
       )}
     >
