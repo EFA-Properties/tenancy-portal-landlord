@@ -54,3 +54,34 @@ export function usePropertyTenancies(propertyId: string | undefined) {
     enabled: !!propertyId,
   })
 }
+
+export function usePropertyDocuments(propertyId: string | undefined) {
+  return useQuery({
+    queryKey: ['property-documents', propertyId],
+    queryFn: async () => {
+      if (!propertyId) throw new Error('No property ID')
+
+      const { data, error } = await supabase
+        .from('documents')
+        .select('id, document_type, title, valid_to, file_path, created_at, served_at, served_to_tenant_id, tenant_opened_at, tenant_confirmed_at, tenants:served_to_tenant_id(full_name)')
+        .eq('property_id', propertyId)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      return data as Array<{
+        id: string
+        document_type: string
+        title: string
+        valid_to: string | null
+        file_path: string
+        created_at: string
+        served_at: string | null
+        served_to_tenant_id: string | null
+        tenant_opened_at: string | null
+        tenant_confirmed_at: string | null
+        tenants: { full_name: string } | null
+      }>
+    },
+    enabled: !!propertyId,
+  })
+}

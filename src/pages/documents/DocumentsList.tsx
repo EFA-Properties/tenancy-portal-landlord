@@ -64,6 +64,13 @@ export default function DocumentsList() {
   const handleDownload = async (doc: any) => {
     setDownloadingId(doc.id)
     try {
+      // External URLs (e.g., gov.uk EPC certificates) — open directly
+      if (doc.file_path?.startsWith('http://') || doc.file_path?.startsWith('https://')) {
+        window.open(doc.file_path, '_blank')
+        return
+      }
+
+      // Supabase storage files — get signed URL
       const bucket = doc.scope === 'property' ? 'property-documents' : 'tenancy-documents'
       const { data, error } = await supabase.storage
         .from(bucket)
@@ -144,7 +151,7 @@ export default function DocumentsList() {
                     onClick={() => handleDownload(doc)}
                     loading={downloadingId === doc.id}
                   >
-                    Download
+                    {doc.file_path?.startsWith('http') ? 'View' : 'Download'}
                   </Button>
                 </div>
               </div>

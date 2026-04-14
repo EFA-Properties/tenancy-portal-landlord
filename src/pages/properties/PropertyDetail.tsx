@@ -1,6 +1,6 @@
 import React from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useProperty, usePropertyTenancies } from '../../hooks/useProperties'
+import { useProperty, usePropertyTenancies, usePropertyDocuments } from '../../hooks/useProperties'
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -29,6 +29,7 @@ export default function PropertyDetail() {
   const navigate = useNavigate()
   const { data: property, isLoading } = useProperty(id)
   const { data: tenancies = [], isLoading: tenanciesLoading } = usePropertyTenancies(id)
+  const { data: propertyDocs = [] } = usePropertyDocuments(id)
 
   if (isLoading) {
     return (
@@ -167,29 +168,91 @@ export default function PropertyDetail() {
             </div>
           </CardHeader>
           <div className="divide-y divide-border">
-            {[
-              { title: 'Gas Safety Certificate (CP12)', desc: 'Annual renewal required', hasExpiry: !!property.gas_safety_expiry, expiry: property.gas_safety_expiry },
-              { title: 'EPC Certificate', desc: 'Minimum C rating from 2028', hasExpiry: !!property.epc_rating, expiry: property.epc_expiry },
-              { title: 'EICR (Electrical Safety)', desc: 'Every 5 years', hasExpiry: !!property.eicr_expiry, expiry: property.eicr_expiry },
-            ].map((item) => (
-              <div key={item.title} className="flex items-center gap-4 px-8 py-5">
-                {item.hasExpiry ? <CheckCircle /> : <EmptyCircle />}
-                <div className="flex-1">
-                  <p className="text-body font-medium text-textPrimary">{item.title}</p>
-                  <p className="text-small text-textMuted mt-0.5">{item.desc}</p>
-                </div>
-                {item.expiry && (
-                  <Badge variant="success" size="sm">
-                    Valid to {formatDate(item.expiry)}
-                  </Badge>
-                )}
-                {!item.hasExpiry && (
-                  <Badge variant="warning" size="sm">
-                    Awaiting
-                  </Badge>
-                )}
-              </div>
-            ))}
+            {(() => {
+              const getDoc = (type: string) => propertyDocs.find((d) => d.document_type === type)
+              const hasDocType = (type: string) => propertyDocs.some((d) => d.document_type === type)
+              const getDocExpiry = (type: string) => getDoc(type)?.valid_to || null
+
+              const items = [
+                { title: 'Gas Safety Certificate (CP12)', desc: 'Annual renewal · Tenant must receive each year', docType: 'gas_safety', hasIt: !!property.gas_safety_expiry || hasDocType('gas_safety'), expiry: property.gas_safety_expiry || getDocExpiry('gas_safety') },
+                { title: 'EPC Certificate', desc: 'Minimum C rating required from 2028', docType: 'epc', hasIt: !!property.epc_rating || hasDocType('epc'), expiry: property.epc_expiry || getDocExpiry('epc') },
+                { title: 'EICR (Electrical Safety)', desc: 'Every 5 years · Required before letting', docType: 'eicr', hasIt: !!property.eicr_expiry || hasDocType('eicr'), expiry: property.eicr_expiry || getDocExpiry('eicr') },
+                { title: 'How to Rent Guide', desc: 'Gov.uk · Must be current edition', docType: 'how_to_rent', hasIt: hasDocType('how_to_rent'), expiry: getDocExpiry('how_to_rent') },
+                { title: "Renter's Rights Bill", desc: 'Renters Reform Bill documentation', docType: 'renter_rights', hasIt: hasDocType('renter_rights'), expiry: getDocExpiry('renter_rights') },
+                { title: 'Deposit Protection Certificate', desc: 'DPS / TDS / MyDeposits · Within 30 days', docType: 'deposit_certificate', hasIt: hasDocType('deposit_certificate'), expiry: getDocExpiry('deposit_certificate') },
+              ]
+
+              return items.map((item) => {
+                const doc = getDoc(item.docType)
+                return (
+                  <div key={item.title} className="flex items-center gap-4 px-8 py-5">
+                    {item.hasIt ? <CheckCircle /> : <EmptyCircle />}
+                    <div className="flex-1">
+                      <p className="text-body font-medium text-textPrimary">{item.title}</p>
+                      <p className="text-small text-textMuted mt-0.5">{item.desc}</p>
+                      {/* Tenant activity tracking */}
+                      {doc && item.hasIt && (
+                        <div className="flex items-center gap-3 mt-2">
+                          {doc.served_at ? (
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-pill">
+                              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="5" fill="#0f766e" /><path d="M3 5l1.5 1.5L7 4" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                              Served {formatDate(doc.served_at)}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-textMuted bg-surface px-2 py-0.5 rounded-pill">
+                              Not served
+                            </span>
+                          )}
+                          {doc.served_at && (
+                            <>
+                              {doc.tenant_opened_at ? (
+                                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-pill">
+                                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="#0f766e" strokeWidth="1" fill="none" /><circle cx="5" cy="5" r="2" fill="#0f766e" /></svg>
+                                  Opened {formatDate(doc.tenant_opened_at)}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-warning bg-warningLight px-2 py-0.5 rounded-pill">
+                                  Not opened
+                                </span>
+                              )}
+                              {doc.tenant_confirmed_at ? (
+                                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-success bg-successLight px-2 py-0.5 rounded-pill">
+                                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="5" fill="#15803d" /><path d="M3 5l1.5 1.5L7 4" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                                  Confirmed {formatDate(doc.tenant_confirmed_at)}
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-textMuted bg-surface px-2 py-0.5 rounded-pill">
+                                  Not confirmed
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {item.hasIt && item.expiry && (
+                        <Badge variant="success" size="sm">
+                          Valid to {formatDate(item.expiry)}
+                        </Badge>
+                      )}
+                      {item.hasIt && !item.expiry && (
+                        <Badge variant="success" size="sm">
+                          Uploaded
+                        </Badge>
+                      )}
+                      {!item.hasIt && (
+                        <Link to={`/documents/upload?property_id=${property.id}&document_type=${item.docType}`}>
+                          <Badge variant="warning" size="sm" className="cursor-pointer hover:bg-amber-100 transition-colors">
+                            + Add
+                          </Badge>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )
+              })
+            })()}
           </div>
         </Card>
 

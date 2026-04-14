@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { Breadcrumb } from '../../components/Breadcrumb'
@@ -11,12 +11,17 @@ import { Upload } from 'lucide-react'
 
 export default function UploadDocument() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { user } = useAuth()
+
+  const prefilledPropertyId = searchParams.get('property_id') || ''
+  const prefilledDocType = searchParams.get('document_type') || ''
+
   const [formData, setFormData] = useState({
     scope: 'property',
-    property_id: '',
+    property_id: prefilledPropertyId,
     tenancy_id: '',
-    document_type: '',
+    document_type: prefilledDocType,
     title: '',
     description: '',
     valid_from: '',

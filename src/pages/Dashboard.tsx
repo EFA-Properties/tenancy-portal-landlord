@@ -70,6 +70,11 @@ export default function Dashboard() {
       done: false,
     },
     {
+      title: "Renter's Rights Bill",
+      description: 'Renters Reform Bill documentation',
+      done: false,
+    },
+    {
       title: 'Deposit Protection Certificate',
       description: 'DPS / TDS / MyDeposits · Within 30 days',
       done: false,
