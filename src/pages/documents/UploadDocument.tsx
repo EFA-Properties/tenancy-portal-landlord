@@ -104,11 +104,13 @@ export default function UploadDocument() {
       if (!landlord) throw new Error('Landlord not found')
 
       // Upload file to storage (use correct bucket based on scope)
+      // Storage RLS policies expect the first folder to be the property_id or tenancy_id
       const bucket = formData.scope === 'property' ? 'property-documents' : 'tenancy-documents'
+      const folderId = formData.scope === 'property' ? formData.property_id : formData.tenancy_id
       const fileName = `${Date.now()}-${file.name}`
       const { data: storageData, error: storageError } = await supabase.storage
         .from(bucket)
-        .upload(`${landlord.id}/${fileName}`, file)
+        .upload(`${folderId}/${fileName}`, file)
 
       if (storageError) throw storageError
 
