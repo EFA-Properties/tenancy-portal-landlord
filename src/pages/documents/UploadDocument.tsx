@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import { Upload } from 'lucide-react'
+import { FeatureGate } from '../../components/FeatureGate'
 
 export default function UploadDocument() {
   const navigate = useNavigate()
@@ -190,6 +191,7 @@ export default function UploadDocument() {
         Upload Document
       </h1>
 
+      <FeatureGate feature="Document upload" description="Upload and deliver compliance documents to your tenants through the portal.">
       <Card className="max-w-2xl">
         <CardHeader>
           <h2 className="text-lg font-semibold text-slate-900">
@@ -338,6 +340,7 @@ export default function UploadDocument() {
           </form>
         </CardBody>
       </Card>
+      </FeatureGate>
     </div>
   )
 }

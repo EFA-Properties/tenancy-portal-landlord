@@ -6,6 +6,7 @@ import { useProperties } from '../hooks/useProperties'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
 import { formatDate } from '../lib/utils'
+import { useLandlord } from '../hooks/useLandlord'
 
 function CheckCircle() {
   return (
@@ -36,6 +37,7 @@ export default function Dashboard() {
   const { user } = useAuth()
   const { data: stats, isLoading } = useDashboardStats()
   const { data: properties = [] } = useProperties()
+  const { data: landlord } = useLandlord()
 
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
   const hour = new Date().getHours()
@@ -92,6 +94,26 @@ export default function Dashboard() {
           Here's an overview of your portfolio.
         </p>
       </div>
+
+      {/* Free plan banner */}
+      {landlord && landlord.plan === 'free' && (
+        <div className="mb-6 p-4 bg-teal-50 border border-teal-200 rounded-lg flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-teal-900">
+              You're on the Free plan — limited to 1 property and date logging only.
+            </p>
+            <p className="text-xs text-teal-700 mt-0.5">
+              Upgrade to unlock document delivery, compliance alerts, and audit reports.
+            </p>
+          </div>
+          <Link
+            to="/settings"
+            className="shrink-0 ml-4 px-4 py-2 bg-teal-700 text-white text-sm font-medium rounded-md hover:bg-teal-600 transition-colors"
+          >
+            Upgrade to Pro — £29.99/mo
+          </Link>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">

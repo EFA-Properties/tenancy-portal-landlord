@@ -7,6 +7,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from '../../components/ui/Table'
 import { AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
+import { FeatureGate } from '../../components/FeatureGate'
 
 export default function ComplianceAlerts() {
   const [searchParams] = useSearchParams()
@@ -35,6 +36,8 @@ export default function ComplianceAlerts() {
       <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-8">
         Compliance Alerts
       </h1>
+
+      <FeatureGate feature="Compliance alerts" description="Never miss a renewal deadline. Get automatic reminders when certificates are expiring.">
 
       {alerts.length === 0 ? (
         <Card>
@@ -74,6 +77,7 @@ export default function ComplianceAlerts() {
           </Table>
         </Card>
       )}
+      </FeatureGate>
     </div>
   )
 }
