@@ -9,17 +9,17 @@ import { formatDate, epcRatingColor } from '../../lib/utils'
 
 function CheckCircle() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
-      <circle cx="10" cy="10" r="10" fill="#0f766e" />
-      <path d="M6.5 10l2 2L13.5 7.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
+      <circle cx="14" cy="14" r="14" fill="#0f766e" />
+      <path d="M9 14l3 3L19 10.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
 
 function EmptyCircle() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="shrink-0">
-      <circle cx="10" cy="10" r="9" stroke="#d1d5db" strokeWidth="1.5" />
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
+      <circle cx="14" cy="14" r="13" stroke="#d1d5db" strokeWidth="1.5" strokeDasharray="3 3" />
     </svg>
   )
 }
@@ -185,11 +185,11 @@ export default function PropertyDetail() {
               return items.map((item) => {
                 const doc = getDoc(item.docType)
                 return (
-                  <div key={item.title} className="flex items-center gap-4 px-8 py-5">
+                  <div key={item.title} className="flex items-center gap-5 px-8 py-6">
                     {item.hasIt ? <CheckCircle /> : <EmptyCircle />}
                     <div className="flex-1">
-                      <p className="text-body font-medium text-textPrimary">{item.title}</p>
-                      <p className="text-small text-textMuted mt-0.5">{item.desc}</p>
+                      <p className="text-[15px] font-medium text-textPrimary">{item.title}</p>
+                      <p className="text-sm text-textMuted mt-1">{item.desc}</p>
                       {/* Tenant activity tracking */}
                       {doc && item.hasIt && (
                         <div className="flex items-center gap-3 mt-2">
@@ -230,22 +230,25 @@ export default function PropertyDetail() {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-3 shrink-0">
                       {item.hasIt && item.expiry && (
-                        <Badge variant="success" size="sm">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-lg">
                           Valid to {formatDate(item.expiry)}
-                        </Badge>
+                        </span>
                       )}
                       {item.hasIt && !item.expiry && (
-                        <Badge variant="success" size="sm">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-lg">
                           Uploaded
-                        </Badge>
+                        </span>
                       )}
                       {!item.hasIt && (
                         <Link to={`/documents/upload?property_id=${property.id}&document_type=${item.docType}`}>
-                          <Badge variant="warning" size="sm" className="cursor-pointer hover:bg-amber-100 transition-colors">
-                            + Add
-                          </Badge>
+                          <button className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-600 transition-colors shadow-sm">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                              <path d="M7 1v12M1 7h12" />
+                            </svg>
+                            Upload
+                          </button>
                         </Link>
                       )}
                     </div>
