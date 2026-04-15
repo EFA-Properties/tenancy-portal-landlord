@@ -173,16 +173,26 @@ export default function PropertyDetail() {
               const hasDocType = (type: string) => propertyDocs.some((d) => d.document_type === type)
               const getDocExpiry = (type: string) => getDoc(type)?.valid_to || null
 
-              const items = [
+              const propertyItems = [
                 { title: 'Gas Safety Certificate (CP12)', desc: 'Annual renewal · Tenant must receive each year', docType: 'gas_safety', hasIt: !!property.gas_safety_expiry || hasDocType('gas_safety'), expiry: property.gas_safety_expiry || getDocExpiry('gas_safety') },
                 { title: 'EPC Certificate', desc: 'Minimum C rating required from 2028', docType: 'epc', hasIt: !!property.epc_rating || hasDocType('epc'), expiry: property.epc_expiry || getDocExpiry('epc') },
                 { title: 'EICR (Electrical Safety)', desc: 'Every 5 years · Required before letting', docType: 'eicr', hasIt: !!property.eicr_expiry || hasDocType('eicr'), expiry: property.eicr_expiry || getDocExpiry('eicr') },
+              ]
+
+              const tenantItems = [
                 { title: 'How to Rent Guide', desc: 'Gov.uk · Must be current edition', docType: 'how_to_rent', hasIt: hasDocType('how_to_rent'), expiry: getDocExpiry('how_to_rent') },
                 { title: "Renter's Rights Bill", desc: 'Renters Reform Bill documentation', docType: 'renter_rights', hasIt: hasDocType('renter_rights'), expiry: getDocExpiry('renter_rights') },
                 { title: 'Deposit Protection Certificate', desc: 'DPS / TDS / MyDeposits · Within 30 days', docType: 'deposit_certificate', hasIt: hasDocType('deposit_certificate'), expiry: getDocExpiry('deposit_certificate') },
               ]
 
-              return items.map((item) => {
+              const items = [...propertyItems, ...tenantItems]
+
+              const renderSection = (sectionItems: typeof items, label: string) => (
+                <>
+                  <div className="px-8 pt-5 pb-2">
+                    <p className="text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">{label}</p>
+                  </div>
+                  {sectionItems.map((item) => {
                 const doc = getDoc(item.docType)
                 return (
                   <div key={item.title} className="flex items-center gap-5 px-8 py-6">
@@ -254,7 +264,16 @@ export default function PropertyDetail() {
                     </div>
                   </div>
                 )
-              })
+              })}
+                </>
+              )
+
+              return (
+                <>
+                  {renderSection(propertyItems, 'Property documents')}
+                  {renderSection(tenantItems, 'Tenant documents')}
+                </>
+              )
             })()}
           </div>
         </Card>

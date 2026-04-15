@@ -18,12 +18,13 @@ export default function UploadDocument() {
   const { user } = useAuth()
 
   const prefilledPropertyId = searchParams.get('property_id') || ''
+  const prefilledTenancyId = searchParams.get('tenancy_id') || ''
   const prefilledDocType = searchParams.get('document_type') || ''
 
   const [formData, setFormData] = useState({
-    scope: 'property',
+    scope: prefilledTenancyId ? 'tenancy' : 'property',
     property_id: prefilledPropertyId,
-    tenancy_id: '',
+    tenancy_id: prefilledTenancyId,
     document_type: prefilledDocType,
     title: '',
     description: '',
@@ -156,6 +157,7 @@ export default function UploadDocument() {
       // Invalidate cached queries so lists update immediately
       await queryClient.invalidateQueries({ queryKey: ['documents'] })
       await queryClient.invalidateQueries({ queryKey: ['property-documents'] })
+      await queryClient.invalidateQueries({ queryKey: ['tenancy-documents'] })
 
       navigate('/documents')
     } catch (err) {
