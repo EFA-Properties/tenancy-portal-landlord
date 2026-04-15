@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -9,6 +9,18 @@ import { Card, CardBody } from '../components/ui/Card'
 
 type PortfolioType = 'btl' | 'hmo' | 'hybrid'
 type PropertyCountRange = '1' | '2-10' | '11-25' | '25+'
+
+interface PromoCode {
+  id: string
+  code: string
+  discount_type: 'percentage' | 'fixed' | 'free_forever'
+  discount_value: number
+  max_uses: number | null
+  times_used: number
+  valid_from: string
+  valid_until: string | null
+  is_active: boolean
+}
 
 export default function Register() {
   const navigate = useNavigate()
@@ -23,6 +35,12 @@ export default function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Promo code state
+  const [promoInput, setPromoInput] = useState('')
+  const [promoCode, setPromoCode] = useState<PromoCode | null>(null)
+  const [promoError, setPromoError] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
+
   // Determine plan based on portfolio type and property count
   const determinedPlan = useMemo((): 'free' | 'pro' => {
     if (portfolioType === 'btl' && propertyCount === '1') {
@@ -31,10 +49,106 @@ export default function Register() {
     return 'pro'
   }, [portfolioType, propertyCount])
 
-  const planPrice = determinedPlan === 'free' ? 0 : 29.99
+  const BASE_PRICE = 29.99
+
+  // Calculate discounted price
+  const { finalPrice, savingsText } = useMemo(() => {
+    if (determinedPlan === 'free' || !promoCode) {
+      return { finalPrice: determinedPlan === 'free' ? 0 : BASE_PRICE, savingsText: '' }
+    }
+
+    if (promoCode.discount_type === 'free_forever') {
+      return { finalPrice: 0, savingsText: 'FREE forever' }
+    }
+
+    if (promoCode.discount_type === 'percentage') {
+      const discounted = BASE_PRICE * (1 - promoCode.discount_value / 100)
+      const rounded = Math.round(discounted * 100) / 100
+      return { finalPrice: rounded, savingsText: `${promoCode.discount_value}% off` }
+    }
+
+    if (promoCode.discount_type === 'fixed') {
+      const discounted = Math.max(0, BASE_PRICE - promoCode.discount_value)
+      const rounded = Math.round(discounted * 100) / 100
+      return { finalPrice: rounded, savingsText: `£${promoCode.discount_value} off` }
+    }
+
+    return { finalPrice: BASE_PRICE, savingsText: '' }
+  }, [determinedPlan, promoCode])
+
+  const planPrice = finalPrice
   const planDescription = determinedPlan === 'free'
     ? 'Free forever. Perfect for single BTL properties.'
-    : 'Pro plan at £29.99/mo. Includes all features.'
+    : promoCode
+      ? promoCode.discount_type === 'free_forever'
+        ? `Pro plan — FREE with code ${promoCode.code}`
+        : `Pro plan at £${finalPrice.toFixed(2)}/mo (${savingsText} with ${promoCode.code})`
+      : 'Pro plan at £29.99/mo. Includes all features.'
+
+  // Validate promo code against the database
+  const handleApplyPromo = useCallback(async () => {
+    const code = promoInput.trim().toUpperCase()
+    if (!code) return
+
+    setPromoError('')
+    setPromoLoading(true)
+
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('promo_codes')
+        .select('*')
+        .eq('code', code)
+        .eq('is_active', true)
+        .single()
+
+      if (fetchError || !data) {
+        setPromoError('Invalid promo code')
+        setPromoCode(null)
+        setPromoLoading(false)
+        return
+      }
+
+      const promo = data as PromoCode
+
+      // Check expiry
+      if (promo.valid_until && new Date(promo.valid_until) < new Date()) {
+        setPromoError('This promo code has expired')
+        setPromoCode(null)
+        setPromoLoading(false)
+        return
+      }
+
+      // Check not started yet
+      if (new Date(promo.valid_from) > new Date()) {
+        setPromoError('This promo code is not yet active')
+        setPromoCode(null)
+        setPromoLoading(false)
+        return
+      }
+
+      // Check max uses
+      if (promo.max_uses !== null && promo.times_used >= promo.max_uses) {
+        setPromoError('This promo code has reached its usage limit')
+        setPromoCode(null)
+        setPromoLoading(false)
+        return
+      }
+
+      setPromoCode(promo)
+      setPromoError('')
+    } catch {
+      setPromoError('Failed to validate promo code')
+      setPromoCode(null)
+    } finally {
+      setPromoLoading(false)
+    }
+  }, [promoInput])
+
+  const handleRemovePromo = () => {
+    setPromoCode(null)
+    setPromoInput('')
+    setPromoError('')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,31 +202,55 @@ export default function Register() {
         throw new Error('Failed to get user after registration')
       }
 
-      // Create landlord record with plan routing
-      const { error: insertError } = await supabase.from('landlords').insert({
+      // Determine if this is a free_forever promo (gets comped Pro)
+      const isFreeForever = promoCode?.discount_type === 'free_forever'
+
+      // Build landlord record
+      const landlordRecord: Record<string, unknown> = {
         auth_user_id: newUser.id,
         full_name: fullName,
         email: email,
         phone: phone || null,
         portfolio_type: portfolioType,
         property_count_range: propertyCount,
-        plan: determinedPlan,
-        plan_price: planPrice,
-        billing_active: determinedPlan === 'free',
+        plan: isFreeForever ? 'pro' : determinedPlan,
+        plan_price: finalPrice,
+        billing_active: determinedPlan === 'free' || isFreeForever,
+        comped: isFreeForever,
         onboarding_completed: false,
-      })
+      }
+
+      // Attach promo code details if applied
+      if (promoCode) {
+        landlordRecord.promo_code_id = promoCode.id
+        landlordRecord.promo_applied_at = new Date().toISOString()
+        if (promoCode.valid_until) {
+          landlordRecord.promo_expires_at = promoCode.valid_until
+        }
+      }
+
+      const { error: insertError } = await supabase
+        .from('landlords')
+        .insert(landlordRecord)
 
       if (insertError) {
         throw insertError
       }
 
+      // Increment promo code usage
+      if (promoCode) {
+        await supabase
+          .from('promo_codes')
+          .update({ times_used: promoCode.times_used + 1 })
+          .eq('id', promoCode.id)
+      }
+
       // Route based on plan
-      if (determinedPlan === 'free') {
+      if (determinedPlan === 'free' || isFreeForever) {
         navigate('/onboarding')
       } else {
-        // Pro tier - for now navigate to onboarding with a note
-        // TODO: integrate GoCardless payment flow
-        navigate('/onboarding')
+        // Pro tier — go to payment page for DD setup
+        navigate('/payment')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
@@ -224,6 +362,62 @@ export default function Register() {
                   placeholder="+44 123 456 7890"
                 />
 
+                {/* Promo Code */}
+                {determinedPlan === 'pro' && (
+                  <div>
+                    <label className="block text-sm font-medium text-textSecondary mb-1.5">
+                      Promo Code (Optional)
+                    </label>
+                    {promoCode ? (
+                      <div className="flex items-center gap-2 rounded-lg border border-teal-300 bg-teal-50 px-4 py-3">
+                        <svg className="h-5 w-5 text-teal-700 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-sm font-medium text-teal-800 flex-1">
+                          {promoCode.code} applied — {savingsText}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleRemovePromo}
+                          className="text-sm text-teal-600 hover:text-teal-800 font-medium transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={promoInput}
+                          onChange={(e) => {
+                            setPromoInput(e.target.value.toUpperCase())
+                            setPromoError('')
+                          }}
+                          placeholder="Enter code"
+                          className="flex-1 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm text-textPrimary placeholder:text-textTertiary focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleApplyPromo()
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyPromo}
+                          disabled={promoLoading || !promoInput.trim()}
+                          className="px-5 py-2.5 rounded-lg bg-gray-100 text-sm font-medium text-textPrimary hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors border border-border"
+                        >
+                          {promoLoading ? 'Checking...' : 'Apply'}
+                        </button>
+                      </div>
+                    )}
+                    {promoError && (
+                      <p className="mt-1.5 text-sm text-error">{promoError}</p>
+                    )}
+                  </div>
+                )}
+
                 {/* Submit Button */}
                 <Button
                   type="submit"
@@ -258,6 +452,17 @@ export default function Register() {
             <div className="inline-block rounded-pill bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700 border border-teal-200">
               {determinedPlan === 'free' ? 'Free' : 'Pro'} — {planDescription}
             </div>
+            {promoCode && determinedPlan === 'pro' && (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="text-sm text-textSecondary line-through">£{BASE_PRICE.toFixed(2)}/mo</span>
+                <span className="text-lg font-semibold text-teal-700">
+                  {finalPrice === 0 ? 'FREE' : `£${finalPrice.toFixed(2)}/mo`}
+                </span>
+                <span className="rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-medium text-teal-800">
+                  {savingsText}
+                </span>
+              </div>
+            )}
           </div>
 
           <Card className="border-teal-200 bg-teal-50">
