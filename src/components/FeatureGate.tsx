@@ -27,7 +27,8 @@ export function FeatureGate({ feature, description, children }: FeatureGateProps
     )
   }
 
-  const isPro = landlord?.plan === 'pro' && landlord?.billing_active
+  // Comped accounts get full Pro access regardless of billing status
+  const isPro = landlord?.comped || (landlord?.plan === 'pro' && landlord?.billing_active)
 
   if (!isPro) {
     return <UpgradePrompt feature={feature} description={description} />

@@ -17,6 +17,7 @@ export interface Landlord {
   gc_mandate_id?: string
   gc_subscription_id?: string
   billing_grace_until?: string
+  comped: boolean
   onboarding_completed: boolean
   created_at: string
   updated_at: string
