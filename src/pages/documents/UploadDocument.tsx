@@ -139,7 +139,7 @@ export default function UploadDocument() {
         mime_type: file.type,
         valid_from: formData.valid_from || null,
         valid_to: formData.valid_to || null,
-        uploaded_by: user.id,
+        uploaded_by: landlord.id,
       }
 
       console.log('Document insert payload:', docPayload)
