@@ -63,6 +63,22 @@ function useTenancyDocuments(tenancyId: string | undefined, propertyId: string |
   })
 }
 
+function useTenantAcknowledgements(tenantId: string | undefined) {
+  return useQuery({
+    queryKey: ['tenant-acknowledgements', tenantId],
+    queryFn: async () => {
+      if (!tenantId) return []
+      const { data, error } = await supabase
+        .from('document_acknowledgements')
+        .select('id, document_id, served_at, opened_at, confirmed_at')
+        .eq('tenant_id', tenantId)
+      if (error) throw error
+      return data || []
+    },
+    enabled: !!tenantId,
+  })
+}
+
 export default function TenantDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -72,6 +88,7 @@ export default function TenantDetail() {
   const tenancyId = tenancy?.id
   const propertyId = tenancy?.property_id
   const { data: tenantDocs = [] } = useTenancyDocuments(tenancyId, propertyId)
+  const { data: tenantAcks = [] } = useTenantAcknowledgements(id)
 
   if (isLoading) {
     return (
@@ -188,6 +205,7 @@ export default function TenantDetail() {
                 ].map((item) => {
                   const doc = tenantDocs.find((d: any) => d.document_type === item.docType)
                   const isComplete = !!doc
+                  const ack = doc ? tenantAcks.find((a: any) => a.document_id === doc.id) : null
                   return (
                     <div
                       key={item.key}
@@ -201,8 +219,35 @@ export default function TenantDetail() {
                         {doc && (
                           <p className="text-xs text-slate-500 mt-0.5">
                             Uploaded {formatDate(doc.uploaded_at)}
-                            {doc.served_at && ` · Served ${formatDate(doc.served_at)}`}
-                            {doc.tenant_confirmed_at && ` · Confirmed ${formatDate(doc.tenant_confirmed_at)}`}
+                          </p>
+                        )}
+                        {/* Per-tenant acknowledgement status */}
+                        {ack && (
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            {ack.served_at && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-pill">
+                                Served {formatDate(ack.served_at)}
+                              </span>
+                            )}
+                            {ack.opened_at && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-pill">
+                                Opened {formatDate(ack.opened_at)}
+                              </span>
+                            )}
+                            {ack.confirmed_at ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-success bg-successLight px-2 py-0.5 rounded-pill">
+                                Confirmed {formatDate(ack.confirmed_at)}
+                              </span>
+                            ) : ack.served_at ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-warning bg-warningLight px-2 py-0.5 rounded-pill">
+                                Awaiting confirmation
+                              </span>
+                            ) : null}
+                          </div>
+                        )}
+                        {doc && !ack && (
+                          <p className="text-[11px] font-mono uppercase tracking-wider text-textMuted mt-1.5">
+                            Not yet served to this tenant
                           </p>
                         )}
                       </div>

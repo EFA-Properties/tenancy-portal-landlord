@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useProperty, usePropertyTenancies, usePropertyDocuments } from '../../hooks/useProperties'
+import { useQueryClient } from '@tanstack/react-query'
+import { useProperty, usePropertyTenancies, usePropertyDocuments, useDocumentAcknowledgements, usePropertyTenants } from '../../hooks/useProperties'
+import { supabase } from '../../lib/supabase'
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -30,6 +32,33 @@ export default function PropertyDetail() {
   const { data: property, isLoading } = useProperty(id)
   const { data: tenancies = [], isLoading: tenanciesLoading } = usePropertyTenancies(id)
   const { data: propertyDocs = [] } = usePropertyDocuments(id)
+  const { data: propertyTenants = [] } = usePropertyTenants(id)
+  const docIds = propertyDocs.map((d) => d.id)
+  const { data: acknowledgements = [] } = useDocumentAcknowledgements(docIds)
+  const queryClient = useQueryClient()
+  const [servingDoc, setServingDoc] = useState<string | null>(null)
+
+  const serveToAllTenants = async (documentId: string) => {
+    if (!propertyTenants.length) return
+    setServingDoc(documentId)
+    try {
+      const rows = propertyTenants.map((pt) => ({
+        document_id: documentId,
+        tenant_id: pt.tenant_id,
+        tenancy_id: pt.tenancy_id,
+        served_at: new Date().toISOString(),
+      }))
+      const { error } = await supabase
+        .from('document_acknowledgements')
+        .upsert(rows, { onConflict: 'document_id,tenant_id' })
+      if (error) throw error
+      await queryClient.invalidateQueries({ queryKey: ['document-acknowledgements'] })
+    } catch (err) {
+      console.error('Error serving document:', err)
+    } finally {
+      setServingDoc(null)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -187,56 +216,63 @@ export default function PropertyDetail() {
 
               const items = [...propertyItems, ...tenantItems]
 
-              const renderSection = (sectionItems: typeof items, label: string) => (
+              const getDocAcks = (docId: string) => acknowledgements.filter((a) => a.document_id === docId)
+              const totalTenants = propertyTenants.length
+
+              const renderSection = (sectionItems: typeof items, label: string, isTenantSection: boolean) => (
                 <>
                   <div className="px-8 pt-5 pb-2">
                     <p className="text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">{label}</p>
                   </div>
                   {sectionItems.map((item) => {
                 const doc = getDoc(item.docType)
+                const acks = doc ? getDocAcks(doc.id) : []
+                const servedCount = acks.filter((a) => a.served_at).length
+                const openedCount = acks.filter((a) => a.opened_at).length
+                const confirmedCount = acks.filter((a) => a.confirmed_at).length
+                const allServed = totalTenants > 0 && servedCount >= totalTenants
+                const allConfirmed = totalTenants > 0 && confirmedCount >= totalTenants
                 return (
                   <div key={item.title} className="flex items-center gap-5 px-8 py-6">
                     {item.hasIt ? <CheckCircle /> : <EmptyCircle />}
                     <div className="flex-1">
                       <p className="text-[15px] font-medium text-textPrimary">{item.title}</p>
                       <p className="text-sm text-textMuted mt-1">{item.desc}</p>
-                      {/* Tenant activity tracking */}
-                      {doc && item.hasIt && (
-                        <div className="flex items-center gap-3 mt-2">
-                          {doc.served_at ? (
-                            <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-pill">
-                              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="5" fill="#0f766e" /><path d="M3 5l1.5 1.5L7 4" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                              Served {formatDate(doc.served_at)}
+                      {/* Per-tenant acknowledgement tracking */}
+                      {doc && item.hasIt && isTenantSection && totalTenants > 0 && (
+                        <div className="flex items-center gap-3 mt-2 flex-wrap">
+                          {servedCount > 0 ? (
+                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-pill ${allServed ? 'text-teal-700 bg-teal-50' : 'text-warning bg-warningLight'}`}>
+                              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="5" fill={allServed ? '#0f766e' : '#b45309'} /><path d="M3 5l1.5 1.5L7 4" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                              Served {servedCount}/{totalTenants}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-textMuted bg-surface px-2 py-0.5 rounded-pill">
                               Not served
                             </span>
                           )}
-                          {doc.served_at && (
+                          {servedCount > 0 && (
                             <>
-                              {doc.tenant_opened_at ? (
-                                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-pill">
-                                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" stroke="#0f766e" strokeWidth="1" fill="none" /><circle cx="5" cy="5" r="2" fill="#0f766e" /></svg>
-                                  Opened {formatDate(doc.tenant_opened_at)}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-warning bg-warningLight px-2 py-0.5 rounded-pill">
-                                  Not opened
-                                </span>
-                              )}
-                              {doc.tenant_confirmed_at ? (
-                                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-success bg-successLight px-2 py-0.5 rounded-pill">
+                              <span className={`inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-pill ${openedCount === totalTenants ? 'text-teal-700 bg-teal-50' : openedCount > 0 ? 'text-warning bg-warningLight' : 'text-textMuted bg-surface'}`}>
+                                Opened {openedCount}/{totalTenants}
+                              </span>
+                              <span className={`inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-pill ${allConfirmed ? 'text-success bg-successLight' : confirmedCount > 0 ? 'text-warning bg-warningLight' : 'text-textMuted bg-surface'}`}>
+                                {allConfirmed ? (
                                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="5" fill="#15803d" /><path d="M3 5l1.5 1.5L7 4" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                  Confirmed {formatDate(doc.tenant_confirmed_at)}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-textMuted bg-surface px-2 py-0.5 rounded-pill">
-                                  Not confirmed
-                                </span>
-                              )}
+                                ) : null}
+                                Confirmed {confirmedCount}/{totalTenants}
+                              </span>
                             </>
                           )}
+                        </div>
+                      )}
+                      {/* Single-tenant fallback for property docs or when no tenants */}
+                      {doc && item.hasIt && !isTenantSection && doc.served_at && (
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-pill">
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="5" fill="#0f766e" /><path d="M3 5l1.5 1.5L7 4" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            Served {formatDate(doc.served_at)}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -250,6 +286,16 @@ export default function PropertyDetail() {
                         <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-lg">
                           Uploaded
                         </span>
+                      )}
+                      {/* Serve to all tenants button for tenant docs */}
+                      {doc && item.hasIt && isTenantSection && totalTenants > 0 && !allServed && (
+                        <button
+                          onClick={() => serveToAllTenants(doc.id)}
+                          disabled={servingDoc === doc.id}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors disabled:opacity-50"
+                        >
+                          {servingDoc === doc.id ? 'Serving…' : 'Serve to all'}
+                        </button>
                       )}
                       {!item.hasIt && (
                         <Link to={`/documents/upload?property_id=${property.id}&document_type=${item.docType}`}>
@@ -270,8 +316,8 @@ export default function PropertyDetail() {
 
               return (
                 <>
-                  {renderSection(propertyItems, 'Property documents')}
-                  {renderSection(tenantItems, 'Tenant documents')}
+                  {renderSection(propertyItems, 'Property documents', false)}
+                  {renderSection(tenantItems, 'Tenant documents', true)}
                 </>
               )
             })()}

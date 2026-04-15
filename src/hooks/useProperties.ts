@@ -68,7 +68,7 @@ export function usePropertyDocuments(propertyId: string | undefined) {
         .order('uploaded_at', { ascending: false })
 
       if (error) throw error
-      return data as Array<{
+      return data as unknown as Array<{
         id: string
         document_type: string
         title: string
@@ -80,6 +80,54 @@ export function usePropertyDocuments(propertyId: string | undefined) {
         tenant_opened_at: string | null
         tenant_confirmed_at: string | null
         tenants: { full_name: string } | null
+      }>
+    },
+    enabled: !!propertyId,
+  })
+}
+
+export function useDocumentAcknowledgements(documentIds: string[]) {
+  return useQuery({
+    queryKey: ['document-acknowledgements', documentIds],
+    queryFn: async () => {
+      if (!documentIds.length) return []
+      const { data, error } = await supabase
+        .from('document_acknowledgements')
+        .select('id, document_id, tenant_id, tenancy_id, served_at, opened_at, confirmed_at, tenants:tenant_id(full_name)')
+        .in('document_id', documentIds)
+      if (error) throw error
+      return data as unknown as Array<{
+        id: string
+        document_id: string
+        tenant_id: string
+        tenancy_id: string | null
+        served_at: string | null
+        opened_at: string | null
+        confirmed_at: string | null
+        tenants: { full_name: string } | null
+      }>
+    },
+    enabled: documentIds.length > 0,
+  })
+}
+
+export function usePropertyTenants(propertyId: string | undefined) {
+  return useQuery({
+    queryKey: ['property-tenants', propertyId],
+    queryFn: async () => {
+      if (!propertyId) throw new Error('No property ID')
+      // Get all tenants linked to active tenancies for this property
+      const { data, error } = await supabase
+        .from('tenancy_tenants')
+        .select('tenant_id, tenancy_id, tenants(id, full_name), tenancies!inner(id, property_id, status)')
+        .eq('tenancies.property_id', propertyId)
+        .in('tenancies.status', ['active', 'pending'])
+      if (error) throw error
+      return data as unknown as Array<{
+        tenant_id: string
+        tenancy_id: string
+        tenants: { id: string; full_name: string } | null
+        tenancies: { id: string; property_id: string; status: string }
       }>
     },
     enabled: !!propertyId,
