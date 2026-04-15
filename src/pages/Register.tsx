@@ -13,13 +13,15 @@ type PropertyCountRange = '1' | '2-10' | '11-25' | '25+'
 interface PromoCode {
   id: string
   code: string
+  description: string | null
   discount_type: 'percentage' | 'fixed' | 'free_forever'
   discount_value: number
+  duration_months: number | null
   max_uses: number | null
   times_used: number
-  valid_from: string
-  valid_until: string | null
+  expires_at: string | null
   is_active: boolean
+  created_at: string
 }
 
 export default function Register() {
@@ -111,16 +113,8 @@ export default function Register() {
       const promo = data as PromoCode
 
       // Check expiry
-      if (promo.valid_until && new Date(promo.valid_until) < new Date()) {
+      if (promo.expires_at && new Date(promo.expires_at) < new Date()) {
         setPromoError('This promo code has expired')
-        setPromoCode(null)
-        setPromoLoading(false)
-        return
-      }
-
-      // Check not started yet
-      if (new Date(promo.valid_from) > new Date()) {
-        setPromoError('This promo code is not yet active')
         setPromoCode(null)
         setPromoLoading(false)
         return
@@ -224,8 +218,8 @@ export default function Register() {
       if (promoCode) {
         landlordRecord.promo_code_id = promoCode.id
         landlordRecord.promo_applied_at = new Date().toISOString()
-        if (promoCode.valid_until) {
-          landlordRecord.promo_expires_at = promoCode.valid_until
+        if (promoCode.expires_at) {
+          landlordRecord.promo_expires_at = promoCode.expires_at
         }
       }
 
