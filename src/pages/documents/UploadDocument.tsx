@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { Breadcrumb } from '../../components/Breadcrumb'
@@ -13,6 +14,7 @@ import { FeatureGate } from '../../components/FeatureGate'
 export default function UploadDocument() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const queryClient = useQueryClient()
   const { user } = useAuth()
 
   const prefilledPropertyId = searchParams.get('property_id') || ''
@@ -150,6 +152,10 @@ export default function UploadDocument() {
         console.error('Document insert error:', docError)
         throw new Error(`Document record failed: ${docError.message}`)
       }
+
+      // Invalidate cached queries so lists update immediately
+      await queryClient.invalidateQueries({ queryKey: ['documents'] })
+      await queryClient.invalidateQueries({ queryKey: ['property-documents'] })
 
       navigate('/documents')
     } catch (err) {
