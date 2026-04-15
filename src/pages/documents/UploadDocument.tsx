@@ -109,14 +109,23 @@ export default function UploadDocument() {
       const bucket = formData.scope === 'property' ? 'property-documents' : 'tenancy-documents'
       const folderId = formData.scope === 'property' ? formData.property_id : formData.tenancy_id
       const fileName = `${Date.now()}-${file.name}`
+      const storagePath = `${folderId}/${fileName}`
+
+      console.log('Upload attempt:', { bucket, storagePath, folderId, landlordId: landlord.id })
+
       const { data: storageData, error: storageError } = await supabase.storage
         .from(bucket)
-        .upload(`${folderId}/${fileName}`, file)
+        .upload(storagePath, file)
 
-      if (storageError) throw storageError
+      if (storageError) {
+        console.error('Storage upload error:', storageError)
+        throw new Error(`Storage upload failed: ${storageError.message}`)
+      }
+
+      console.log('Storage upload success:', storageData)
 
       // Create document record
-      const { error: docError } = await supabase.from('documents').insert({
+      const docPayload = {
         landlord_id: landlord.id,
         scope: formData.scope,
         property_id: formData.scope === 'property' ? formData.property_id : null,
@@ -131,9 +140,16 @@ export default function UploadDocument() {
         valid_from: formData.valid_from || null,
         valid_to: formData.valid_to || null,
         uploaded_by: user.id,
-      })
+      }
 
-      if (docError) throw docError
+      console.log('Document insert payload:', docPayload)
+
+      const { error: docError } = await supabase.from('documents').insert(docPayload)
+
+      if (docError) {
+        console.error('Document insert error:', docError)
+        throw new Error(`Document record failed: ${docError.message}`)
+      }
 
       navigate('/documents')
     } catch (err) {
