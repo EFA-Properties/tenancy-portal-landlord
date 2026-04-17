@@ -1,12 +1,13 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { useTenant } from '../../hooks/useTenants'
+import { useTenant, useTenantLinkStatus, useMoveOutTenant, useRevokeAccess, useRestoreTenant } from '../../hooks/useTenants'
 import { supabase } from '../../lib/supabase'
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
-import { Mail, Phone } from 'lucide-react'
+import { Badge } from '../../components/ui/Badge'
+import { Mail, Phone, LogOut, ShieldOff, RotateCcw } from 'lucide-react'
 import { formatDate } from '../../lib/utils'
 
 function CheckCircle() {
@@ -89,6 +90,36 @@ export default function TenantDetail() {
   const propertyId = tenancy?.property_id
   const { data: tenantDocs = [] } = useTenancyDocuments(tenancyId, propertyId)
   const { data: tenantAcks = [] } = useTenantAcknowledgements(id)
+  const { data: linkStatus } = useTenantLinkStatus(id)
+
+  const moveOut = useMoveOutTenant()
+  const revokeAccess = useRevokeAccess()
+  const restoreTenant = useRestoreTenant()
+
+  const [showMoveOutConfirm, setShowMoveOutConfirm] = useState(false)
+  const [showRevokeConfirm, setShowRevokeConfirm] = useState(false)
+  const [moveOutNotes, setMoveOutNotes] = useState('')
+
+  const isMovedOut = linkStatus?.status === 'moved_out'
+  const isAccessRevoked = !!linkStatus?.access_revoked_at
+
+  const handleMoveOut = async () => {
+    if (!id || !tenancyId) return
+    await moveOut.mutateAsync({ tenantId: id, tenancyId, notes: moveOutNotes || undefined })
+    setShowMoveOutConfirm(false)
+    setMoveOutNotes('')
+  }
+
+  const handleRevokeAccess = async () => {
+    if (!id || !tenancyId) return
+    await revokeAccess.mutateAsync({ tenantId: id, tenancyId })
+    setShowRevokeConfirm(false)
+  }
+
+  const handleRestore = async () => {
+    if (!id || !tenancyId) return
+    await restoreTenant.mutateAsync({ tenantId: id, tenancyId })
+  }
 
   if (isLoading) {
     return (
@@ -112,9 +143,13 @@ export default function TenantDetail() {
       />
 
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-fraunces font-bold text-slate-900">
-          {tenant.first_name} {tenant.last_name}
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-fraunces font-bold text-slate-900">
+            {tenant.first_name} {tenant.last_name}
+          </h1>
+          {isMovedOut && <Badge variant="secondary">Moved Out</Badge>}
+          {isAccessRevoked && <Badge variant="destructive">Access Revoked</Badge>}
+        </div>
         <Button variant="outline" onClick={() => navigate('/tenants')}>
           Back
         </Button>
@@ -181,6 +216,138 @@ export default function TenantDetail() {
           </CardBody>
         </Card>
       </div>
+
+      {/* Tenant Actions */}
+      {tenancyId && (
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <h2 className="text-lg font-semibold text-slate-900">
+                Tenant Actions
+              </h2>
+            </CardHeader>
+            <CardBody>
+              {isMovedOut ? (
+                <div className="space-y-4">
+                  <div className="rounded-lg bg-surface p-4">
+                    <p className="text-sm text-textSecondary">
+                      This tenant was moved out on <span className="font-medium text-textPrimary">{linkStatus?.moved_out_at ? formatDate(linkStatus.moved_out_at) : 'unknown date'}</span>.
+                      {linkStatus?.move_out_notes && (
+                        <span className="block mt-1 text-textMuted">Notes: {linkStatus.move_out_notes}</span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="secondary"
+                      onClick={handleRestore}
+                      loading={restoreTenant.isPending}
+                    >
+                      <RotateCcw size={16} className="mr-1.5" />
+                      Restore Tenant
+                    </Button>
+                    {!isAccessRevoked && (
+                      <Button
+                        variant="outline"
+                        className="text-error border-error hover:bg-errorLight"
+                        onClick={() => setShowRevokeConfirm(true)}
+                      >
+                        <ShieldOff size={16} className="mr-1.5" />
+                        Revoke Portal Access
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    className="text-warning border-warning hover:bg-warningLight"
+                    onClick={() => setShowMoveOutConfirm(true)}
+                  >
+                    <LogOut size={16} className="mr-1.5" />
+                    Move Out
+                  </Button>
+                  {!isAccessRevoked ? (
+                    <Button
+                      variant="outline"
+                      className="text-error border-error hover:bg-errorLight"
+                      onClick={() => setShowRevokeConfirm(true)}
+                    >
+                      <ShieldOff size={16} className="mr-1.5" />
+                      Revoke Portal Access
+                    </Button>
+                  ) : (
+                    <Badge variant="destructive">Portal access revoked</Badge>
+                  )}
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </div>
+      )}
+
+      {/* Move Out Confirmation Modal */}
+      {showMoveOutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Move out tenant</h3>
+            <p className="text-sm text-textSecondary mb-4">
+              This will mark <span className="font-medium">{tenant.first_name} {tenant.last_name}</span> as moved out.
+              Their documents and history will be preserved. You can optionally revoke portal access separately.
+            </p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-900 mb-1.5">
+                Notes (optional)
+              </label>
+              <textarea
+                rows={3}
+                value={moveOutNotes}
+                onChange={(e) => setMoveOutNotes(e.target.value)}
+                placeholder="e.g. End of fixed term, moved to new address..."
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => { setShowMoveOutConfirm(false); setMoveOutNotes('') }}>
+                Cancel
+              </Button>
+              <Button
+                className="bg-warning hover:bg-warning/90 text-white"
+                onClick={handleMoveOut}
+                loading={moveOut.isPending}
+              >
+                Confirm Move Out
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Revoke Access Confirmation Modal */}
+      {showRevokeConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Revoke portal access</h3>
+            <p className="text-sm text-textSecondary mb-4">
+              This will immediately revoke <span className="font-medium">{tenant.first_name} {tenant.last_name}</span>'s
+              access to the tenant portal. They will no longer be able to log in, view documents, or submit maintenance requests.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowRevokeConfirm(false)}>
+                Cancel
+              </Button>
+              <Button
+                className="bg-error hover:bg-error/90 text-white"
+                onClick={handleRevokeAccess}
+                loading={revokeAccess.isPending}
+              >
+                Revoke Access
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tenant Document Checklist */}
       <div className="mt-8">
