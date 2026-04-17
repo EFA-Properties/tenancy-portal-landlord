@@ -3,27 +3,10 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useDashboardStats } from '../hooks/useDashboardStats'
 import { useProperties } from '../hooks/useProperties'
+import { useDashboardActions, type DashboardAction } from '../hooks/useDashboardActions'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
-import { formatDate } from '../lib/utils'
 import { useLandlord } from '../hooks/useLandlord'
-
-function CheckCircle() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-      <circle cx="11" cy="11" r="11" fill="#0f766e" />
-      <path d="M7 11l2.5 2.5L15 8.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-function EmptyCircle() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-      <circle cx="11" cy="11" r="10" stroke="#d1d5db" strokeWidth="1.5" />
-    </svg>
-  )
-}
 
 function ArrowRight() {
   return (
@@ -33,55 +16,78 @@ function ArrowRight() {
   )
 }
 
+function PriorityIcon({ priority }: { priority: DashboardAction['priority'] }) {
+  if (priority === 'urgent') {
+    return (
+      <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 5v3M8 10.5v.5" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="8" cy="8" r="7" stroke="#dc2626" strokeWidth="1.5" />
+        </svg>
+      </div>
+    )
+  }
+  if (priority === 'warning') {
+    return (
+      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 5.5v3M8 10.5v.5" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+          <path d="M7.13 2.5L1.5 12.5h13L8.87 2.5H7.13z" stroke="#b45309" strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
+      </div>
+    )
+  }
+  return (
+    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="7" stroke="#2563eb" strokeWidth="1.5" />
+        <path d="M8 7v4M8 5v.5" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const { user } = useAuth()
   const { data: stats, isLoading } = useDashboardStats()
   const { data: properties = [] } = useProperties()
   const { data: landlord } = useLandlord()
+  const { data: actions = [], isLoading: actionsLoading } = useDashboardActions()
 
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
+  const urgentActions = actions.filter((a) => a.priority === 'urgent')
+  const warningActions = actions.filter((a) => a.priority === 'warning')
+  const infoActions = actions.filter((a) => a.priority === 'info')
+
   const statCards = [
     { label: 'Active Tenancies', value: stats?.activeTenancies ?? 0, color: 'text-teal-700' },
     { label: 'Properties', value: properties.length, color: 'text-slate-900' },
     { label: 'Pending', value: stats?.pendingRequests ?? 0, color: 'text-warning' },
-    { label: 'Alerts', value: stats?.overdueAlerts ?? 0, color: 'text-error' },
+    { label: 'Actions', value: actions.length, color: actions.some((a) => a.priority === 'urgent') ? 'text-error' : 'text-warning' },
   ]
 
-  const complianceItems = [
-    {
-      title: 'Gas Safety Certificate (CP12)',
-      description: 'Annual renewal · Tenant must receive each year',
-      done: true,
-    },
-    {
-      title: 'EPC Certificate',
-      description: 'Minimum C rating required from 2028',
-      done: true,
-    },
-    {
-      title: 'EICR (Electrical Safety)',
-      description: 'Every 5 years · Required before letting',
-      done: false,
-    },
-    {
-      title: 'How to Rent Guide',
-      description: 'Gov.uk · Must be current edition',
-      done: false,
-    },
-    {
-      title: "Renter's Rights Bill",
-      description: 'Renters Reform Bill documentation',
-      done: false,
-    },
-    {
-      title: 'Deposit Protection Certificate',
-      description: 'DPS / TDS / MyDeposits · Within 30 days',
-      done: false,
-    },
-  ]
+  const renderAction = (action: DashboardAction) => (
+    <Link
+      key={action.id}
+      to={action.link}
+      className="flex items-start gap-3 px-5 py-4 hover:bg-slate-50 transition-colors group"
+    >
+      <PriorityIcon priority={action.priority} />
+      <div className="flex-1 min-w-0">
+        <p className="text-[14px] font-medium text-slate-900 group-hover:text-teal-700 transition-colors">
+          {action.title}
+        </p>
+        <p className="text-xs text-slate-400 mt-0.5">{action.description}</p>
+        <p className="text-xs text-slate-300 mt-1 truncate">{action.propertyAddress}</p>
+      </div>
+      <div className="text-slate-200 group-hover:text-teal-600 transition-colors mt-1 shrink-0">
+        <ArrowRight />
+      </div>
+    </Link>
+  )
 
   return (
     <div>
@@ -132,32 +138,91 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Compliance checklist — spans 3 cols */}
+        {/* Action feed — spans 3 cols */}
         <Card className="lg:col-span-3">
           <CardHeader>
-            <div>
-              <p className="text-xs font-medium text-teal-700 uppercase tracking-wider mb-1">
-                Compliance
-              </p>
-              <h2 className="text-xl font-fraunces font-semibold text-slate-900">
-                Every document.{' '}
-                <em className="font-fraunces italic text-teal-700">Provably delivered.</em>
-              </h2>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-teal-700 uppercase tracking-wider mb-1">
+                  Action Required
+                </p>
+                <h2 className="text-xl font-fraunces font-semibold text-slate-900">
+                  {actions.length === 0 ? (
+                    <>All clear <span className="text-teal-600">— nothing to action</span></>
+                  ) : (
+                    <>{actions.length} item{actions.length !== 1 ? 's' : ''} need{actions.length === 1 ? 's' : ''} attention</>
+                  )}
+                </h2>
+              </div>
+              {actions.length > 0 && (
+                <div className="flex items-center gap-2">
+                  {urgentActions.length > 0 && (
+                    <Badge variant="destructive" size="sm">{urgentActions.length} urgent</Badge>
+                  )}
+                  {warningActions.length > 0 && (
+                    <Badge variant="warning" size="sm">{warningActions.length} warning</Badge>
+                  )}
+                </div>
+              )}
             </div>
           </CardHeader>
-          <div className="divide-y divide-border">
-            {complianceItems.map((item) => (
-              <div key={item.title} className="flex items-start gap-4 px-8 py-5">
-                <div className="mt-0.5 shrink-0">
-                  {item.done ? <CheckCircle /> : <EmptyCircle />}
-                </div>
-                <div>
-                  <p className="text-body font-medium text-textPrimary">{item.title}</p>
-                  <p className="text-small text-textMuted mt-0.5">{item.description}</p>
-                </div>
+
+          {actionsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600" />
+            </div>
+          ) : actions.length === 0 ? (
+            <div className="px-8 py-12 text-center">
+              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center mx-auto mb-4">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="#0f766e" strokeWidth="2" />
+                  <path d="M8 12l2.5 2.5L16 9" stroke="#0f766e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </div>
-            ))}
-          </div>
+              <p className="text-sm font-medium text-slate-900 mb-1">You're all caught up</p>
+              <p className="text-xs text-slate-400">
+                No expiring certificates, missing documents, or tenant actions needed.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {/* Urgent section */}
+              {urgentActions.length > 0 && (
+                <>
+                  <div className="px-5 pt-4 pb-1">
+                    <p className="text-[10px] font-mono font-medium text-red-500 uppercase tracking-widest">
+                      Requires immediate action
+                    </p>
+                  </div>
+                  {urgentActions.map(renderAction)}
+                </>
+              )}
+
+              {/* Warning section */}
+              {warningActions.length > 0 && (
+                <>
+                  <div className="px-5 pt-4 pb-1">
+                    <p className="text-[10px] font-mono font-medium text-amber-600 uppercase tracking-widest">
+                      Upcoming / Missing
+                    </p>
+                  </div>
+                  {warningActions.map(renderAction)}
+                </>
+              )}
+
+              {/* Info section */}
+              {infoActions.length > 0 && (
+                <>
+                  <div className="px-5 pt-4 pb-1">
+                    <p className="text-[10px] font-mono font-medium text-blue-500 uppercase tracking-widest">
+                      Coming up
+                    </p>
+                  </div>
+                  {infoActions.map(renderAction)}
+                </>
+              )}
+            </div>
+          )}
         </Card>
 
         {/* Quick actions — spans 2 cols */}
