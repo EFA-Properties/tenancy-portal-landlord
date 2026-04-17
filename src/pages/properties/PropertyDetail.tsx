@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useProperty, usePropertyTenancies, usePropertyDocuments, useDocumentAcknowledgements, usePropertyTenants } from '../../hooks/useProperties'
+import { useRightToRentByProperty } from '../../hooks/useRightToRent'
 import { supabase } from '../../lib/supabase'
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
@@ -33,6 +34,7 @@ export default function PropertyDetail() {
   const { data: tenancies = [], isLoading: tenanciesLoading } = usePropertyTenancies(id)
   const { data: propertyDocs = [] } = usePropertyDocuments(id)
   const { data: propertyTenants = [] } = usePropertyTenants(id)
+  const { data: rtrChecks = [] } = useRightToRentByProperty(id)
   const docIds = propertyDocs.map((d) => d.id)
   const { data: acknowledgements = [] } = useDocumentAcknowledgements(docIds)
   const queryClient = useQueryClient()
@@ -212,6 +214,8 @@ export default function PropertyDetail() {
                 { title: 'How to Rent Guide', desc: 'Gov.uk · Must be current edition', docType: 'how_to_rent', hasIt: hasDocType('how_to_rent'), expiry: getDocExpiry('how_to_rent') },
                 { title: "Renter's Rights Bill", desc: 'Renters Reform Bill documentation', docType: 'renter_rights', hasIt: hasDocType('renter_rights'), expiry: getDocExpiry('renter_rights') },
                 { title: 'Deposit Protection Certificate', desc: 'DPS / TDS / MyDeposits · Within 30 days', docType: 'deposit_certificate', hasIt: hasDocType('deposit_certificate'), expiry: getDocExpiry('deposit_certificate') },
+                { title: 'Right to Rent Check', desc: 'Required before every tenancy · £20,000 fine per tenant', docType: 'right_to_rent', hasIt: rtrChecks.length > 0, expiry: rtrChecks[0]?.next_check_due || null },
+                { title: 'Inventory & Schedule of Condition', desc: 'Check-in report · Signed by tenant · Protects deposit claims', docType: 'inventory', hasIt: hasDocType('inventory'), expiry: getDocExpiry('inventory') },
               ]
 
               const items = [...propertyItems, ...tenantItems]
@@ -297,7 +301,20 @@ export default function PropertyDetail() {
                           {servingDoc === doc.id ? 'Serving…' : 'Serve to all'}
                         </button>
                       )}
-                      {!item.hasIt && (
+                      {!item.hasIt && item.docType === 'right_to_rent' && (
+                        <a
+                          href="https://www.gov.uk/landlords-immigration-check"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-600 transition-colors shadow-sm"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
+                          Run Check
+                        </a>
+                      )}
+                      {!item.hasIt && item.docType !== 'right_to_rent' && (
                         <Link to={`/documents/upload?property_id=${property.id}&document_type=${item.docType}`}>
                           <button className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-600 transition-colors shadow-sm">
                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">

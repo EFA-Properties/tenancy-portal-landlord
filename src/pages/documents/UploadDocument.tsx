@@ -173,10 +173,11 @@ export default function UploadDocument() {
     { value: 'epc', label: 'Energy Performance Certificate' },
     { value: 'gas_safety', label: 'Gas Safety Certificate' },
     { value: 'eicr', label: 'EICR (Electrical)' },
-    { value: 'inventory', label: 'Inventory' },
+    { value: 'inventory', label: 'Inventory & Schedule of Condition' },
     { value: 'deposit_certificate', label: 'Deposit Certificate' },
     { value: 'how_to_rent', label: 'How to Rent Guide' },
     { value: 'renter_rights', label: "Renter's Rights" },
+    { value: 'right_to_rent', label: 'Right to Rent Check' },
     { value: 'other', label: 'Other' },
   ]
 

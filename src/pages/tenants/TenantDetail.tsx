@@ -202,6 +202,8 @@ export default function TenantDetail() {
                   { key: 'how_to_rent', label: 'How to Rent Guide', docType: 'how_to_rent' },
                   { key: 'renter_rights', label: "Renter's Rights Bill", docType: 'renter_rights' },
                   { key: 'deposit_certificate', label: 'Deposit Protection Certificate', docType: 'deposit_certificate' },
+                  { key: 'right_to_rent', label: 'Right to Rent Check', docType: 'right_to_rent' },
+                  { key: 'inventory', label: 'Inventory & Schedule of Condition', docType: 'inventory' },
                 ].map((item) => {
                   const doc = tenantDocs.find((d: any) => d.document_type === item.docType)
                   const isComplete = !!doc
@@ -251,7 +253,17 @@ export default function TenantDetail() {
                           </p>
                         )}
                       </div>
-                      {!isComplete && (
+                      {!isComplete && item.docType === 'right_to_rent' && (
+                        <a
+                          href="https://www.gov.uk/landlords-immigration-check"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-teal-700 hover:bg-teal-600 rounded-md transition-colors"
+                        >
+                          Run Check
+                        </a>
+                      )}
+                      {!isComplete && item.docType !== 'right_to_rent' && (
                         <Link
                           to={`/documents/upload?tenancy_id=${tenancyId}&document_type=${item.docType}`}
                           className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-teal-700 hover:bg-teal-600 rounded-md transition-colors"
