@@ -30,6 +30,10 @@ export default function AddProperty() {
     company_number: '',
     registered_address: '',
   })
+  // HMO rooms
+  const [hmoRoomCount, setHmoRoomCount] = useState('')
+  const [hmoRoomLabels, setHmoRoomLabels] = useState<string[]>([])
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [epcLoading, setEpcLoading] = useState(false)
@@ -71,13 +75,50 @@ export default function AddProperty() {
     loadEntities()
   }, [user])
 
+  const isHmo = formData.is_hmo || formData.property_type === 'hmo'
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
     if (type === 'checkbox') {
-      setFormData((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }))
+      const checked = (e.target as HTMLInputElement).checked
+      setFormData((prev) => ({
+        ...prev,
+        [name]: checked,
+        // Auto-sync: if is_hmo checked, set property_type to hmo too
+        ...(name === 'is_hmo' && checked && !prev.property_type ? { property_type: 'hmo' } : {}),
+      }))
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }))
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        // Auto-sync: if property_type set to hmo, tick is_hmo
+        ...(name === 'property_type' && value === 'hmo' ? { is_hmo: true } : {}),
+        ...(name === 'property_type' && value !== 'hmo' ? { is_hmo: false } : {}),
+      }))
     }
+  }
+
+  const handleRoomCountChange = (value: string) => {
+    setHmoRoomCount(value)
+    const count = parseInt(value)
+    if (!isNaN(count) && count > 0 && count <= 50) {
+      // Preserve existing labels, extend or trim
+      setHmoRoomLabels((prev) => {
+        const newLabels = [...prev]
+        while (newLabels.length < count) {
+          newLabels.push(`Room ${newLabels.length + 1}`)
+        }
+        return newLabels.slice(0, count)
+      })
+    }
+  }
+
+  const updateRoomLabel = (index: number, label: string) => {
+    setHmoRoomLabels((prev) => {
+      const updated = [...prev]
+      updated[index] = label
+      return updated
+    })
   }
 
   const handleCompanyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -225,6 +266,25 @@ export default function AddProperty() {
         throw new Error(`Property creation failed: ${propertyError.message} (${propertyError.code})`)
       }
 
+      // Create HMO rooms if applicable
+      if (isHmo && hmoRoomLabels.length > 0 && property) {
+        const roomRows = hmoRoomLabels
+          .filter((label) => label.trim())
+          .map((label) => ({
+            property_id: property.id,
+            room_label: label.trim(),
+          }))
+
+        if (roomRows.length > 0) {
+          const { error: roomsError } = await supabase
+            .from('property_rooms')
+            .insert(roomRows)
+          if (roomsError) {
+            console.warn('Failed to create HMO rooms:', roomsError)
+          }
+        }
+      }
+
       // Auto-create EPC document record
       if (epcData && epcData.lmk_key && property) {
         const epcCertUrl = `https://find-energy-certificate.service.gov.uk/energy-certificate/${epcData.lmk_key}`
@@ -352,6 +412,46 @@ export default function AddProperty() {
                 Is this an HMO (House in Multiple Occupation)?
               </label>
             </div>
+
+            {/* HMO Rooms — shown when HMO is selected */}
+            {isHmo && (
+              <div className="p-5 bg-amber-50 border border-amber-200 rounded-xl space-y-4">
+                <div>
+                  <p className="text-sm font-medium text-amber-800 mb-1">HMO Room Setup</p>
+                  <p className="text-xs text-amber-600">
+                    How many lettable rooms does this HMO have? You can name each room (e.g., Room 1, The Attic, B2).
+                  </p>
+                </div>
+                <Input
+                  label="Number of Let Rooms"
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={hmoRoomCount}
+                  onChange={(e) => handleRoomCountChange(e.target.value)}
+                  placeholder="e.g., 5"
+                />
+                {hmoRoomLabels.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-amber-700 uppercase tracking-wider">
+                      Room names / numbers
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {hmoRoomLabels.map((label, i) => (
+                        <input
+                          key={i}
+                          type="text"
+                          value={label}
+                          onChange={(e) => updateRoomLabel(i, e.target.value)}
+                          className="px-3 py-2 rounded-md border border-amber-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600"
+                          placeholder={`Room ${i + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* EPC Lookup */}
             <div className="mt-8 pt-8 border-t border-slate-100">

@@ -289,6 +289,7 @@ export interface Property {
   gas_safety_expiry: string | null
   fire_risk_expiry: string | null
   pat_expiry: string | null
+  compliance_overrides: Record<string, string> | null
   created_at: string
   updated_at: string
 }

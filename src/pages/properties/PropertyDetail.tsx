@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useProperty, usePropertyTenancies, usePropertyDocuments, useDocumentAcknowledgements, usePropertyTenants } from '../../hooks/useProperties'
@@ -8,7 +8,16 @@ import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
+import { Input } from '../../components/ui/Input'
 import { formatDate, epcRatingColor } from '../../lib/utils'
+
+interface PropertyRoom {
+  id: string
+  property_id: string
+  room_label: string
+  floor: number | null
+  notes: string | null
+}
 
 function CheckCircle() {
   return (
@@ -39,6 +48,93 @@ export default function PropertyDetail() {
   const { data: acknowledgements = [] } = useDocumentAcknowledgements(docIds)
   const queryClient = useQueryClient()
   const [servingDoc, setServingDoc] = useState<string | null>(null)
+
+  // HMO Rooms
+  const [rooms, setRooms] = useState<PropertyRoom[]>([])
+  const [roomsLoading, setRoomsLoading] = useState(false)
+  const [newRoomLabel, setNewRoomLabel] = useState('')
+  const [addingRoom, setAddingRoom] = useState(false)
+  const [deletingRoom, setDeletingRoom] = useState<string | null>(null)
+
+  const isHmo = property ? (property.is_hmo || property.property_type === 'hmo') : false
+
+  const loadRooms = useCallback(async () => {
+    if (!id) return
+    setRoomsLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('property_rooms')
+        .select('*')
+        .eq('property_id', id)
+        .order('room_label')
+      if (error) throw error
+      setRooms(data || [])
+    } catch (err) {
+      console.error('Error loading rooms:', err)
+    } finally {
+      setRoomsLoading(false)
+    }
+  }, [id])
+
+  useEffect(() => {
+    if (isHmo && id) loadRooms()
+  }, [isHmo, id, loadRooms])
+
+  const addRoom = async () => {
+    if (!newRoomLabel.trim() || !id) return
+    setAddingRoom(true)
+    try {
+      const { error } = await supabase
+        .from('property_rooms')
+        .insert({ property_id: id, room_label: newRoomLabel.trim() })
+      if (error) throw error
+      setNewRoomLabel('')
+      await loadRooms()
+    } catch (err) {
+      console.error('Error adding room:', err)
+    } finally {
+      setAddingRoom(false)
+    }
+  }
+
+  const deleteRoom = async (roomId: string) => {
+    setDeletingRoom(roomId)
+    try {
+      const { error } = await supabase
+        .from('property_rooms')
+        .delete()
+        .eq('id', roomId)
+      if (error) throw error
+      await loadRooms()
+    } catch (err) {
+      console.error('Error deleting room:', err)
+    } finally {
+      setDeletingRoom(null)
+    }
+  }
+
+  // Compliance overrides (N/A)
+  const overrides: Record<string, string> = (property as any)?.compliance_overrides || {}
+
+  const toggleOverride = async (docType: string) => {
+    if (!id || !property) return
+    const currentOverrides = { ...(property as any).compliance_overrides || {} }
+
+    if (currentOverrides[docType] === 'na') {
+      delete currentOverrides[docType]
+    } else {
+      currentOverrides[docType] = 'na'
+    }
+
+    const { error } = await supabase
+      .from('properties')
+      .update({ compliance_overrides: currentOverrides })
+      .eq('id', id)
+
+    if (!error) {
+      queryClient.invalidateQueries({ queryKey: ['properties', id] })
+    }
+  }
 
   const serveToAllTenants = async (documentId: string) => {
     if (!propertyTenants.length) return
@@ -236,9 +332,15 @@ export default function PropertyDetail() {
                 const confirmedCount = acks.filter((a) => a.confirmed_at).length
                 const allServed = totalTenants > 0 && servedCount >= totalTenants
                 const allConfirmed = totalTenants > 0 && confirmedCount >= totalTenants
+                const isNa = overrides[item.docType] === 'na'
                 return (
-                  <div key={item.title} className="flex items-center gap-5 px-8 py-6">
-                    {item.hasIt ? <CheckCircle /> : <EmptyCircle />}
+                  <div key={item.title} className={`flex items-center gap-5 px-8 py-6 ${isNa ? 'opacity-50' : ''}`}>
+                    {isNa ? (
+                      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
+                        <circle cx="14" cy="14" r="13" stroke="#94a3b8" strokeWidth="1.5" />
+                        <text x="14" y="15.5" textAnchor="middle" fontSize="8" fontWeight="600" fill="#94a3b8">N/A</text>
+                      </svg>
+                    ) : item.hasIt ? <CheckCircle /> : <EmptyCircle />}
                     <div className="flex-1">
                       <p className="text-[15px] font-medium text-textPrimary">{item.title}</p>
                       <p className="text-sm text-textMuted mt-1">{item.desc}</p>
@@ -281,6 +383,15 @@ export default function PropertyDetail() {
                       )}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
+                      {isNa ? (
+                        <button
+                          onClick={() => toggleOverride(item.docType)}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-500 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 transition-colors"
+                        >
+                          Undo N/A
+                        </button>
+                      ) : (
+                        <>
                       {item.hasIt && item.expiry && (
                         <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-lg">
                           Valid to {formatDate(item.expiry)}
@@ -324,6 +435,18 @@ export default function PropertyDetail() {
                           </button>
                         </Link>
                       )}
+                      {/* Mark N/A — available for items that aren't uploaded yet */}
+                      {!item.hasIt && (
+                        <button
+                          onClick={() => toggleOverride(item.docType)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          title="Mark as not applicable for this property"
+                        >
+                          N/A
+                        </button>
+                      )}
+                        </>
+                      )}
                     </div>
                   </div>
                 )
@@ -340,6 +463,90 @@ export default function PropertyDetail() {
             })()}
           </div>
         </Card>
+
+        {/* HMO Rooms — only shown if property is HMO */}
+        {isHmo && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-amber-700 uppercase tracking-wider mb-1">HMO</p>
+                  <h2 className="text-lg font-fraunces font-semibold text-slate-900">
+                    Rooms
+                  </h2>
+                </div>
+                <Badge variant="secondary" size="sm">{rooms.length} room{rooms.length !== 1 ? 's' : ''}</Badge>
+              </div>
+            </CardHeader>
+            <CardBody>
+              {roomsLoading ? (
+                <div className="flex items-center justify-center h-16">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600" />
+                </div>
+              ) : (
+                <>
+                  {rooms.length > 0 && (
+                    <div className="space-y-2 mb-4">
+                      {rooms.map((room) => (
+                        <div
+                          key={room.id}
+                          className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center text-sm font-bold">
+                              {room.room_label.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-sm font-medium text-slate-900">{room.room_label}</span>
+                            {room.floor != null && (
+                              <span className="text-xs text-slate-400">Floor {room.floor}</span>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => deleteRoom(room.id)}
+                            disabled={deletingRoom === room.id}
+                            className="text-xs text-red-500 hover:text-red-700 font-medium disabled:opacity-50"
+                          >
+                            {deletingRoom === room.id ? 'Removing...' : 'Remove'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Room name or number (e.g. Room 1, The Attic, B2)"
+                        value={newRoomLabel}
+                        onChange={(e) => setNewRoomLabel(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            addRoom()
+                          }
+                        }}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={addRoom}
+                      loading={addingRoom}
+                      disabled={!newRoomLabel.trim()}
+                    >
+                      Add Room
+                    </Button>
+                  </div>
+
+                  {rooms.length === 0 && (
+                    <p className="text-sm text-slate-400 mt-3">
+                      Add rooms so you can assign tenants to specific rooms when creating tenancies.
+                    </p>
+                  )}
+                </>
+              )}
+            </CardBody>
+          </Card>
+        )}
 
         {/* Tenancies */}
         <Card className="lg:col-span-2">

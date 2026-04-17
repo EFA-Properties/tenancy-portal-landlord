@@ -2,26 +2,34 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
+import { useProperties } from '../../hooks/useProperties'
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
+import type { Property } from '../../types/database'
+
+interface PropertyRoom {
+  id: string
+  room_label: string
+  floor: number | null
+  notes: string | null
+}
 
 export default function AddTenancy() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { data: properties = [], isLoading: propertiesLoading } = useProperties()
 
-  // Property address fields (inline entry)
-  const [addressData, setAddressData] = useState({
-    address_line1: '',
-    address_line2: '',
-    town: '',
-    county: '',
-    postcode: '',
-    property_type: '',
-    is_hmo: false,
-  })
+  // Property selection
+  const [propertyId, setPropertyId] = useState('')
+  const [selectedProperty, setSelectedProperty] = useState<(Property & { legal_entities: any }) | null>(null)
+
+  // HMO rooms
+  const [rooms, setRooms] = useState<PropertyRoom[]>([])
+  const [roomId, setRoomId] = useState('')
+  const [roomsLoading, setRoomsLoading] = useState(false)
 
   // Tenancy fields
   const [formData, setFormData] = useState({
@@ -39,31 +47,14 @@ export default function AddTenancy() {
   const [tenantId, setTenantId] = useState('')
   const [tenants, setTenants] = useState<Array<{ id: string; full_name: string; email: string }>>([])
 
-  // Ownership
-  const [ownership, setOwnership] = useState<'individual' | 'company'>('individual')
-  const [companyData, setCompanyData] = useState({
-    name: '',
-    company_number: '',
-    registered_address: '',
-  })
-
-  // EPC
-  const [epcLoading, setEpcLoading] = useState(false)
-  const [epcResults, setEpcResults] = useState<any[]>([])
-  const [epcData, setEpcData] = useState<{
-    epc_rating: string
-    epc_score: number | null
-    epc_expiry: string
-    lmk_key: string | null
-  } | null>(null)
-
   // UI state
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [loadingData, setLoadingData] = useState(true)
+  const [loadingTenants, setLoadingTenants] = useState(true)
 
+  // Load tenants
   useEffect(() => {
-    const loadData = async () => {
+    const loadTenants = async () => {
       if (!user) return
       try {
         const { data: tenantsData } = await supabase
@@ -73,18 +64,47 @@ export default function AddTenancy() {
       } catch (err) {
         console.error('Error loading tenants:', err)
       } finally {
-        setLoadingData(false)
+        setLoadingTenants(false)
       }
     }
-    loadData()
+    loadTenants()
   }, [user])
 
-  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target
-    if (type === 'checkbox') {
-      setAddressData((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }))
+  // When property selection changes, update selected property and load rooms if HMO
+  useEffect(() => {
+    if (!propertyId) {
+      setSelectedProperty(null)
+      setRooms([])
+      setRoomId('')
+      return
+    }
+
+    const prop = properties.find((p) => p.id === propertyId) || null
+    setSelectedProperty(prop)
+    setRoomId('')
+
+    if (prop && (prop.is_hmo || prop.property_type === 'hmo')) {
+      loadRooms(propertyId)
     } else {
-      setAddressData((prev) => ({ ...prev, [name]: value }))
+      setRooms([])
+    }
+  }, [propertyId, properties])
+
+  const loadRooms = async (propId: string) => {
+    setRoomsLoading(true)
+    try {
+      const { data, error: roomsError } = await supabase
+        .from('property_rooms')
+        .select('id, room_label, floor, notes')
+        .eq('property_id', propId)
+        .order('room_label')
+
+      if (roomsError) throw roomsError
+      setRooms(data || [])
+    } catch (err) {
+      console.error('Error loading rooms:', err)
+    } finally {
+      setRoomsLoading(false)
     }
   }
 
@@ -93,59 +113,9 @@ export default function AddTenancy() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleCompanyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setCompanyData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleEpcLookup = async () => {
-    if (!addressData.postcode) {
-      setError('Enter a postcode first')
-      return
-    }
-    setEpcLoading(true)
-    setError(null)
-    setEpcResults([])
-    setEpcData(null)
-    try {
-      const res = await fetch(`/api/epc-lookup?postcode=${encodeURIComponent(addressData.postcode)}`)
-      const data = await res.json()
-      if (data.error) {
-        setError(data.error)
-        return
-      }
-      if (data.results && data.results.length > 0) {
-        setEpcResults(data.results)
-      } else {
-        setError('No EPC records found for this postcode')
-      }
-    } catch (err) {
-      setError('Failed to look up EPC data')
-    } finally {
-      setEpcLoading(false)
-    }
-  }
-
-  const selectEpc = (epc: any) => {
-    setEpcData({
-      epc_rating: epc.current_rating || '',
-      epc_score: epc.current_score ? parseInt(epc.current_score) : null,
-      epc_expiry: epc.expiry_date || '',
-      lmk_key: epc.lmk_key || null,
-    })
-    // Auto-fill address from selected EPC if address_line1 is empty
-    if (!addressData.address_line1 && epc.address) {
-      const parts = epc.address.split(',').map((p: string) => p.trim())
-      setAddressData((prev) => ({
-        ...prev,
-        address_line1: parts[0] || prev.address_line1,
-        address_line2: parts.length > 2 ? parts[1] : prev.address_line2,
-        town: parts[parts.length - 1] || prev.town,
-        property_type: epc.property_type?.toLowerCase() || prev.property_type,
-      }))
-    }
-    setEpcResults([])
-  }
+  const isHmo = selectedProperty
+    ? selectedProperty.is_hmo || selectedProperty.property_type === 'hmo'
+    : false
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -154,8 +124,18 @@ export default function AddTenancy() {
       return
     }
 
-    if (!addressData.address_line1 || !addressData.town || !addressData.postcode) {
-      setError('Property address, town, and postcode are required')
+    if (!propertyId) {
+      setError('Please select a property')
+      return
+    }
+
+    if (!formData.start_date) {
+      setError('Start date is required')
+      return
+    }
+
+    if (!formData.monthly_rent) {
+      setError('Monthly rent is required')
       return
     }
 
@@ -163,98 +143,22 @@ export default function AddTenancy() {
     setError(null)
 
     try {
-      // Get or create landlord record
-      let { data: landlord } = await supabase
+      // Get landlord record
+      const { data: landlord } = await supabase
         .from('landlords')
         .select('id')
         .eq('auth_user_id', user.id)
         .single()
 
-      if (!landlord) {
-        const { data: newLandlord, error: landlordError } = await supabase
-          .from('landlords')
-          .insert({
-            auth_user_id: user.id,
-            email: user.email || '',
-            full_name: user.user_metadata?.full_name || '',
-          })
-          .select()
-          .single()
+      if (!landlord) throw new Error('Landlord record not found')
 
-        if (landlordError) throw landlordError
-        landlord = newLandlord
-      }
-
-      if (!landlord) throw new Error('Landlord not found')
-
-      let legal_entity_id: string | null = null
-
-      // Create legal entity if company
-      if (ownership === 'company') {
-        if (!companyData.name || !companyData.company_number) {
-          setError('Company name and number are required')
-          setLoading(false)
-          return
-        }
-
-        const { data: entity, error: entityError } = await supabase
-          .from('legal_entities')
-          .insert({
-            landlord_id: landlord.id,
-            name: companyData.name,
-            company_number: companyData.company_number,
-            registered_address: companyData.registered_address,
-            is_company: true,
-          })
-          .select()
-          .single()
-
-        if (entityError) throw entityError
-        legal_entity_id = entity.id
-      }
-
-      // Create property from inline address
-      const propertyPayload = {
-        landlord_id: landlord.id,
-        legal_entity_id,
-        address_line1: addressData.address_line1,
-        address_line2: addressData.address_line2 || null,
-        town: addressData.town,
-        county: addressData.county || null,
-        postcode: addressData.postcode,
-        property_type: addressData.property_type || null,
-        is_hmo: addressData.is_hmo,
-        ...(epcData
-          ? {
-              epc_rating: epcData.epc_rating,
-              epc_score: epcData.epc_score,
-              epc_expiry: epcData.epc_expiry,
-              uprn: epcData.lmk_key || null,
-            }
-          : {}),
-      }
-
-      console.log('Creating property with:', propertyPayload)
-      const { data: property, error: propertyError } = await supabase
-        .from('properties')
-        .insert(propertyPayload)
-        .select()
-        .single()
-
-      if (propertyError) {
-        console.error('Property creation failed:', propertyError)
-        throw new Error(`Property creation failed: ${propertyError.message} (${propertyError.code})`)
-      }
-
-      console.log('Property created:', property.id)
-
-      // Create tenancy linked to the new property
+      // Create tenancy linked to the selected property
       const tenancyPayload = {
         landlord_id: landlord.id,
-        property_id: property.id,
+        property_id: propertyId,
         tenant_id: tenantId || null,
         unit_id: null,
-        legal_entity_id,
+        legal_entity_id: selectedProperty?.legal_entity_id || null,
         tenancy_type: formData.tenancy_type,
         start_date: formData.start_date,
         end_date: formData.tenancy_type === 'fixed_term' ? formData.end_date : null,
@@ -265,14 +169,32 @@ export default function AddTenancy() {
         deposit_scheme_ref: formData.deposit_scheme_ref || null,
       }
 
-      console.log('Creating tenancy with:', tenancyPayload)
-      const { error: tenancyError } = await supabase
+      const { data: tenancy, error: tenancyError } = await supabase
         .from('tenancies')
         .insert(tenancyPayload)
+        .select()
+        .single()
 
-      if (tenancyError) {
-        console.error('Tenancy creation failed:', tenancyError)
-        throw new Error(`Tenancy creation failed: ${tenancyError.message} (${tenancyError.code})`)
+      if (tenancyError) throw new Error(`Tenancy creation failed: ${tenancyError.message}`)
+
+      // If tenant was selected, also create the tenancy_tenants link (with room if HMO)
+      if (tenantId && tenancy) {
+        const linkPayload: Record<string, any> = {
+          tenancy_id: tenancy.id,
+          tenant_id: tenantId,
+          status: 'active',
+        }
+        if (isHmo && roomId) {
+          linkPayload.room_id = roomId
+        }
+
+        const { error: linkError } = await supabase
+          .from('tenancy_tenants')
+          .insert(linkPayload)
+
+        if (linkError) {
+          console.error('Warning: tenancy created but tenant link failed:', linkError)
+        }
       }
 
       navigate('/tenancies')
@@ -283,13 +205,6 @@ export default function AddTenancy() {
       setLoading(false)
     }
   }
-
-  const propertyTypes = [
-    { value: 'btl', label: 'Buy to Let' },
-    { value: 'hmo', label: 'HMO' },
-    { value: 'commercial', label: 'Commercial' },
-    { value: 'holiday_let', label: 'Holiday Let' },
-  ]
 
   const tenancyTypes = [
     { value: 'periodic', label: 'Periodic' },
@@ -302,7 +217,7 @@ export default function AddTenancy() {
     { value: 'mydeposits', label: 'MyDeposits' },
   ]
 
-  if (loadingData) {
+  if (propertiesLoading || loadingTenants) {
     return (
       <div>
         <Breadcrumb
@@ -314,7 +229,9 @@ export default function AddTenancy() {
         <h1 className="text-3xl font-fraunces font-bold text-slate-900 mb-8">
           Add New Tenancy
         </h1>
-        <p>Loading...</p>
+        <div className="flex items-center justify-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
+        </div>
       </div>
     )
   }
@@ -332,335 +249,239 @@ export default function AddTenancy() {
         Add New Tenancy
       </h1>
 
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-slate-900">
-            Property Address
-          </h2>
-        </CardHeader>
-        <CardBody>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="p-4 bg-red-50 border border-red-600 rounded-lg text-red-600">
-                {error}
-              </div>
-            )}
+      <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-600 rounded-lg text-red-600">
+            {error}
+          </div>
+        )}
 
-            {/* Property Address Section */}
-            <Input
-              label="Address Line 1"
-              name="address_line1"
-              value={addressData.address_line1}
-              onChange={handleAddressChange}
-              placeholder="Street address"
-              required
-            />
-            <Input
-              label="Address Line 2"
-              name="address_line2"
-              value={addressData.address_line2}
-              onChange={handleAddressChange}
-              placeholder="Apartment, suite, etc. (optional)"
-            />
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Town"
-                name="town"
-                value={addressData.town}
-                onChange={handleAddressChange}
-                placeholder="Town"
-                required
-              />
-              <Input
-                label="County"
-                name="county"
-                value={addressData.county}
-                onChange={handleAddressChange}
-                placeholder="County"
-              />
-            </div>
-            <Input
-              label="Postcode"
-              name="postcode"
-              value={addressData.postcode}
-              onChange={handleAddressChange}
-              placeholder="Postcode"
-              required
-            />
-            <Select
-              label="Property Type"
-              name="property_type"
-              value={addressData.property_type}
-              onChange={handleAddressChange}
-              options={propertyTypes}
-              required
-            />
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="is_hmo"
-                checked={addressData.is_hmo}
-                onChange={handleAddressChange}
-                className="w-4 h-4 rounded border-slate-200"
-              />
-              <label className="ml-2 text-sm font-medium text-slate-900">
-                Is this an HMO (House in Multiple Occupation)?
-              </label>
-            </div>
+        {/* Property Selection */}
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-semibold text-slate-900">Property</h2>
+          </CardHeader>
+          <CardBody className="space-y-4">
+            {properties.length > 0 ? (
+              <>
+                <Select
+                  label="Select Property"
+                  name="property_id"
+                  value={propertyId}
+                  onChange={(e) => setPropertyId(e.target.value)}
+                  options={properties.map((p) => ({
+                    value: p.id,
+                    label: `${p.address_line1}, ${p.town} (${p.postcode})`,
+                  }))}
+                  required
+                />
 
-            {/* EPC Lookup Section */}
-            <div className="mt-4 pt-4 border-t border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">EPC Data</h3>
-              <div className="flex gap-3 items-end mb-4">
-                <div className="flex-1">
-                  <p className="text-sm text-slate-600 mb-2">
-                    Look up the latest EPC certificate using the postcode above.
-                  </p>
-                </div>
+                {selectedProperty && (
+                  <div className="p-3 bg-slate-50 rounded-lg text-sm text-slate-600 space-y-1">
+                    <p>
+                      <span className="font-medium text-slate-700">Type:</span>{' '}
+                      {selectedProperty.property_type === 'btl' ? 'Buy to Let' :
+                       selectedProperty.property_type === 'hmo' ? 'HMO' :
+                       selectedProperty.property_type === 'commercial' ? 'Commercial' :
+                       selectedProperty.property_type === 'holiday_let' ? 'Holiday Let' :
+                       selectedProperty.property_type || '—'}
+                    </p>
+                    {selectedProperty.epc_rating && (
+                      <p>
+                        <span className="font-medium text-slate-700">EPC:</span>{' '}
+                        {selectedProperty.epc_rating}
+                        {selectedProperty.epc_expiry && ` (expires ${new Date(selectedProperty.epc_expiry).toLocaleDateString('en-GB')})`}
+                      </p>
+                    )}
+                    {selectedProperty.legal_entities && (
+                      <p>
+                        <span className="font-medium text-slate-700">Owned by:</span>{' '}
+                        {selectedProperty.legal_entities.name} ({selectedProperty.legal_entities.company_number})
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* HMO Room Selection */}
+                {isHmo && (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg space-y-3">
+                    <p className="text-sm font-medium text-amber-800">
+                      This is an HMO property — select which room the tenant will occupy.
+                    </p>
+                    {roomsLoading ? (
+                      <p className="text-sm text-amber-600">Loading rooms...</p>
+                    ) : rooms.length > 0 ? (
+                      <Select
+                        label="Room"
+                        name="room_id"
+                        value={roomId}
+                        onChange={(e) => setRoomId(e.target.value)}
+                        options={rooms.map((r) => ({
+                          value: r.id,
+                          label: r.floor != null ? `${r.room_label} (Floor ${r.floor})` : r.room_label,
+                        }))}
+                      />
+                    ) : (
+                      <p className="text-sm text-amber-600">
+                        No rooms set up for this property yet.{' '}
+                        <a
+                          href={`/properties/${propertyId}`}
+                          className="text-teal-700 hover:underline font-medium"
+                        >
+                          Add rooms on the property page
+                        </a>{' '}
+                        first, or continue without a room assignment.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-sm text-slate-600 mb-3">
+                  You haven't added any properties yet.
+                </p>
                 <Button
                   type="button"
                   variant="outline"
-                  loading={epcLoading}
-                  onClick={handleEpcLookup}
+                  onClick={() => navigate('/properties/add')}
                 >
-                  Lookup EPC
+                  Add Your First Property
                 </Button>
               </div>
+            )}
+          </CardBody>
+        </Card>
 
-              {epcResults.length > 0 && (
-                <div className="space-y-2 max-h-64 overflow-y-auto border border-slate-200 rounded-lg p-3">
-                  <p className="text-sm font-medium text-slate-900 mb-2">
-                    Select the matching property ({epcResults.length} results):
-                  </p>
-                  {epcResults.map((epc, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => selectEpc(epc)}
-                      className="w-full text-left p-3 border border-slate-200 rounded-lg hover:bg-teal-50 hover:border-teal-300 transition-colors"
-                    >
-                      <p className="text-sm font-medium text-slate-900">{epc.address}</p>
-                      <div className="flex gap-4 mt-1 text-xs text-slate-400">
-                        <span>Rating: <strong className="text-slate-900">{epc.current_rating}</strong></span>
-                        <span>Score: {epc.current_score}</span>
-                        <span>Expires: {epc.expiry_date ? new Date(epc.expiry_date).toLocaleDateString('en-GB') : '—'}</span>
-                        <span>Type: {epc.property_type}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+        {/* Tenant Selection */}
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-semibold text-slate-900">Tenant</h2>
+          </CardHeader>
+          <CardBody>
+            {tenants.length > 0 ? (
+              <Select
+                label="Select Tenant (optional)"
+                name="tenant_id"
+                value={tenantId}
+                onChange={(e) => setTenantId(e.target.value)}
+                options={tenants.map((t) => ({
+                  value: t.id,
+                  label: `${t.full_name} (${t.email})`,
+                }))}
+              />
+            ) : (
+              <p className="text-sm text-slate-600">
+                No tenants yet.{' '}
+                <a href="/tenants/invite" className="text-teal-700 hover:underline font-medium">
+                  Invite a tenant
+                </a>{' '}
+                first, or you can add a tenant after creating this tenancy.
+              </p>
+            )}
+          </CardBody>
+        </Card>
 
-              {epcData && (
-                <div className="p-4 bg-green-50 border border-green-600 rounded-lg mt-3">
-                  <p className="text-sm font-medium text-green-600 mb-2">EPC data selected:</p>
-                  <div className="grid grid-cols-3 gap-4 text-sm text-green-600">
-                    <div>
-                      <span className="font-medium">Rating:</span> {epcData.epc_rating}
-                    </div>
-                    <div>
-                      <span className="font-medium">Score:</span> {epcData.epc_score}
-                    </div>
-                    <div>
-                      <span className="font-medium">Expires:</span> {epcData.epc_expiry ? new Date(epcData.epc_expiry).toLocaleDateString('en-GB') : '—'}
-                    </div>
-                  </div>
-                  {epcData.lmk_key && (
-                    <a
-                      href={`https://find-energy-certificate.service.gov.uk/energy-certificate/${epcData.lmk_key}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block mt-3 text-sm font-medium text-teal-700 hover:text-teal-800 underline"
-                    >
-                      View Full EPC Certificate
-                    </a>
-                  )}
-                </div>
-              )}
-            </div>
+        {/* Tenancy Details */}
+        <Card>
+          <CardHeader>
+            <h2 className="text-lg font-semibold text-slate-900">Tenancy Details</h2>
+          </CardHeader>
+          <CardBody className="space-y-6">
+            <Select
+              label="Tenancy Type"
+              name="tenancy_type"
+              value={formData.tenancy_type}
+              onChange={handleChange}
+              options={tenancyTypes}
+              required
+            />
 
-            {/* Ownership Section */}
-            <div className="mt-4 pt-4 border-t border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Ownership</h3>
-              <div className="space-y-3 mb-6">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="ownership"
-                    value="individual"
-                    checked={ownership === 'individual'}
-                    onChange={() => setOwnership('individual')}
-                    className="w-4 h-4"
-                  />
-                  <span className="ml-2 text-sm font-medium text-slate-900">Individual</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="ownership"
-                    value="company"
-                    checked={ownership === 'company'}
-                    onChange={() => setOwnership('company')}
-                    className="w-4 h-4"
-                  />
-                  <span className="ml-2 text-sm font-medium text-slate-900">Limited Company</span>
-                </label>
-              </div>
+            <Input
+              label="Start Date"
+              name="start_date"
+              type="date"
+              value={formData.start_date}
+              onChange={handleChange}
+              required
+            />
 
-              {ownership === 'company' && (
-                <div className="space-y-4 p-4 bg-slate-100 rounded-lg">
-                  <Input
-                    label="Company Name"
-                    name="name"
-                    value={companyData.name}
-                    onChange={handleCompanyChange}
-                    placeholder="e.g., Acme Ltd"
-                    required
-                  />
-                  <Input
-                    label="Company Number"
-                    name="company_number"
-                    value={companyData.company_number}
-                    onChange={handleCompanyChange}
-                    placeholder="e.g., 12345678"
-                    required
-                  />
-                  <Input
-                    label="Registered Address"
-                    name="registered_address"
-                    value={companyData.registered_address}
-                    onChange={handleCompanyChange}
-                    placeholder="Company registered address"
-                  />
-                </div>
-              )}
-            </div>
+            {formData.tenancy_type === 'fixed_term' && (
+              <Input
+                label="End Date"
+                name="end_date"
+                type="date"
+                value={formData.end_date}
+                onChange={handleChange}
+                required
+              />
+            )}
 
-            {/* Tenant Selection */}
-            <div className="mt-4 pt-4 border-t border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Tenant</h3>
-              {tenants.length > 0 ? (
-                <Select
-                  label="Select Tenant"
-                  name="tenant_id"
-                  value={tenantId}
-                  onChange={(e) => setTenantId(e.target.value)}
-                  options={tenants.map((t) => ({
-                    value: t.id,
-                    label: `${t.full_name} (${t.email})`,
-                  }))}
-                />
-              ) : (
-                <p className="text-sm text-slate-600">
-                  No tenants yet.{' '}
-                  <a href="/tenants/invite" className="text-teal-700 hover:underline">
-                    Invite a tenant
-                  </a>{' '}
-                  first, or you can add a tenant after creating this tenancy.
-                </p>
-              )}
-            </div>
+            <Input
+              label="Monthly Rent (&pound;)"
+              name="monthly_rent"
+              type="number"
+              step="0.01"
+              value={formData.monthly_rent}
+              onChange={handleChange}
+              placeholder="Enter monthly rent"
+              required
+            />
 
-            {/* Tenancy Details Section */}
-            <div className="mt-4 pt-4 border-t border-slate-200">
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">Tenancy Details</h3>
+            <Input
+              label="Rent Due Day (1-28)"
+              name="rent_due_day"
+              type="number"
+              min="1"
+              max="28"
+              value={formData.rent_due_day}
+              onChange={handleChange}
+            />
 
-              <div className="space-y-6">
-                <Select
-                  label="Tenancy Type"
-                  name="tenancy_type"
-                  value={formData.tenancy_type}
-                  onChange={handleChange}
-                  options={tenancyTypes}
-                  required
-                />
+            <Input
+              label="Deposit Amount (&pound;)"
+              name="deposit_amount"
+              type="number"
+              step="0.01"
+              value={formData.deposit_amount}
+              onChange={handleChange}
+              placeholder="Optional"
+            />
 
-                <Input
-                  label="Start Date"
-                  name="start_date"
-                  type="date"
-                  value={formData.start_date}
-                  onChange={handleChange}
-                  required
-                />
+            <Select
+              label="Deposit Scheme"
+              name="deposit_scheme"
+              value={formData.deposit_scheme}
+              onChange={handleChange}
+              options={depositSchemes}
+            />
 
-                {formData.tenancy_type === 'fixed_term' && (
-                  <Input
-                    label="End Date"
-                    name="end_date"
-                    type="date"
-                    value={formData.end_date}
-                    onChange={handleChange}
-                    required
-                  />
-                )}
+            {formData.deposit_scheme && (
+              <Input
+                label="Deposit Scheme Reference"
+                name="deposit_scheme_ref"
+                value={formData.deposit_scheme_ref}
+                onChange={handleChange}
+                placeholder="e.g., scheme reference number"
+              />
+            )}
+          </CardBody>
+        </Card>
 
-                <Input
-                  label="Monthly Rent (£)"
-                  name="monthly_rent"
-                  type="number"
-                  step="0.01"
-                  value={formData.monthly_rent}
-                  onChange={handleChange}
-                  placeholder="Enter monthly rent"
-                  required
-                />
-
-                <Input
-                  label="Rent Due Day (1-28)"
-                  name="rent_due_day"
-                  type="number"
-                  min="1"
-                  max="28"
-                  value={formData.rent_due_day}
-                  onChange={handleChange}
-                />
-
-                <Input
-                  label="Deposit Amount (£)"
-                  name="deposit_amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.deposit_amount}
-                  onChange={handleChange}
-                  placeholder="Optional"
-                />
-
-                <Select
-                  label="Deposit Scheme"
-                  name="deposit_scheme"
-                  value={formData.deposit_scheme}
-                  onChange={handleChange}
-                  options={depositSchemes}
-                />
-
-                {formData.deposit_scheme && (
-                  <Input
-                    label="Deposit Scheme Reference"
-                    name="deposit_scheme_ref"
-                    value={formData.deposit_scheme_ref}
-                    onChange={handleChange}
-                    placeholder="e.g., scheme reference number"
-                  />
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <Button type="submit" loading={loading}>
-                Create Tenancy
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/tenancies')}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </CardBody>
-      </Card>
+        {/* Actions */}
+        <div className="flex gap-4">
+          <Button type="submit" loading={loading} disabled={!propertyId}>
+            Create Tenancy
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate('/tenancies')}
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
     </div>
   )
 }
