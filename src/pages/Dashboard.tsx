@@ -155,19 +155,16 @@ export default function Dashboard() {
                 </h2>
               </div>
               {actions.length > 0 && (
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                  {(() => {
-                    const expired = actions.filter((a) => a.category === 'expiry' && a.priority === 'urgent').length
-                    const expiring = actions.filter((a) => a.category === 'expiry' && a.priority !== 'urgent').length
-                    const missing = actions.filter((a) => a.category === 'missing_doc').length
-                    const tenantActions = actions.filter((a) => a.category === 'tenant').length
-                    const parts: string[] = []
-                    if (expired) parts.push(`${expired} expired`)
-                    if (expiring) parts.push(`${expiring} expiring`)
-                    if (missing) parts.push(`${missing} missing doc${missing !== 1 ? 's' : ''}`)
-                    if (tenantActions) parts.push(`${tenantActions} tenant${tenantActions !== 1 ? 's' : ''}`)
-                    return <span>{parts.join(' · ')}</span>
-                  })()}
+                <div className="flex items-center gap-2">
+                  {urgentActions.length > 0 && (
+                    <Badge variant="destructive">{urgentActions.length} URGENT</Badge>
+                  )}
+                  {warningActions.length > 0 && (
+                    <Badge variant="warning">{warningActions.length} WARNING</Badge>
+                  )}
+                  {infoActions.length > 0 && (
+                    <Badge variant="default">{infoActions.length} INFO</Badge>
+                  )}
                 </div>
               )}
             </div>
