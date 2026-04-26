@@ -6,7 +6,7 @@ import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { EmptyState } from '../../components/ui/EmptyState'
-import { formatDate } from '../../lib/utils'
+import { formatDate, formatDateTime } from '../../lib/utils'
 import { FeatureGate } from '../../components/FeatureGate'
 
 const docTypeLabels: Record<string, string> = {
@@ -169,71 +169,115 @@ export default function DocumentsList() {
                 </Badge>
               </div>
             </CardHeader>
-            <div className="divide-y divide-border">
-              {(docs as any[]).map((doc: any) => {
-                const isLandlordOnly = landlordOnlyTypes.has(doc.document_type)
-                const isTenantVisible = tenantVisibleTypes.has(doc.document_type)
-                return (
-                  <div
-                    key={doc.id}
-                    className="flex items-center gap-4 px-8 py-5 hover:bg-slate-50/50 transition-colors"
-                  >
-                    <CheckCircle />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-body font-medium text-textPrimary">
-                        {doc.title || docTypeLabels[doc.document_type] || doc.file_name || 'Untitled'}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className="text-small text-textMuted">
-                          Uploaded {formatDate(doc.uploaded_at)}
-                          {doc.valid_to ? ` · Valid to ${formatDate(doc.valid_to)}` : ''}
-                        </span>
-                        {doc.served_at && (
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-pill">
-                            Served {formatDate(doc.served_at)}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-slate-50/50">
+                    <th className="text-left px-6 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Document</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Uploaded</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Tenant Accepted</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Valid To</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Status</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {(docs as any[]).map((doc: any) => {
+                    const isLandlordOnly = landlordOnlyTypes.has(doc.document_type)
+                    const isTenantVisible = tenantVisibleTypes.has(doc.document_type)
+
+                    // Determine status
+                    let statusLabel = 'Uploaded'
+                    let statusColor = 'text-textMuted bg-slate-100'
+                    if (doc.tenant_confirmed_at) {
+                      statusLabel = 'Accepted'
+                      statusColor = 'text-success bg-successLight'
+                    } else if (doc.tenant_opened_at) {
+                      statusLabel = 'Viewed'
+                      statusColor = 'text-blue-700 bg-blue-50'
+                    } else if (doc.served_at) {
+                      statusLabel = 'Served'
+                      statusColor = 'text-teal-700 bg-teal-50'
+                    }
+
+                    return (
+                      <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
+                        {/* Document name & type */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <CheckCircle />
+                            <div className="min-w-0">
+                              <p className="font-medium text-textPrimary truncate">
+                                {doc.title || docTypeLabels[doc.document_type] || doc.file_name || 'Untitled'}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-textMuted">
+                                  {docTypeLabels[doc.document_type] || doc.document_type}
+                                </span>
+                                {isTenantVisible && (
+                                  <span className="text-[9px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded-pill">
+                                    Tenant
+                                  </span>
+                                )}
+                                {isLandlordOnly && (
+                                  <span className="text-[9px] font-mono uppercase tracking-wider text-textMuted bg-surface px-1.5 py-0.5 rounded-pill">
+                                    Private
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Uploaded date/time */}
+                        <td className="px-4 py-4 text-textSecondary whitespace-nowrap">
+                          {formatDateTime(doc.uploaded_at)}
+                        </td>
+
+                        {/* Tenant accepted date/time */}
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {doc.tenant_confirmed_at ? (
+                            <span className="text-success font-medium">{formatDateTime(doc.tenant_confirmed_at)}</span>
+                          ) : (
+                            <span className="text-textMuted">—</span>
+                          )}
+                        </td>
+
+                        {/* Valid to */}
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {doc.valid_to ? (
+                            <span className={new Date(doc.valid_to) < new Date() ? 'text-error font-medium' : 'text-textSecondary'}>
+                              {formatDate(doc.valid_to)}
+                              {new Date(doc.valid_to) < new Date() && ' (expired)'}
+                            </span>
+                          ) : (
+                            <span className="text-textMuted">—</span>
+                          )}
+                        </td>
+
+                        {/* Status badge */}
+                        <td className="px-4 py-4">
+                          <span className={`text-[10px] font-mono font-medium uppercase tracking-wider px-2.5 py-1 rounded-pill ${statusColor}`}>
+                            {statusLabel}
                           </span>
-                        )}
-                        {doc.tenant_opened_at && (
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded-pill">
-                            Viewed {formatDate(doc.tenant_opened_at)}
-                          </span>
-                        )}
-                        {doc.tenant_confirmed_at && (
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-success bg-successLight px-2 py-0.5 rounded-pill">
-                            Accepted {formatDate(doc.tenant_confirmed_at)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <Badge variant="secondary" size="sm">
-                        {docTypeLabels[doc.document_type] || doc.document_type}
-                      </Badge>
-                      {isTenantVisible && (
-                        <span className="text-[10px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-pill">
-                          Tenant sees
-                        </span>
-                      )}
-                      {isLandlordOnly && (
-                        <span className="text-[10px] font-mono uppercase tracking-wider text-textMuted bg-surface px-2 py-0.5 rounded-pill">
-                          Landlord only
-                        </span>
-                      )}
-                      <Badge variant={doc.scope === 'property' ? 'outline' : 'default'} size="sm">
-                        {doc.scope === 'property' ? 'Property' : 'Tenancy'}
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDownload(doc)}
-                        loading={downloadingId === doc.id}
-                      >
-                        {doc.file_path?.startsWith('http') ? 'View' : 'Download'}
-                      </Button>
-                    </div>
-                  </div>
-                )
-              })}
+                        </td>
+
+                        {/* Action */}
+                        <td className="px-4 py-4 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDownload(doc)}
+                            loading={downloadingId === doc.id}
+                          >
+                            {doc.file_path?.startsWith('http') ? 'View' : 'Download'}
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </Card>
         ))

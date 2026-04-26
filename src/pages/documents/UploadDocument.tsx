@@ -21,12 +21,30 @@ export default function UploadDocument() {
   const prefilledTenancyId = searchParams.get('tenancy_id') || ''
   const prefilledDocType = searchParams.get('document_type') || ''
 
+  // Auto-title lookup for known doc types
+  const knownDocTitles: Record<string, string> = {
+    ast: 'Tenancy Agreement',
+    epc: 'EPC Certificate',
+    gas_safety: 'Gas Safety Certificate (CP12)',
+    eicr: 'EICR (Electrical Safety)',
+    inventory: 'Inventory & Schedule of Condition',
+    deposit_certificate: 'Deposit Protection Certificate',
+    how_to_rent: 'How to Rent Guide',
+    renter_rights: "Renter's Rights",
+    right_to_rent: 'Right to Rent Check',
+    hmo_licence: 'HMO Licence',
+    emergency_lighting: 'Emergency Lighting Condition Report',
+    fire_risk_assessment: 'Fire Risk Assessment',
+    fire_emergency_procedures: 'Fire & Emergency Procedures',
+    house_rules: 'House Rules / Guidance',
+  }
+
   const [formData, setFormData] = useState({
     scope: prefilledTenancyId ? 'tenancy' : 'property',
     property_id: prefilledPropertyId,
     tenancy_id: prefilledTenancyId,
     document_type: prefilledDocType,
-    title: '',
+    title: (prefilledDocType && prefilledDocType !== 'other') ? (knownDocTitles[prefilledDocType] || '') : '',
     description: '',
     valid_from: '',
     valid_to: '',
@@ -81,7 +99,16 @@ export default function UploadDocument() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value }
+      // Auto-set title from doc type label (unless "other")
+      if (name === 'document_type' && value !== 'other') {
+        next.title = knownDocTitles[value] || value
+      } else if (name === 'document_type' && value === 'other') {
+        next.title = ''
+      }
+      return next
+    })
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,7 +180,14 @@ export default function UploadDocument() {
       await queryClient.invalidateQueries({ queryKey: ['property-documents'] })
       await queryClient.invalidateQueries({ queryKey: ['tenancy-documents'] })
 
-      navigate('/documents')
+      // Navigate back to where the user came from
+      if (formData.scope === 'property' && formData.property_id) {
+        navigate(`/properties/${formData.property_id}`)
+      } else if (formData.scope === 'tenancy' && formData.tenancy_id) {
+        navigate(`/tenancies/${formData.tenancy_id}`)
+      } else {
+        navigate('/documents')
+      }
     } catch (err) {
       console.error('Error uploading document:', err)
       setError(err instanceof Error ? err.message : 'Failed to upload document')
@@ -276,14 +310,16 @@ export default function UploadDocument() {
               required
             />
 
-            <Input
-              label="Document Title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="e.g., Tenancy Agreement 2024"
-              required
-            />
+            {formData.document_type === 'other' && (
+              <Input
+                label="Document Title"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="e.g., Insurance Certificate"
+                required
+              />
+            )}
 
             <div>
               <label className="block text-sm font-medium text-slate-900 mb-2">
