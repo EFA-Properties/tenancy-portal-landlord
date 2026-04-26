@@ -183,7 +183,7 @@ export default function PropertyDetail() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-fraunces font-semibold text-slate-900">
-            {property.address_line1}, {property.town}
+            {property.address_line1}, {property.town}, {property.postcode}
           </h1>
           <div className="flex items-center gap-3 mt-2">
             {property.property_type && (
@@ -199,7 +199,6 @@ export default function PropertyDetail() {
                 {(property as any).legal_entities.name}
               </Badge>
             )}
-            <span className="text-sm text-slate-400">{property.postcode}</span>
           </div>
         </div>
         <Button variant="outline" onClick={() => navigate('/properties')}>
@@ -260,9 +259,9 @@ export default function PropertyDetail() {
                     )}
                   </div>
                 </div>
-                {property.uprn && (
+                {property.postcode && (
                   <a
-                    href={`https://find-energy-certificate.service.gov.uk/energy-certificate/${property.uprn}`}
+                    href={`https://find-energy-certificate.service.gov.uk/find-a-certificate/search-by-postcode?postcode=${encodeURIComponent(property.postcode)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-teal-700 bg-teal-50 rounded-xl hover:bg-teal-100 transition-colors"
@@ -280,7 +279,7 @@ export default function PropertyDetail() {
           </CardBody>
         </Card>
 
-        {/* Compliance checklist */}
+        {/* Document checklist — unified table */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -290,318 +289,277 @@ export default function PropertyDetail() {
                   Document checklist
                 </h2>
               </div>
-              <Link to={`/documents?property_id=${property.id}`}>
-                <Button variant="ghost" size="sm">View All</Button>
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link to={`/documents/upload?property_id=${property.id}`}>
+                  <Button size="sm">Upload Document</Button>
+                </Link>
+              </div>
             </div>
           </CardHeader>
-          <div className="divide-y divide-border">
+          <div className="overflow-x-auto">
             {(() => {
+              const docTypeLabels: Record<string, string> = {
+                gas_safety: 'Gas Safety Certificate (CP12)', epc: 'EPC Certificate',
+                eicr: 'EICR (Electrical Safety)', hmo_licence: 'HMO Licence',
+                emergency_lighting: 'Emergency Lighting Report', fire_risk_assessment: 'Fire Risk Assessment',
+                fire_emergency_procedures: 'Fire & Emergency Procedures', house_rules: 'House Rules / Guidance',
+                how_to_rent: 'How to Rent Guide', renter_rights: "Renter's Rights",
+                deposit_certificate: 'Deposit Protection Certificate', right_to_rent: 'Right to Rent Check',
+                inventory: 'Inventory & Schedule of Condition', ast: 'Tenancy Agreement', other: 'Other Document',
+              }
+
               const getDoc = (type: string) => propertyDocs.find((d) => d.document_type === type)
               const hasDocType = (type: string) => propertyDocs.some((d) => d.document_type === type)
               const getDocExpiry = (type: string) => getDoc(type)?.valid_to || null
 
-              const propertyItems = [
-                { title: 'Gas Safety Certificate (CP12)', desc: 'Annual renewal · Tenant must receive each year', docType: 'gas_safety', hasIt: !!property.gas_safety_expiry || hasDocType('gas_safety'), expiry: property.gas_safety_expiry || getDocExpiry('gas_safety') },
-                { title: 'EPC Certificate', desc: 'Minimum C rating required from 2028', docType: 'epc', hasIt: !!property.epc_rating || hasDocType('epc'), expiry: property.epc_expiry || getDocExpiry('epc') },
-                { title: 'EICR (Electrical Safety)', desc: 'Every 5 years · Required before letting', docType: 'eicr', hasIt: !!property.eicr_expiry || hasDocType('eicr'), expiry: property.eicr_expiry || getDocExpiry('eicr') },
+              // Build required items list
+              const requiredItems = [
+                { docType: 'gas_safety', section: 'property', hasIt: !!property.gas_safety_expiry || hasDocType('gas_safety'), expiry: property.gas_safety_expiry || getDocExpiry('gas_safety') },
+                { docType: 'epc', section: 'property', hasIt: !!property.epc_rating || hasDocType('epc'), expiry: property.epc_expiry || getDocExpiry('epc') },
+                { docType: 'eicr', section: 'property', hasIt: !!property.eicr_expiry || hasDocType('eicr'), expiry: property.eicr_expiry || getDocExpiry('eicr') },
+                ...(isHmo ? [
+                  { docType: 'hmo_licence', section: 'hmo', hasIt: !!property.hmo_licence_number || hasDocType('hmo_licence'), expiry: property.hmo_licence_expiry || getDocExpiry('hmo_licence') },
+                  { docType: 'emergency_lighting', section: 'hmo', hasIt: hasDocType('emergency_lighting'), expiry: getDocExpiry('emergency_lighting') },
+                  { docType: 'fire_risk_assessment', section: 'hmo', hasIt: !!property.fire_risk_expiry || hasDocType('fire_risk_assessment'), expiry: property.fire_risk_expiry || getDocExpiry('fire_risk_assessment') },
+                  { docType: 'fire_emergency_procedures', section: 'hmo', hasIt: hasDocType('fire_emergency_procedures'), expiry: getDocExpiry('fire_emergency_procedures') },
+                  { docType: 'house_rules', section: 'hmo', hasIt: hasDocType('house_rules'), expiry: getDocExpiry('house_rules') },
+                ] : []),
+                { docType: 'how_to_rent', section: 'tenant', hasIt: hasDocType('how_to_rent'), expiry: getDocExpiry('how_to_rent') },
+                { docType: 'renter_rights', section: 'tenant', hasIt: hasDocType('renter_rights'), expiry: getDocExpiry('renter_rights') },
+                { docType: 'deposit_certificate', section: 'tenant', hasIt: hasDocType('deposit_certificate'), expiry: getDocExpiry('deposit_certificate') },
+                { docType: 'right_to_rent', section: 'tenant', hasIt: rtrChecks.length > 0, expiry: rtrChecks[0]?.next_check_due || null },
+                { docType: 'inventory', section: 'tenant', hasIt: hasDocType('inventory'), expiry: getDocExpiry('inventory') },
               ]
 
-              // HMO-specific compliance documents
-              const hmoItems = isHmo ? [
-                { title: 'HMO Licence', desc: 'Mandatory for 5+ tenants · Check with local authority', docType: 'hmo_licence', hasIt: !!property.hmo_licence_number || hasDocType('hmo_licence'), expiry: property.hmo_licence_expiry || getDocExpiry('hmo_licence') },
-                { title: 'Emergency Lighting Condition Report', desc: 'Every 5 years · BS 5266 compliant', docType: 'emergency_lighting', hasIt: hasDocType('emergency_lighting'), expiry: getDocExpiry('emergency_lighting') },
-                { title: 'Fire Risk Assessment', desc: 'Required before letting · Review annually', docType: 'fire_risk_assessment', hasIt: !!property.fire_risk_expiry || hasDocType('fire_risk_assessment'), expiry: property.fire_risk_expiry || getDocExpiry('fire_risk_assessment') },
-                { title: 'Fire & Emergency Procedures', desc: 'Displayed in communal areas · Updated annually', docType: 'fire_emergency_procedures', hasIt: hasDocType('fire_emergency_procedures'), expiry: getDocExpiry('fire_emergency_procedures') },
-                { title: 'House Rules / Guidance', desc: 'Communal area usage, quiet hours, cleaning rota, etc.', docType: 'house_rules', hasIt: hasDocType('house_rules'), expiry: getDocExpiry('house_rules') },
-              ] : []
+              // Also include any extra uploaded docs not in the required list (e.g. "other" type)
+              const requiredDocTypes = new Set(requiredItems.map((r) => r.docType))
+              const extraDocs = propertyDocs.filter((d) => !requiredDocTypes.has(d.document_type))
 
-              const tenantItems = [
-                { title: 'How to Rent Guide', desc: 'Gov.uk · Must be current edition', docType: 'how_to_rent', hasIt: hasDocType('how_to_rent'), expiry: getDocExpiry('how_to_rent') },
-                { title: "Renter's Rights Bill", desc: 'Renters Reform Bill documentation', docType: 'renter_rights', hasIt: hasDocType('renter_rights'), expiry: getDocExpiry('renter_rights') },
-                { title: 'Deposit Protection Certificate', desc: 'DPS / TDS / MyDeposits · Within 30 days', docType: 'deposit_certificate', hasIt: hasDocType('deposit_certificate'), expiry: getDocExpiry('deposit_certificate') },
-                { title: 'Right to Rent Check', desc: 'Required before every tenancy · £20,000 fine per tenant', docType: 'right_to_rent', hasIt: rtrChecks.length > 0, expiry: rtrChecks[0]?.next_check_due || null },
-                { title: 'Inventory & Schedule of Condition', desc: 'Check-in report · Signed by tenant · Protects deposit claims', docType: 'inventory', hasIt: hasDocType('inventory'), expiry: getDocExpiry('inventory') },
-              ]
-
-              const items = [...propertyItems, ...hmoItems, ...tenantItems]
-
-              const getDocAcks = (docId: string) => acknowledgements.filter((a) => a.document_id === docId)
-              const totalTenants = propertyTenants.length
-
-              const renderSection = (sectionItems: typeof items, label: string, isTenantSection: boolean) => (
-                <>
-                  <div className="px-8 pt-5 pb-2">
-                    <p className="text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">{label}</p>
-                  </div>
-                  {sectionItems.map((item) => {
-                const doc = getDoc(item.docType)
-                const acks = doc ? getDocAcks(doc.id) : []
-                const servedCount = acks.filter((a) => a.served_at).length
-                const openedCount = acks.filter((a) => a.opened_at).length
-                const confirmedCount = acks.filter((a) => a.confirmed_at).length
-                const allServed = totalTenants > 0 && servedCount >= totalTenants
-                const allConfirmed = totalTenants > 0 && confirmedCount >= totalTenants
-                const isNa = overrides[item.docType] === 'na'
-                return (
-                  <div key={item.title} className={`flex items-center gap-5 px-8 py-6 ${isNa ? 'opacity-50' : ''}`}>
-                    {isNa ? (
-                      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
-                        <circle cx="14" cy="14" r="13" stroke="#94a3b8" strokeWidth="1.5" />
-                        <text x="14" y="15.5" textAnchor="middle" fontSize="8" fontWeight="600" fill="#94a3b8">N/A</text>
-                      </svg>
-                    ) : item.hasIt ? <CheckCircle /> : <EmptyCircle />}
-                    <div className="flex-1">
-                      <p className="text-[15px] font-medium text-textPrimary">{item.title}</p>
-                      <p className="text-sm text-textMuted mt-1">{item.desc}</p>
-                      {/* Per-tenant acknowledgement tracking */}
-                      {doc && item.hasIt && isTenantSection && totalTenants > 0 && (
-                        <div className="flex items-center gap-3 mt-2 flex-wrap">
-                          {servedCount > 0 ? (
-                            <span className={`inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-pill ${allServed ? 'text-teal-700 bg-teal-50' : 'text-warning bg-warningLight'}`}>
-                              <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="5" fill={allServed ? '#0f766e' : '#b45309'} /><path d="M3 5l1.5 1.5L7 4" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                              Served {servedCount}/{totalTenants}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-textMuted bg-surface px-2 py-0.5 rounded-pill">
-                              Not served
-                            </span>
-                          )}
-                          {servedCount > 0 && (
-                            <>
-                              <span className={`inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-pill ${openedCount === totalTenants ? 'text-teal-700 bg-teal-50' : openedCount > 0 ? 'text-warning bg-warningLight' : 'text-textMuted bg-surface'}`}>
-                                Opened {openedCount}/{totalTenants}
-                              </span>
-                              <span className={`inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-pill ${allConfirmed ? 'text-success bg-successLight' : confirmedCount > 0 ? 'text-warning bg-warningLight' : 'text-textMuted bg-surface'}`}>
-                                {allConfirmed ? (
-                                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="5" fill="#15803d" /><path d="M3 5l1.5 1.5L7 4" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                ) : null}
-                                Confirmed {confirmedCount}/{totalTenants}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      )}
-                      {/* Single-tenant fallback for property docs or when no tenants */}
-                      {doc && item.hasIt && !isTenantSection && doc.served_at && (
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-pill">
-                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="5" fill="#0f766e" /><path d="M3 5l1.5 1.5L7 4" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                            Served {formatDate(doc.served_at)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      {isNa ? (
-                        <button
-                          onClick={() => toggleOverride(item.docType)}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-500 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 transition-colors"
-                        >
-                          Undo N/A
-                        </button>
-                      ) : (
-                        <>
-                      {item.hasIt && item.expiry && (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-lg">
-                          Valid to {formatDate(item.expiry)}
-                        </span>
-                      )}
-                      {item.hasIt && !item.expiry && (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-lg">
-                          Uploaded
-                        </span>
-                      )}
-                      {/* Serve to all tenants button for tenant docs */}
-                      {doc && item.hasIt && isTenantSection && totalTenants > 0 && !allServed && (
-                        <button
-                          onClick={() => serveToAllTenants(doc.id)}
-                          disabled={servingDoc === doc.id}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors disabled:opacity-50"
-                        >
-                          {servingDoc === doc.id ? 'Serving…' : 'Serve to all'}
-                        </button>
-                      )}
-                      {!item.hasIt && item.docType === 'right_to_rent' && (
-                        <a
-                          href="https://www.gov.uk/landlords-immigration-check"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-600 transition-colors shadow-sm"
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-                          </svg>
-                          Run Check
-                        </a>
-                      )}
-                      {!item.hasIt && item.docType !== 'right_to_rent' && (
-                        <Link to={`/documents/upload?property_id=${property.id}&document_type=${item.docType}`}>
-                          <button className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-teal-700 rounded-lg hover:bg-teal-600 transition-colors shadow-sm">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                              <path d="M7 1v12M1 7h12" />
-                            </svg>
-                            Upload
-                          </button>
-                        </Link>
-                      )}
-                      {/* Mark N/A — available for items that aren't uploaded yet */}
-                      {!item.hasIt && (
-                        <button
-                          onClick={() => toggleOverride(item.docType)}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-                          title="Mark as not applicable for this property"
-                        >
-                          N/A
-                        </button>
-                      )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-                </>
-              )
+              let lastSection = ''
 
               return (
-                <>
-                  {renderSection(propertyItems, 'Property documents', false)}
-                  {hmoItems.length > 0 && renderSection(hmoItems, 'HMO compliance', false)}
-                  {renderSection(tenantItems, 'Tenant documents', true)}
-                </>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-slate-50/50">
+                      <th className="text-left px-6 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Document</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Uploaded</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Tenant Accepted</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Valid To</th>
+                      <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Status</th>
+                      <th className="px-4 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {requiredItems.map((item) => {
+                      const doc = getDoc(item.docType)
+                      const isNa = overrides[item.docType] === 'na'
+                      const sectionLabel = item.section === 'property' ? 'Property Documents'
+                        : item.section === 'hmo' ? 'HMO Compliance'
+                        : 'Tenant Documents'
+                      const showSectionHeader = sectionLabel !== lastSection
+                      lastSection = sectionLabel
+
+                      // Status
+                      let statusLabel = 'Missing'
+                      let statusColor = 'text-amber-600 bg-amber-50'
+                      if (isNa) {
+                        statusLabel = 'N/A'
+                        statusColor = 'text-slate-400 bg-slate-100'
+                      } else if (item.hasIt) {
+                        if (doc?.tenant_confirmed_at) {
+                          statusLabel = 'Accepted'
+                          statusColor = 'text-success bg-successLight'
+                        } else if (doc?.tenant_opened_at) {
+                          statusLabel = 'Viewed'
+                          statusColor = 'text-blue-700 bg-blue-50'
+                        } else if (doc?.served_at) {
+                          statusLabel = 'Served'
+                          statusColor = 'text-teal-700 bg-teal-50'
+                        } else {
+                          statusLabel = 'Uploaded'
+                          statusColor = 'text-textMuted bg-slate-100'
+                        }
+                      }
+
+                      return (
+                        <React.Fragment key={item.docType}>
+                          {showSectionHeader && (
+                            <tr>
+                              <td colSpan={6} className="px-6 pt-5 pb-2 bg-white">
+                                <p className="text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">{sectionLabel}</p>
+                              </td>
+                            </tr>
+                          )}
+                          <tr className={`hover:bg-slate-50/50 transition-colors ${isNa ? 'opacity-50' : ''}`}>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                {isNa ? (
+                                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className="shrink-0">
+                                    <circle cx="11" cy="11" r="10" stroke="#94a3b8" strokeWidth="1.5" />
+                                    <text x="11" y="12.5" textAnchor="middle" fontSize="7" fontWeight="600" fill="#94a3b8">N/A</text>
+                                  </svg>
+                                ) : item.hasIt ? <CheckCircle /> : <EmptyCircle />}
+                                <div className="min-w-0">
+                                  <p className="font-medium text-textPrimary truncate">
+                                    {doc?.title || docTypeLabels[item.docType] || item.docType}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 text-textSecondary whitespace-nowrap">
+                              {doc?.uploaded_at ? formatDateTime(doc.uploaded_at) : <span className="text-textMuted">—</span>}
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              {doc?.tenant_confirmed_at ? (
+                                <span className="text-success font-medium">{formatDateTime(doc.tenant_confirmed_at)}</span>
+                              ) : (
+                                <span className="text-textMuted">—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              {(item.expiry || doc?.valid_to) ? (
+                                <span className={new Date(item.expiry || doc?.valid_to || '') < new Date() ? 'text-error font-medium' : 'text-textSecondary'}>
+                                  {formatDate(item.expiry || doc?.valid_to)}
+                                  {new Date(item.expiry || doc?.valid_to || '') < new Date() && ' (expired)'}
+                                </span>
+                              ) : (
+                                <span className="text-textMuted">—</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-4">
+                              <span className={`text-[10px] font-mono font-medium uppercase tracking-wider px-2.5 py-1 rounded-pill ${statusColor}`}>
+                                {statusLabel}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                {item.hasIt && doc && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={async () => {
+                                      setDownloadingId(doc.id)
+                                      try {
+                                        if (doc.file_path?.startsWith('http')) {
+                                          window.open(doc.file_path, '_blank')
+                                        } else if (doc.file_path) {
+                                          const bucket = 'property-documents'
+                                          const { data, error } = await supabase.storage.from(bucket).createSignedUrl(doc.file_path, 3600)
+                                          if (!error && data?.signedUrl) window.open(data.signedUrl, '_blank')
+                                        }
+                                      } finally {
+                                        setDownloadingId(null)
+                                      }
+                                    }}
+                                    loading={downloadingId === doc.id}
+                                  >
+                                    {doc.file_path?.startsWith('http') ? 'View' : 'Download'}
+                                  </Button>
+                                )}
+                                {!item.hasIt && !isNa && item.docType === 'right_to_rent' && (
+                                  <a
+                                    href="https://www.gov.uk/landlords-immigration-check"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <Button size="sm">Run Check</Button>
+                                  </a>
+                                )}
+                                {!item.hasIt && !isNa && item.docType !== 'right_to_rent' && (
+                                  <Link to={`/documents/upload?property_id=${property.id}&document_type=${item.docType}`}>
+                                    <Button size="sm">Upload</Button>
+                                  </Link>
+                                )}
+                                {isNa ? (
+                                  <button
+                                    onClick={() => toggleOverride(item.docType)}
+                                    className="text-xs text-slate-400 hover:text-slate-600"
+                                  >
+                                    Undo
+                                  </button>
+                                ) : !item.hasIt && (
+                                  <button
+                                    onClick={() => toggleOverride(item.docType)}
+                                    className="text-xs text-slate-400 hover:text-slate-600"
+                                    title="Mark as not applicable"
+                                  >
+                                    N/A
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        </React.Fragment>
+                      )
+                    })}
+                    {/* Extra uploaded docs not in the required list */}
+                    {extraDocs.length > 0 && (
+                      <>
+                        <tr>
+                          <td colSpan={6} className="px-6 pt-5 pb-2 bg-white">
+                            <p className="text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Other Documents</p>
+                          </td>
+                        </tr>
+                        {extraDocs.map((doc: any) => {
+                          let statusLabel = 'Uploaded'
+                          let statusColor = 'text-textMuted bg-slate-100'
+                          if (doc.tenant_confirmed_at) { statusLabel = 'Accepted'; statusColor = 'text-success bg-successLight' }
+                          else if (doc.tenant_opened_at) { statusLabel = 'Viewed'; statusColor = 'text-blue-700 bg-blue-50' }
+                          else if (doc.served_at) { statusLabel = 'Served'; statusColor = 'text-teal-700 bg-teal-50' }
+
+                          return (
+                            <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-3">
+                                  <CheckCircle />
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-textPrimary truncate">
+                                      {doc.title || docTypeLabels[doc.document_type] || doc.file_name || 'Untitled'}
+                                    </p>
+                                    <span className="text-xs text-textMuted">{docTypeLabels[doc.document_type] || doc.document_type}</span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-4 py-4 text-textSecondary whitespace-nowrap">{formatDateTime(doc.uploaded_at)}</td>
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                {doc.tenant_confirmed_at ? <span className="text-success font-medium">{formatDateTime(doc.tenant_confirmed_at)}</span> : <span className="text-textMuted">—</span>}
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                {doc.valid_to ? (
+                                  <span className={new Date(doc.valid_to) < new Date() ? 'text-error font-medium' : 'text-textSecondary'}>
+                                    {formatDate(doc.valid_to)}{new Date(doc.valid_to) < new Date() && ' (expired)'}
+                                  </span>
+                                ) : <span className="text-textMuted">—</span>}
+                              </td>
+                              <td className="px-4 py-4">
+                                <span className={`text-[10px] font-mono font-medium uppercase tracking-wider px-2.5 py-1 rounded-pill ${statusColor}`}>{statusLabel}</span>
+                              </td>
+                              <td className="px-4 py-4 text-right">
+                                <Button variant="ghost" size="sm" onClick={async () => {
+                                  setDownloadingId(doc.id)
+                                  try {
+                                    if (doc.file_path?.startsWith('http')) { window.open(doc.file_path, '_blank') }
+                                    else if (doc.file_path) {
+                                      const bucket = 'property-documents'
+                                      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(doc.file_path, 3600)
+                                      if (!error && data?.signedUrl) window.open(data.signedUrl, '_blank')
+                                    }
+                                  } finally { setDownloadingId(null) }
+                                }} loading={downloadingId === doc.id}>
+                                  {doc.file_path?.startsWith('http') ? 'View' : 'Download'}
+                                </Button>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </>
+                    )}
+                  </tbody>
+                </table>
               )
             })()}
           </div>
         </Card>
-
-        {/* Uploaded Documents Table */}
-        {propertyDocs.length > 0 && (
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-medium text-teal-700 uppercase tracking-wider mb-1">Documents</p>
-                  <h2 className="text-lg font-fraunces font-semibold text-slate-900">
-                    Uploaded Documents
-                  </h2>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary" size="sm">{propertyDocs.length} {propertyDocs.length === 1 ? 'doc' : 'docs'}</Badge>
-                  <Link to={`/documents/upload?property_id=${property.id}`}>
-                    <Button size="sm">Upload</Button>
-                  </Link>
-                </div>
-              </div>
-            </CardHeader>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-slate-50/50">
-                    <th className="text-left px-6 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Document</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Uploaded</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Tenant Accepted</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Valid To</th>
-                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Status</th>
-                    <th className="px-4 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {propertyDocs.map((doc: any) => {
-                    const docTypeLabels: Record<string, string> = {
-                      ast: 'Tenancy Agreement', epc: 'EPC Certificate', gas_safety: 'Gas Safety Certificate (CP12)',
-                      eicr: 'EICR (Electrical Safety)', inventory: 'Inventory & Schedule of Condition',
-                      deposit_certificate: 'Deposit Protection Certificate', how_to_rent: 'How to Rent Guide',
-                      renter_rights: "Renter's Rights", right_to_rent: 'Right to Rent Check',
-                      hmo_licence: 'HMO Licence', emergency_lighting: 'Emergency Lighting Report',
-                      fire_risk_assessment: 'Fire Risk Assessment', fire_emergency_procedures: 'Fire & Emergency Procedures',
-                      house_rules: 'House Rules / Guidance', other: 'Other Document',
-                    }
-
-                    let statusLabel = 'Uploaded'
-                    let statusColor = 'text-textMuted bg-slate-100'
-                    if (doc.tenant_confirmed_at) {
-                      statusLabel = 'Accepted'
-                      statusColor = 'text-success bg-successLight'
-                    } else if (doc.tenant_opened_at) {
-                      statusLabel = 'Viewed'
-                      statusColor = 'text-blue-700 bg-blue-50'
-                    } else if (doc.served_at) {
-                      statusLabel = 'Served'
-                      statusColor = 'text-teal-700 bg-teal-50'
-                    }
-
-                    return (
-                      <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <CheckCircle />
-                            <div className="min-w-0">
-                              <p className="font-medium text-textPrimary truncate">
-                                {doc.title || docTypeLabels[doc.document_type] || doc.file_name || 'Untitled'}
-                              </p>
-                              <span className="text-xs text-textMuted">
-                                {docTypeLabels[doc.document_type] || doc.document_type}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 text-textSecondary whitespace-nowrap">
-                          {formatDateTime(doc.uploaded_at)}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          {doc.tenant_confirmed_at ? (
-                            <span className="text-success font-medium">{formatDateTime(doc.tenant_confirmed_at)}</span>
-                          ) : (
-                            <span className="text-textMuted">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          {doc.valid_to ? (
-                            <span className={new Date(doc.valid_to) < new Date() ? 'text-error font-medium' : 'text-textSecondary'}>
-                              {formatDate(doc.valid_to)}
-                              {new Date(doc.valid_to) < new Date() && ' (expired)'}
-                            </span>
-                          ) : (
-                            <span className="text-textMuted">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-4">
-                          <span className={`text-[10px] font-mono font-medium uppercase tracking-wider px-2.5 py-1 rounded-pill ${statusColor}`}>
-                            {statusLabel}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async () => {
-                              setDownloadingId(doc.id)
-                              try {
-                                if (doc.file_path?.startsWith('http')) {
-                                  window.open(doc.file_path, '_blank')
-                                } else if (doc.file_path) {
-                                  const bucket = doc.scope === 'property' ? 'property-documents' : 'tenancy-documents'
-                                  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(doc.file_path, 3600)
-                                  if (!error && data?.signedUrl) window.open(data.signedUrl, '_blank')
-                                }
-                              } finally {
-                                setDownloadingId(null)
-                              }
-                            }}
-                            loading={downloadingId === doc.id}
-                          >
-                            {doc.file_path?.startsWith('http') ? 'View' : 'Download'}
-                          </Button>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </Card>
-        )}
 
         {/* HMO Rooms — only shown if property is HMO */}
         {isHmo && (
