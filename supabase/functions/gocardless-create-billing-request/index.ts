@@ -103,12 +103,18 @@ Deno.serve(async (req) => {
     const authorisationUrl = flowData.billing_request_flows.authorisation_url
     const mandateId = billingReqData.billing_requests?.links?.mandate_request_mandate
 
-    // 4. Update landlord with GoCardless IDs
+    // 4. Update landlord with GoCardless IDs and activate Pro trial immediately
+    const trialEnds = new Date()
+    trialEnds.setDate(trialEnds.getDate() + 14)
+
     await supabase
       .from('landlords')
       .update({
         gc_customer_id: customerId,
         gc_mandate_id: mandateId || null,
+        plan: 'pro',
+        billing_active: true,
+        trial_ends_at: trialEnds.toISOString(),
       })
       .eq('id', landlordId)
 

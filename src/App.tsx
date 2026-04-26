@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Onboarding from './pages/Onboarding'
 import Payment from './pages/Payment'
+import PaymentSuccess from './pages/PaymentSuccess'
 import Dashboard from './pages/Dashboard'
 import Settings from './pages/Settings'
 import TenanciesList from './pages/tenancies/TenanciesList'
@@ -39,6 +40,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Payment />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment/success"
+          element={
+            <ProtectedRoute>
+              <PaymentSuccess />
             </ProtectedRoute>
           }
         />

@@ -25,6 +25,10 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const gcWebhookSecret = Deno.env.get('GC_WEBHOOK_SECRET')!
 const gcAccessToken = Deno.env.get('GC_ACCESS_TOKEN')!
 
+const GC_BASE = Deno.env.get('GC_ENVIRONMENT') === 'live'
+  ? 'https://api.gocardless.com'
+  : 'https://api-sandbox.gocardless.com'
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 // Verify GoCardless webhook signature
@@ -36,8 +40,13 @@ function verifySignature(body: string, signature: string): boolean {
 }
 
 // Create a GoCardless subscription for monthly billing
-async function createSubscription(mandateId: string): Promise<string> {
-  const response = await fetch('https://api.gocardless.com/subscriptions', {
+async function createSubscription(mandateId: string, trialDays = 14): Promise<string> {
+  // Calculate start date after trial period
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() + trialDays)
+  const startDateStr = startDate.toISOString().split('T')[0] // YYYY-MM-DD
+
+  const response = await fetch(`${GC_BASE}/subscriptions`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${gcAccessToken}`,
@@ -50,6 +59,7 @@ async function createSubscription(mandateId: string): Promise<string> {
         currency: 'GBP',
         name: 'Tenancy Portal Pro',
         interval_unit: 'monthly',
+        start_date: startDateStr,
         links: { mandate: mandateId },
         metadata: { product: 'tenancy-portal-pro' },
       },
@@ -98,15 +108,21 @@ Deno.serve(async (req) => {
             .single()
 
           if (landlord) {
-            // Create subscription
-            const subscriptionId = await createSubscription(mandateId)
+            // Create subscription with 14-day trial
+            const subscriptionId = await createSubscription(mandateId, 14)
+
+            // Calculate trial end date
+            const trialEnds = new Date()
+            trialEnds.setDate(trialEnds.getDate() + 14)
 
             // Update landlord billing status
             await supabase
               .from('landlords')
               .update({
                 billing_active: true,
+                plan: 'pro',
                 gc_subscription_id: subscriptionId,
+                trial_ends_at: trialEnds.toISOString(),
                 billing_grace_until: null,
               })
               .eq('id', landlord.id)

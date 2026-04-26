@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useLandlord } from '../hooks/useLandlord'
 import { Card, CardBody } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
-import { PLANS } from '../lib/gocardless'
+import { PLANS, createBillingRequestFlow } from '../lib/gocardless'
 
 export default function Payment() {
   const navigate = useNavigate()
@@ -32,27 +32,14 @@ export default function Payment() {
     setError('')
 
     try {
-      // TODO: Once GoCardless is set up, this will:
-      // 1. Call Supabase Edge Function to create billing request flow
-      // 2. Redirect to GoCardless hosted page
-      // 3. GoCardless redirects back to /payment/success
-      // 4. Webhook confirms mandate → billing_active = true
-
-      // For now, simulate success and proceed to onboarding
-      // Remove this block when GoCardless is live:
-      alert('GoCardless integration pending. Proceeding to onboarding for testing.')
-      navigate('/onboarding')
-
-      /* Uncomment when GoCardless is configured:
       const { authorisation_url } = await createBillingRequestFlow({
         landlordId: landlord!.id,
         email: user!.email!,
-        fullName: user!.user_metadata?.full_name || '',
+        fullName: landlord?.full_name || user!.user_metadata?.full_name || '',
         successUrl: `${window.location.origin}/payment/success`,
         exitUrl: `${window.location.origin}/payment`,
       })
       window.location.href = authorisation_url
-      */
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to set up payment')
     } finally {

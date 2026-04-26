@@ -1,29 +1,15 @@
 /**
- * GoCardless Integration — Scaffolded
+ * GoCardless Integration — LIVE
  *
- * SETUP REQUIRED:
- * 1. Create a GoCardless account at https://manage.gocardless.com
- * 2. Get your Access Token from the Developers section
- * 3. Add VITE_GOCARDLESS_ACCESS_TOKEN to your .env.local
- * 4. For production: set up webhook endpoint (Supabase Edge Function)
- *
- * This file provides the client-side billing request flow.
- * GoCardless Billing Requests use a hosted page for bank auth —
- * we redirect the user there, they complete the mandate, and
- * GoCardless redirects back to our success URL.
+ * Uses Supabase Edge Function to create billing requests securely.
+ * The access token is stored as a Supabase secret, never exposed client-side.
  */
 
-const GC_ENVIRONMENT = import.meta.env.VITE_GOCARDLESS_ENVIRONMENT || 'sandbox'
-const GC_BASE_URL = GC_ENVIRONMENT === 'live'
-  ? 'https://api.gocardless.com'
-  : 'https://api-sandbox.gocardless.com'
+import { supabase } from './supabase'
 
 /**
- * Create a GoCardless Billing Request Flow
- * This generates a hosted page URL where the landlord sets up their DD mandate.
- *
- * In production, this should be called from a Supabase Edge Function
- * (not client-side) to keep the access token secret.
+ * Create a GoCardless Billing Request Flow via Supabase Edge Function.
+ * Returns a hosted page URL where the landlord sets up their DD mandate.
  */
 export async function createBillingRequestFlow(params: {
   landlordId: string
@@ -32,25 +18,20 @@ export async function createBillingRequestFlow(params: {
   successUrl: string
   exitUrl: string
 }): Promise<{ authorisation_url: string }> {
-  // TODO: Replace with actual Supabase Edge Function call
-  // The edge function will:
-  // 1. Create a GoCardless customer
-  // 2. Create a billing request
-  // 3. Create a billing request flow (hosted page)
-  // 4. Return the authorisation_url
-
-  // For now, this is a placeholder that would call your edge function:
-  const response = await fetch('/api/gocardless/create-billing-request', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
+  const { data, error } = await supabase.functions.invoke('gocardless-create-billing-request', {
+    body: params,
   })
 
-  if (!response.ok) {
-    throw new Error('Failed to create billing request')
+  if (error) {
+    console.error('GoCardless billing request error:', error)
+    throw new Error(error.message || 'Failed to create billing request')
   }
 
-  return response.json()
+  if (!data?.authorisation_url) {
+    throw new Error('No authorisation URL returned from GoCardless')
+  }
+
+  return data
 }
 
 /**
