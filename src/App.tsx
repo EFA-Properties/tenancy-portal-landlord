@@ -26,6 +26,7 @@ import MessagesList from './pages/messages/MessagesList'
 import MessageThread from './pages/messages/MessageThread'
 import AgreementsList from './pages/tenancies/AgreementsList'
 import CreateAgreement from './pages/tenancies/CreateAgreement'
+import AgreementView from './pages/tenancies/AgreementView'
 
 export default function App() {
   return (
@@ -107,6 +108,16 @@ export default function App() {
             <ProtectedRoute>
               <Layout>
                 <CreateAgreement />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tenancies/:tenancyId/agreements/:agreementId"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <AgreementView />
               </Layout>
             </ProtectedRoute>
           }
