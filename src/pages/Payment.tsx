@@ -21,8 +21,8 @@ export default function Payment() {
     )
   }
 
-  // If already on free plan or billing is active, redirect
-  if (landlord?.plan === 'free' || landlord?.billing_active) {
+  // If billing is already active or comped, skip payment
+  if (landlord?.billing_active || landlord?.comped) {
     navigate('/onboarding')
     return null
   }
@@ -73,10 +73,10 @@ export default function Payment() {
             </svg>
           </div>
           <h1 className="text-3xl font-fraunces font-semibold text-slate-900 mb-2">
-            Set Up Your Pro Plan
+            Start Your 14-Day Free Trial
           </h1>
           <p className="text-slate-500">
-            One simple monthly payment by Direct Debit.
+            Set up Direct Debit now — you won't be charged until your trial ends.
           </p>
         </div>
 
@@ -124,7 +124,7 @@ export default function Payment() {
                 </span>
               </div>
               <p className="text-xs text-slate-400 ml-6">
-                Powered by GoCardless. Secure. Cancel any time.
+                Powered by GoCardless. Secure. Cancel any time. First payment taken after 14-day trial.
               </p>
             </div>
           </CardBody>
@@ -136,15 +136,12 @@ export default function Payment() {
           loading={loading}
           className="w-full mb-3"
         >
-          Set Up Direct Debit — £{proPlan.price}/mo
+          Start Free Trial — Set Up Direct Debit
         </Button>
 
-        <button
-          onClick={() => navigate('/onboarding')}
-          className="w-full text-center text-sm text-slate-400 hover:text-slate-600 transition-colors py-2"
-        >
-          Skip for now — I'll upgrade later
-        </button>
+        <p className="text-center text-xs text-slate-400 mt-2">
+          No charge for 14 days. Cancel before your trial ends and you won't pay a thing.
+        </p>
       </div>
     </div>
   )

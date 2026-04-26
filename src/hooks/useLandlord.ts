@@ -13,11 +13,15 @@ export interface Landlord {
   plan: 'free' | 'pro'
   plan_price: number
   billing_active: boolean
+  trial_ends_at?: string
   gc_customer_id?: string
   gc_mandate_id?: string
   gc_subscription_id?: string
   billing_grace_until?: string
   comped: boolean
+  promo_code_id?: string
+  promo_applied_at?: string
+  promo_expires_at?: string
   onboarding_completed: boolean
   created_at: string
   updated_at: string

@@ -262,9 +262,9 @@ export default function TenancyDetail() {
                   Maintenance Requests
                 </Button>
               </Link>
-              <Link to={`/tenancies/${tenancy.id}/edit`}>
+              <Link to={`/tenancies/${tenancy.id}/agreements`}>
                 <Button variant="outline" className="w-full">
-                  Edit Tenancy
+                  Agreements & Signatures
                 </Button>
               </Link>
             </div>

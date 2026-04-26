@@ -495,6 +495,13 @@ export default function Onboarding() {
                     Cancel
                   </Button>
                   <Button
+                    variant="ghost"
+                    onClick={() => navigate('/dashboard')}
+                    disabled={loading}
+                  >
+                    Skip — I'll add later
+                  </Button>
+                  <Button
                     onClick={handleStep1Submit}
                     loading={loading}
                     className="ml-auto"
@@ -581,6 +588,13 @@ export default function Onboarding() {
                     disabled={loading}
                   >
                     Back
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setCurrentStep(3)}
+                    disabled={loading}
+                  >
+                    Skip — I'll add later
                   </Button>
                   <Button
                     onClick={handleStep2Submit}

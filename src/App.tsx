@@ -22,6 +22,10 @@ import TenantsList from './pages/tenants/TenantsList'
 import TenantDetail from './pages/tenants/TenantDetail'
 import InviteTenant from './pages/tenants/InviteTenant'
 import ComplianceAlerts from './pages/compliance/ComplianceAlerts'
+import MessagesList from './pages/messages/MessagesList'
+import MessageThread from './pages/messages/MessageThread'
+import AgreementsList from './pages/tenancies/AgreementsList'
+import CreateAgreement from './pages/tenancies/CreateAgreement'
 
 export default function App() {
   return (
@@ -83,6 +87,26 @@ export default function App() {
             <ProtectedRoute>
               <Layout>
                 <AddTenancy />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tenancies/:tenancyId/agreements"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <AgreementsList />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tenancies/:tenancyId/agreements/new"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <CreateAgreement />
               </Layout>
             </ProtectedRoute>
           }
@@ -187,6 +211,27 @@ export default function App() {
             <ProtectedRoute>
               <Layout>
                 <InviteTenant />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <MessagesList />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/messages/:tenancyId"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <MessageThread />
               </Layout>
             </ProtectedRoute>
           }

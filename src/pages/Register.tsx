@@ -43,20 +43,15 @@ export default function Register() {
   const [promoError, setPromoError] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
 
-  // Determine plan based on portfolio type and property count
-  const determinedPlan = useMemo((): 'free' | 'pro' => {
-    if (portfolioType === 'btl' && propertyCount === '1') {
-      return 'free'
-    }
-    return 'pro'
-  }, [portfolioType, propertyCount])
+  // Everyone is on the Pro plan — 14-day free trial, then £29.99/mo via DD
+  const determinedPlan = 'pro' as const
 
   const BASE_PRICE = 29.99
 
   // Calculate discounted price
   const { finalPrice, savingsText } = useMemo(() => {
-    if (determinedPlan === 'free' || !promoCode) {
-      return { finalPrice: determinedPlan === 'free' ? 0 : BASE_PRICE, savingsText: '' }
+    if (!promoCode) {
+      return { finalPrice: BASE_PRICE, savingsText: '' }
     }
 
     if (promoCode.discount_type === 'free_forever') {
@@ -76,16 +71,13 @@ export default function Register() {
     }
 
     return { finalPrice: BASE_PRICE, savingsText: '' }
-  }, [determinedPlan, promoCode])
+  }, [promoCode])
 
-  const planPrice = finalPrice
-  const planDescription = determinedPlan === 'free'
-    ? 'Free forever. Perfect for single BTL properties.'
-    : promoCode
-      ? promoCode.discount_type === 'free_forever'
-        ? `Pro plan — FREE with code ${promoCode.code}`
-        : `Pro plan at £${finalPrice.toFixed(2)}/mo (${savingsText} with ${promoCode.code})`
-      : 'Pro plan at £29.99/mo. Includes all features.'
+  const planDescription = promoCode
+    ? promoCode.discount_type === 'free_forever'
+      ? `Pro plan — FREE with code ${promoCode.code}`
+      : `Pro plan at £${finalPrice.toFixed(2)}/mo (${savingsText} with ${promoCode.code})`
+    : '14-day free trial, then £29.99/mo via Direct Debit.'
 
   // Validate promo code against the database
   const handleApplyPromo = useCallback(async () => {
@@ -209,8 +201,9 @@ export default function Register() {
         property_count_range: propertyCount,
         plan: isFreeForever ? 'pro' : determinedPlan,
         plan_price: finalPrice,
-        billing_active: determinedPlan === 'free' || isFreeForever,
+        billing_active: isFreeForever,
         comped: isFreeForever,
+        trial_ends_at: isFreeForever ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
         onboarding_completed: false,
       }
 
@@ -239,11 +232,11 @@ export default function Register() {
           .eq('id', promoCode.id)
       }
 
-      // Route based on plan
-      if (determinedPlan === 'free' || isFreeForever) {
+      // Route: free_forever promos skip payment, everyone else sets up DD
+      if (isFreeForever) {
         navigate('/onboarding')
       } else {
-        // Pro tier — go to payment page for DD setup
+        // Go to payment page for GoCardless DD setup (trial starts immediately)
         navigate('/payment')
       }
     } catch (err) {
@@ -444,9 +437,9 @@ export default function Register() {
               Your Plan
             </h2>
             <div className="inline-block rounded-pill bg-teal-50 px-4 py-2 text-sm font-medium text-teal-700 border border-teal-200">
-              {determinedPlan === 'free' ? 'Free' : 'Pro'} — {planDescription}
+              Pro — {planDescription}
             </div>
-            {promoCode && determinedPlan === 'pro' && (
+            {promoCode && (
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-sm text-textSecondary line-through">£{BASE_PRICE.toFixed(2)}/mo</span>
                 <span className="text-lg font-semibold text-teal-700">
@@ -487,39 +480,28 @@ export default function Register() {
                   <span className="text-textSecondary text-sm">Invite tenants to the portal</span>
                 </li>
 
-                {determinedPlan === 'pro' && (
-                  <>
-                    <li className="flex gap-3">
-                      <svg className="h-5 w-5 text-teal-700 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-textSecondary text-sm">Upload & share documents</span>
-                    </li>
+                <li className="flex gap-3">
+                  <svg className="h-5 w-5 text-teal-700 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-textSecondary text-sm">Upload & share documents</span>
+                </li>
 
-                    <li className="flex gap-3">
-                      <svg className="h-5 w-5 text-teal-700 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-textSecondary text-sm">Maintenance request tracking</span>
-                    </li>
+                <li className="flex gap-3">
+                  <svg className="h-5 w-5 text-teal-700 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-textSecondary text-sm">Maintenance request tracking</span>
+                </li>
 
-                    <li className="flex gap-3">
-                      <svg className="h-5 w-5 text-teal-700 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-textSecondary text-sm">Compliance alerts & reminders</span>
-                    </li>
-                  </>
-                )}
+                <li className="flex gap-3">
+                  <svg className="h-5 w-5 text-teal-700 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-textSecondary text-sm">Compliance alerts & reminders</span>
+                </li>
               </ul>
 
-              {determinedPlan === 'free' && (
-                <div className="mt-8 pt-6 border-t border-teal-200">
-                  <p className="text-sm text-textSecondary mb-3">
-                    Want more features? Upgrade to Pro anytime for just <span className="font-semibold text-textPrimary">£29.99/month</span>
-                  </p>
-                </div>
-              )}
             </CardBody>
           </Card>
         </div>
