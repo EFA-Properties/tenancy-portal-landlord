@@ -1,12 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useDashboardStats } from '../hooks/useDashboardStats'
 import { useProperties } from '../hooks/useProperties'
+import { useDocuments } from '../hooks/useDocuments'
 import { useDashboardActions, type DashboardAction } from '../hooks/useDashboardActions'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
 import { Badge } from '../components/ui/Badge'
+import { Button } from '../components/ui/Button'
 import { useLandlord } from '../hooks/useLandlord'
+import { formatDate, formatDateTime } from '../lib/utils'
+import { supabase } from '../lib/supabase'
 
 function ArrowRight() {
   return (
@@ -47,12 +51,41 @@ function PriorityIcon({ priority }: { priority: DashboardAction['priority'] }) {
   )
 }
 
+const docTypeLabels: Record<string, string> = {
+  ast: 'Tenancy Agreement',
+  epc: 'EPC Certificate',
+  gas_safety: 'Gas Safety Certificate (CP12)',
+  eicr: 'EICR (Electrical Safety)',
+  inventory: 'Inventory & Schedule of Condition',
+  deposit_certificate: 'Deposit Protection Certificate',
+  how_to_rent: 'How to Rent Guide',
+  renter_rights: "Renter's Rights",
+  right_to_rent: 'Right to Rent Check',
+  hmo_licence: 'HMO Licence',
+  emergency_lighting: 'Emergency Lighting Report',
+  fire_risk_assessment: 'Fire Risk Assessment',
+  fire_emergency_procedures: 'Fire & Emergency Procedures',
+  house_rules: 'House Rules / Guidance',
+  other: 'Other Document',
+}
+
+function CheckCircle() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 22 22" fill="none" className="shrink-0">
+      <circle cx="11" cy="11" r="11" fill="#0f766e" />
+      <path d="M7 11l2.5 2.5L15 8.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default function Dashboard() {
   const { user } = useAuth()
   const { data: stats, isLoading } = useDashboardStats()
   const { data: properties = [] } = useProperties()
   const { data: landlord } = useLandlord()
   const { data: actions = [], isLoading: actionsLoading } = useDashboardActions()
+  const { data: documents = [], isLoading: docsLoading } = useDocuments()
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
   const hour = new Date().getHours()
@@ -100,26 +133,6 @@ export default function Dashboard() {
           Here's an overview of your portfolio.
         </p>
       </div>
-
-      {/* Free plan banner */}
-      {landlord && landlord.plan === 'free' && (
-        <div className="mb-6 p-4 bg-teal-50 border border-teal-200 rounded-lg flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-teal-900">
-              You're on the Free plan — limited to 1 property and date logging only.
-            </p>
-            <p className="text-xs text-teal-700 mt-0.5">
-              Upgrade to unlock document delivery, compliance alerts, and audit reports.
-            </p>
-          </div>
-          <Link
-            to="/settings"
-            className="shrink-0 ml-4 px-4 py-2 bg-teal-700 text-white text-sm font-medium rounded-md hover:bg-teal-600 transition-colors"
-          >
-            Upgrade to Pro — £29.99/mo
-          </Link>
-        </div>
-      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
@@ -302,6 +315,131 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Recent Documents Table */}
+      {documents.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-teal-700 uppercase tracking-wider mb-1">
+                  Document Vault
+                </p>
+                <h2 className="text-xl font-fraunces font-semibold text-slate-900">
+                  Recent Documents
+                </h2>
+              </div>
+              <Link to="/documents">
+                <Badge variant="secondary" size="sm">View all</Badge>
+              </Link>
+            </div>
+          </CardHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-slate-50/50">
+                  <th className="text-left px-6 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Document</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Property</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Uploaded</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Tenant Accepted</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Valid To</th>
+                  <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Status</th>
+                  <th className="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {documents.slice(0, 10).map((doc: any) => {
+                  let statusLabel = 'Uploaded'
+                  let statusColor = 'text-textMuted bg-slate-100'
+                  if (doc.tenant_confirmed_at) {
+                    statusLabel = 'Accepted'
+                    statusColor = 'text-success bg-successLight'
+                  } else if (doc.tenant_opened_at) {
+                    statusLabel = 'Viewed'
+                    statusColor = 'text-blue-700 bg-blue-50'
+                  } else if (doc.served_at) {
+                    statusLabel = 'Served'
+                    statusColor = 'text-teal-700 bg-teal-50'
+                  }
+
+                  const propertyName = doc.properties
+                    ? `${doc.properties.address_line1}, ${doc.properties.town}`
+                    : '—'
+
+                  return (
+                    <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle />
+                          <div className="min-w-0">
+                            <p className="font-medium text-textPrimary truncate">
+                              {doc.title || docTypeLabels[doc.document_type] || doc.file_name || 'Untitled'}
+                            </p>
+                            <span className="text-xs text-textMuted">
+                              {docTypeLabels[doc.document_type] || doc.document_type}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-textSecondary whitespace-nowrap text-xs">
+                        {propertyName}
+                      </td>
+                      <td className="px-4 py-4 text-textSecondary whitespace-nowrap">
+                        {formatDateTime(doc.uploaded_at)}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {doc.tenant_confirmed_at ? (
+                          <span className="text-success font-medium">{formatDateTime(doc.tenant_confirmed_at)}</span>
+                        ) : (
+                          <span className="text-textMuted">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        {doc.valid_to ? (
+                          <span className={new Date(doc.valid_to) < new Date() ? 'text-error font-medium' : 'text-textSecondary'}>
+                            {formatDate(doc.valid_to)}
+                            {new Date(doc.valid_to) < new Date() && ' (expired)'}
+                          </span>
+                        ) : (
+                          <span className="text-textMuted">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4">
+                        <span className={`text-[10px] font-mono font-medium uppercase tracking-wider px-2.5 py-1 rounded-pill ${statusColor}`}>
+                          {statusLabel}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            setDownloadingId(doc.id)
+                            try {
+                              if (doc.file_path?.startsWith('http')) {
+                                window.open(doc.file_path, '_blank')
+                              } else {
+                                const bucket = doc.scope === 'property' ? 'property-documents' : 'tenancy-documents'
+                                const { data, error } = await supabase.storage.from(bucket).createSignedUrl(doc.file_path, 3600)
+                                if (!error && data?.signedUrl) window.open(data.signedUrl, '_blank')
+                              }
+                            } finally {
+                              setDownloadingId(null)
+                            }
+                          }}
+                          loading={downloadingId === doc.id}
+                        >
+                          {doc.file_path?.startsWith('http') ? 'View' : 'Download'}
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </div>
   )
 }
