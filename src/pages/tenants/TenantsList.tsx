@@ -107,7 +107,7 @@ export default function TenantsList() {
               {filtered.map((tenant: TenantWithStatus) => (
                 <TableRow key={tenant.id}>
                   <TableCell className="font-medium">
-                    {tenant.first_name} {tenant.last_name}
+                    {tenant.full_name}
                   </TableCell>
                   <TableCell className="text-textSecondary text-sm">
                     {tenant.property_address || '—'}
@@ -120,10 +120,14 @@ export default function TenantsList() {
                     </TableCell>
                   )}
                   <TableCell>
-                    {tenant.access_revoked_at ? (
+                    {tenant.invite_status === 'invited' ? (
+                      <Badge variant="warning" size="sm">Invited</Badge>
+                    ) : tenant.access_revoked_at ? (
                       <Badge variant="destructive" size="sm">Access Revoked</Badge>
                     ) : tenant.tenancy_status === 'moved_out' ? (
                       <Badge variant="secondary" size="sm">Moved Out</Badge>
+                    ) : tenant.invite_status === 'registered' ? (
+                      <Badge variant="success" size="sm">Registered</Badge>
                     ) : (
                       <Badge variant="default" size="sm">Active</Badge>
                     )}

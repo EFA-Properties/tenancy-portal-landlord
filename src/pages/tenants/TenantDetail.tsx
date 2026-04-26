@@ -138,14 +138,14 @@ export default function TenantDetail() {
       <Breadcrumb
         items={[
           { label: 'Tenants', href: '/tenants' },
-          { label: `${tenant.first_name} ${tenant.last_name}` },
+          { label: tenant.full_name },
         ]}
       />
 
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <h1 className="text-3xl font-fraunces font-bold text-slate-900">
-            {tenant.first_name} {tenant.last_name}
+            {tenant.full_name}
           </h1>
           {isMovedOut && <Badge variant="secondary">Moved Out</Badge>}
           {isAccessRevoked && <Badge variant="destructive">Access Revoked</Badge>}
@@ -166,7 +166,7 @@ export default function TenantDetail() {
             <div>
               <p className="text-sm text-slate-600">Name</p>
               <p className="font-medium text-slate-900">
-                {tenant.first_name} {tenant.last_name}
+                {tenant.full_name}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -293,7 +293,7 @@ export default function TenantDetail() {
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-2">Move out tenant</h3>
             <p className="text-sm text-textSecondary mb-4">
-              This will mark <span className="font-medium">{tenant.first_name} {tenant.last_name}</span> as moved out.
+              This will mark <span className="font-medium">{tenant.full_name}</span> as moved out.
               Their documents and history will be preserved. You can optionally revoke portal access separately.
             </p>
             <div className="mb-4">
@@ -330,7 +330,7 @@ export default function TenantDetail() {
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
             <h3 className="text-lg font-semibold text-slate-900 mb-2">Revoke portal access</h3>
             <p className="text-sm text-textSecondary mb-4">
-              This will immediately revoke <span className="font-medium">{tenant.first_name} {tenant.last_name}</span>'s
+              This will immediately revoke <span className="font-medium">{tenant.full_name}</span>'s
               access to the tenant portal. They will no longer be able to log in, view documents, or submit maintenance requests.
             </p>
             <div className="flex items-center justify-end gap-3">

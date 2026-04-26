@@ -269,10 +269,13 @@ export default function AddTenancy() {
                   name="property_id"
                   value={propertyId}
                   onChange={(e) => setPropertyId(e.target.value)}
-                  options={properties.map((p) => ({
-                    value: p.id,
-                    label: `${p.address_line1}, ${p.town} (${p.postcode})`,
-                  }))}
+                  options={[
+                    { value: '', label: 'Choose a property...' },
+                    ...properties.map((p) => ({
+                      value: p.id,
+                      label: `${p.address_line1}, ${p.town} (${p.postcode})`,
+                    })),
+                  ]}
                   required
                 />
 
@@ -365,10 +368,13 @@ export default function AddTenancy() {
                 name="tenant_id"
                 value={tenantId}
                 onChange={(e) => setTenantId(e.target.value)}
-                options={tenants.map((t) => ({
-                  value: t.id,
-                  label: `${t.full_name} (${t.email})`,
-                }))}
+                options={[
+                  { value: '', label: 'No tenant yet — assign later' },
+                  ...tenants.map((t) => ({
+                    value: t.id,
+                    label: `${t.full_name} (${t.email})`,
+                  })),
+                ]}
               />
             ) : (
               <p className="text-sm text-slate-600">

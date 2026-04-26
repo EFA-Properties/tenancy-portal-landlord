@@ -306,6 +306,15 @@ export default function PropertyDetail() {
                 { title: 'EICR (Electrical Safety)', desc: 'Every 5 years · Required before letting', docType: 'eicr', hasIt: !!property.eicr_expiry || hasDocType('eicr'), expiry: property.eicr_expiry || getDocExpiry('eicr') },
               ]
 
+              // HMO-specific compliance documents
+              const hmoItems = isHmo ? [
+                { title: 'HMO Licence', desc: 'Mandatory for 5+ tenants · Check with local authority', docType: 'hmo_licence', hasIt: !!property.hmo_licence_number || hasDocType('hmo_licence'), expiry: property.hmo_licence_expiry || getDocExpiry('hmo_licence') },
+                { title: 'Emergency Lighting Condition Report', desc: 'Every 5 years · BS 5266 compliant', docType: 'emergency_lighting', hasIt: hasDocType('emergency_lighting'), expiry: getDocExpiry('emergency_lighting') },
+                { title: 'Fire Risk Assessment', desc: 'Required before letting · Review annually', docType: 'fire_risk_assessment', hasIt: !!property.fire_risk_expiry || hasDocType('fire_risk_assessment'), expiry: property.fire_risk_expiry || getDocExpiry('fire_risk_assessment') },
+                { title: 'Fire & Emergency Procedures', desc: 'Displayed in communal areas · Updated annually', docType: 'fire_emergency_procedures', hasIt: hasDocType('fire_emergency_procedures'), expiry: getDocExpiry('fire_emergency_procedures') },
+                { title: 'House Rules / Guidance', desc: 'Communal area usage, quiet hours, cleaning rota, etc.', docType: 'house_rules', hasIt: hasDocType('house_rules'), expiry: getDocExpiry('house_rules') },
+              ] : []
+
               const tenantItems = [
                 { title: 'How to Rent Guide', desc: 'Gov.uk · Must be current edition', docType: 'how_to_rent', hasIt: hasDocType('how_to_rent'), expiry: getDocExpiry('how_to_rent') },
                 { title: "Renter's Rights Bill", desc: 'Renters Reform Bill documentation', docType: 'renter_rights', hasIt: hasDocType('renter_rights'), expiry: getDocExpiry('renter_rights') },
@@ -314,7 +323,7 @@ export default function PropertyDetail() {
                 { title: 'Inventory & Schedule of Condition', desc: 'Check-in report · Signed by tenant · Protects deposit claims', docType: 'inventory', hasIt: hasDocType('inventory'), expiry: getDocExpiry('inventory') },
               ]
 
-              const items = [...propertyItems, ...tenantItems]
+              const items = [...propertyItems, ...hmoItems, ...tenantItems]
 
               const getDocAcks = (docId: string) => acknowledgements.filter((a) => a.document_id === docId)
               const totalTenants = propertyTenants.length
@@ -457,6 +466,7 @@ export default function PropertyDetail() {
               return (
                 <>
                   {renderSection(propertyItems, 'Property documents', false)}
+                  {hmoItems.length > 0 && renderSection(hmoItems, 'HMO compliance', false)}
                   {renderSection(tenantItems, 'Tenant documents', true)}
                 </>
               )

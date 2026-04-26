@@ -178,6 +178,11 @@ export default function UploadDocument() {
     { value: 'how_to_rent', label: 'How to Rent Guide' },
     { value: 'renter_rights', label: "Renter's Rights" },
     { value: 'right_to_rent', label: 'Right to Rent Check' },
+    { value: 'hmo_licence', label: 'HMO Licence' },
+    { value: 'emergency_lighting', label: 'Emergency Lighting Condition Report' },
+    { value: 'fire_risk_assessment', label: 'Fire Risk Assessment' },
+    { value: 'fire_emergency_procedures', label: 'Fire & Emergency Procedures' },
+    { value: 'house_rules', label: 'House Rules / Guidance' },
     { value: 'other', label: 'Other' },
   ]
 

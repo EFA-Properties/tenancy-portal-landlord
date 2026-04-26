@@ -93,36 +93,43 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          first_name: string
-          last_name: string
+          full_name: string
           email: string
           phone: string | null
+          date_of_birth: string | null
           emergency_contact: string | null
           emergency_phone: string | null
+          invite_status: string | null
+          invite_token: string | null
+          invited_at: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           user_id: string
-          first_name: string
-          last_name: string
+          full_name: string
           email: string
           phone?: string | null
+          date_of_birth?: string | null
           emergency_contact?: string | null
           emergency_phone?: string | null
+          invite_status?: string | null
+          invited_at?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string
-          first_name?: string
-          last_name?: string
+          full_name?: string
           email?: string
           phone?: string | null
+          date_of_birth?: string | null
           emergency_contact?: string | null
           emergency_phone?: string | null
+          invite_status?: string | null
+          invited_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -309,12 +316,15 @@ export interface Tenancy {
 export interface Tenant {
   id: string
   user_id: string
-  first_name: string
-  last_name: string
+  full_name: string
   email: string
   phone: string | null
+  date_of_birth: string | null
   emergency_contact: string | null
   emergency_phone: string | null
+  invite_status: 'invited' | 'registered' | null
+  invite_token: string | null
+  invited_at: string | null
   created_at: string
   updated_at: string
 }

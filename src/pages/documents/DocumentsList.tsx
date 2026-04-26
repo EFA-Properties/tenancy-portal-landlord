@@ -19,6 +19,11 @@ const docTypeLabels: Record<string, string> = {
   how_to_rent: 'How to Rent Guide',
   renter_rights: "Renter's Rights",
   right_to_rent: 'Right to Rent Check',
+  hmo_licence: 'HMO Licence',
+  emergency_lighting: 'Emergency Lighting Report',
+  fire_risk_assessment: 'Fire Risk Assessment',
+  fire_emergency_procedures: 'Fire & Emergency Procedures',
+  house_rules: 'House Rules / Guidance',
   other: 'Other Document',
 }
 
@@ -178,11 +183,26 @@ export default function DocumentsList() {
                       <p className="text-body font-medium text-textPrimary">
                         {doc.title || docTypeLabels[doc.document_type] || doc.file_name || 'Untitled'}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-small text-textMuted">
                           Uploaded {formatDate(doc.uploaded_at)}
                           {doc.valid_to ? ` · Valid to ${formatDate(doc.valid_to)}` : ''}
                         </span>
+                        {doc.served_at && (
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-teal-700 bg-teal-50 px-2 py-0.5 rounded-pill">
+                            Served {formatDate(doc.served_at)}
+                          </span>
+                        )}
+                        {doc.tenant_opened_at && (
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded-pill">
+                            Viewed {formatDate(doc.tenant_opened_at)}
+                          </span>
+                        )}
+                        {doc.tenant_confirmed_at && (
+                          <span className="text-[10px] font-mono uppercase tracking-wider text-success bg-successLight px-2 py-0.5 rounded-pill">
+                            Accepted {formatDate(doc.tenant_confirmed_at)}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">

@@ -285,28 +285,27 @@ export default function AddProperty() {
         }
       }
 
-      // Auto-create EPC document record
+      // Auto-create EPC document record linked to gov.uk certificate
       if (epcData && epcData.lmk_key && property) {
         const epcCertUrl = `https://find-energy-certificate.service.gov.uk/energy-certificate/${epcData.lmk_key}`
-        try {
-          await supabase.from('documents').insert({
-            landlord_id: landlord.id,
-            scope: 'property',
-            property_id: property.id,
-            tenancy_id: null,
-            document_type: 'epc',
-            title: `EPC Certificate — Rating ${epcData.epc_rating}${epcData.epc_score ? ` (${epcData.epc_score})` : ''}`,
-            description: `Auto-imported from gov.uk EPC register. Valid to ${formatDate(epcData.epc_expiry)}.`,
-            file_path: epcCertUrl,
-            file_name: `epc-certificate-${epcData.lmk_key}.pdf`,
-            file_size: 0,
-            mime_type: 'text/html',
-            valid_from: null,
-            valid_to: epcData.epc_expiry || null,
-            uploaded_by: user.id,
-          })
-        } catch (docErr) {
-          console.warn('Failed to auto-create EPC document:', docErr)
+        const { error: epcDocError } = await supabase.from('documents').insert({
+          landlord_id: landlord.id,
+          scope: 'property',
+          property_id: property.id,
+          tenancy_id: null,
+          document_type: 'epc',
+          title: `EPC Certificate — Rating ${epcData.epc_rating}${epcData.epc_score ? ` (${epcData.epc_score})` : ''}`,
+          description: `Auto-imported from gov.uk EPC register. Valid to ${epcData.epc_expiry ? formatDate(epcData.epc_expiry) : 'N/A'}.`,
+          file_path: epcCertUrl,
+          file_name: `EPC-${epcData.epc_rating}-${property.address_line1}.html`,
+          file_size: 0,
+          mime_type: 'text/html',
+          valid_from: null,
+          valid_to: epcData.epc_expiry || null,
+          uploaded_by: landlord.id,
+        })
+        if (epcDocError) {
+          console.error('Failed to auto-create EPC document:', epcDocError)
         }
       }
 

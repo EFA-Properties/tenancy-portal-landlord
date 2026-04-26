@@ -2,12 +2,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import type { Tenant } from '../types/database'
 
-export interface TenantWithStatus extends Tenant {
+export interface TenantWithStatus extends Omit<Tenant, 'invite_status'> {
   tenancy_status?: 'active' | 'moved_out'
   tenancy_id?: string
   property_address?: string
   moved_out_at?: string
   access_revoked_at?: string
+  invite_status?: 'invited' | 'registered' | null
 }
 
 export function useTenants() {

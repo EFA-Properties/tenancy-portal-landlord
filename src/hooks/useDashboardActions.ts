@@ -41,7 +41,7 @@ export function useDashboardActions() {
       // --------------------------------------------------
       const { data: properties } = await supabase
         .from('properties')
-        .select('id, address_line1, town, postcode, gas_safety_expiry, epc_expiry, eicr_expiry, compliance_overrides')
+        .select('id, address_line1, town, postcode, gas_safety_expiry, epc_expiry, eicr_expiry, fire_risk_expiry, hmo_licence_expiry, is_hmo, property_type, compliance_overrides')
 
       if (properties) {
         const certFields = [
@@ -110,15 +110,27 @@ export function useDashboardActions() {
           { type: 'eicr', label: 'EICR Report', expiryField: 'eicr_expiry' },
         ]
 
+        const hmoRequiredDocs = [
+          { type: 'hmo_licence', label: 'HMO Licence', expiryField: 'hmo_licence_expiry' },
+          { type: 'fire_risk_assessment', label: 'Fire Risk Assessment', expiryField: 'fire_risk_expiry' },
+          { type: 'emergency_lighting', label: 'Emergency Lighting Report', expiryField: null },
+          { type: 'fire_emergency_procedures', label: 'Fire & Emergency Procedures', expiryField: null },
+          { type: 'house_rules', label: 'House Rules / Guidance', expiryField: null },
+        ]
+
         for (const prop of properties) {
           const address = `${prop.address_line1}, ${prop.town}`
           const overrides = (prop.compliance_overrides as Record<string, string>) || {}
           const propDocs = docsByProperty.get(prop.id) || new Set()
+          const propIsHmo = (prop as any).is_hmo || (prop as any).property_type === 'hmo'
 
-          for (const req of requiredDocs) {
+          // Add HMO-specific docs if applicable
+          const allRequiredDocs = propIsHmo ? [...requiredDocs, ...hmoRequiredDocs] : requiredDocs
+
+          for (const req of allRequiredDocs) {
             if (overrides[req.type] === 'na') continue
             // Only flag missing if no document uploaded AND no expiry date set on property
-            const hasExpiry = !!(prop as any)[req.expiryField]
+            const hasExpiry = req.expiryField ? !!(prop as any)[req.expiryField] : false
             if (!propDocs.has(req.type) && !hasExpiry) {
               actions.push({
                 id: `${prop.id}-missing-${req.type}`,
