@@ -30,15 +30,19 @@ export default function MessageThread() {
   const sendMessage = useSendMessage()
   const [newMessage, setNewMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const [tenancyInfo, setTenancyInfo] = useState<{ propertyAddress: string; tenantName: string } | null>(null)
+  const [tenancyInfo, setTenancyInfo] = useState<{
+    propertyAddress: string
+    tenantName: string
+    tenantEmail: string | null
+  } | null>(null)
 
-  // Load tenancy info
+  // Load tenancy info including tenant email for notifications
   useEffect(() => {
     if (!tenancyId) return
     const load = async () => {
       const { data } = await supabase
         .from('tenancies')
-        .select('properties(address_line1, town), tenancy_tenants(tenants(full_name))')
+        .select('properties(address_line1, town), tenancy_tenants(tenants(full_name, email))')
         .eq('id', tenancyId)
         .single()
       if (data) {
@@ -47,6 +51,7 @@ export default function MessageThread() {
         setTenancyInfo({
           propertyAddress: prop ? `${prop.address_line1}, ${prop.town}` : 'Unknown',
           tenantName: tenant?.full_name || 'Unknown tenant',
+          tenantEmail: tenant?.email || null,
         })
       }
     }
@@ -60,12 +65,21 @@ export default function MessageThread() {
 
   const handleSend = async () => {
     if (!newMessage.trim() || !tenancyId || !landlord) return
+    const messageBody = newMessage.trim()
     setNewMessage('')
     try {
       await sendMessage.mutateAsync({
         tenancyId,
         senderId: landlord.id,
-        body: newMessage.trim(),
+        body: messageBody,
+        notifyRecipient: tenancyInfo?.tenantEmail
+          ? {
+              recipientName: tenancyInfo.tenantName,
+              recipientEmail: tenancyInfo.tenantEmail,
+              senderName: landlord.full_name,
+              propertyAddress: tenancyInfo.propertyAddress,
+            }
+          : undefined,
       })
     } catch (err) {
       console.error('Failed to send message:', err)

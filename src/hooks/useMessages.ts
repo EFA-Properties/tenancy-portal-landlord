@@ -37,10 +37,17 @@ export function useSendMessage() {
       tenancyId,
       senderId,
       body,
+      notifyRecipient,
     }: {
       tenancyId: string
       senderId: string
       body: string
+      notifyRecipient?: {
+        recipientName: string
+        recipientEmail: string
+        senderName: string
+        propertyAddress?: string
+      }
     }) => {
       const { data, error } = await supabase
         .from('messages')
@@ -53,6 +60,24 @@ export function useSendMessage() {
         .select()
         .single()
       if (error) throw error
+
+      // Fire-and-forget email notification
+      if (notifyRecipient?.recipientEmail) {
+        fetch('/api/notify-message', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipientName: notifyRecipient.recipientName,
+            recipientEmail: notifyRecipient.recipientEmail,
+            senderName: notifyRecipient.senderName,
+            messagePreview: body,
+            propertyAddress: notifyRecipient.propertyAddress,
+            senderType: 'landlord',
+            tenancyId,
+          }),
+        }).catch((err) => console.warn('Failed to send message notification:', err))
+      }
+
       return data as Message
     },
     onSuccess: (_, variables) => {
