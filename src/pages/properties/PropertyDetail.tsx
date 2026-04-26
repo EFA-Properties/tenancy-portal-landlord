@@ -9,7 +9,7 @@ import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { Input } from '../../components/ui/Input'
-import { formatDate, epcRatingColor } from '../../lib/utils'
+import { formatDate, formatDateTime, epcRatingColor } from '../../lib/utils'
 
 interface PropertyRoom {
   id: string
@@ -48,6 +48,7 @@ export default function PropertyDetail() {
   const { data: acknowledgements = [] } = useDocumentAcknowledgements(docIds)
   const queryClient = useQueryClient()
   const [servingDoc, setServingDoc] = useState<string | null>(null)
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
   // HMO Rooms
   const [rooms, setRooms] = useState<PropertyRoom[]>([])
@@ -473,6 +474,134 @@ export default function PropertyDetail() {
             })()}
           </div>
         </Card>
+
+        {/* Uploaded Documents Table */}
+        {propertyDocs.length > 0 && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-teal-700 uppercase tracking-wider mb-1">Documents</p>
+                  <h2 className="text-lg font-fraunces font-semibold text-slate-900">
+                    Uploaded Documents
+                  </h2>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="secondary" size="sm">{propertyDocs.length} {propertyDocs.length === 1 ? 'doc' : 'docs'}</Badge>
+                  <Link to={`/documents/upload?property_id=${property.id}`}>
+                    <Button size="sm">Upload</Button>
+                  </Link>
+                </div>
+              </div>
+            </CardHeader>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-slate-50/50">
+                    <th className="text-left px-6 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Document</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Uploaded</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Tenant Accepted</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Valid To</th>
+                    <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Status</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {propertyDocs.map((doc: any) => {
+                    const docTypeLabels: Record<string, string> = {
+                      ast: 'Tenancy Agreement', epc: 'EPC Certificate', gas_safety: 'Gas Safety Certificate (CP12)',
+                      eicr: 'EICR (Electrical Safety)', inventory: 'Inventory & Schedule of Condition',
+                      deposit_certificate: 'Deposit Protection Certificate', how_to_rent: 'How to Rent Guide',
+                      renter_rights: "Renter's Rights", right_to_rent: 'Right to Rent Check',
+                      hmo_licence: 'HMO Licence', emergency_lighting: 'Emergency Lighting Report',
+                      fire_risk_assessment: 'Fire Risk Assessment', fire_emergency_procedures: 'Fire & Emergency Procedures',
+                      house_rules: 'House Rules / Guidance', other: 'Other Document',
+                    }
+
+                    let statusLabel = 'Uploaded'
+                    let statusColor = 'text-textMuted bg-slate-100'
+                    if (doc.tenant_confirmed_at) {
+                      statusLabel = 'Accepted'
+                      statusColor = 'text-success bg-successLight'
+                    } else if (doc.tenant_opened_at) {
+                      statusLabel = 'Viewed'
+                      statusColor = 'text-blue-700 bg-blue-50'
+                    } else if (doc.served_at) {
+                      statusLabel = 'Served'
+                      statusColor = 'text-teal-700 bg-teal-50'
+                    }
+
+                    return (
+                      <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <CheckCircle />
+                            <div className="min-w-0">
+                              <p className="font-medium text-textPrimary truncate">
+                                {doc.title || docTypeLabels[doc.document_type] || doc.file_name || 'Untitled'}
+                              </p>
+                              <span className="text-xs text-textMuted">
+                                {docTypeLabels[doc.document_type] || doc.document_type}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4 text-textSecondary whitespace-nowrap">
+                          {formatDateTime(doc.uploaded_at)}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {doc.tenant_confirmed_at ? (
+                            <span className="text-success font-medium">{formatDateTime(doc.tenant_confirmed_at)}</span>
+                          ) : (
+                            <span className="text-textMuted">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          {doc.valid_to ? (
+                            <span className={new Date(doc.valid_to) < new Date() ? 'text-error font-medium' : 'text-textSecondary'}>
+                              {formatDate(doc.valid_to)}
+                              {new Date(doc.valid_to) < new Date() && ' (expired)'}
+                            </span>
+                          ) : (
+                            <span className="text-textMuted">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`text-[10px] font-mono font-medium uppercase tracking-wider px-2.5 py-1 rounded-pill ${statusColor}`}>
+                            {statusLabel}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async () => {
+                              setDownloadingId(doc.id)
+                              try {
+                                if (doc.file_path?.startsWith('http')) {
+                                  window.open(doc.file_path, '_blank')
+                                } else if (doc.file_path) {
+                                  const bucket = doc.scope === 'property' ? 'property-documents' : 'tenancy-documents'
+                                  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(doc.file_path, 3600)
+                                  if (!error && data?.signedUrl) window.open(data.signedUrl, '_blank')
+                                }
+                              } finally {
+                                setDownloadingId(null)
+                              }
+                            }}
+                            loading={downloadingId === doc.id}
+                          >
+                            {doc.file_path?.startsWith('http') ? 'View' : 'Download'}
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
 
         {/* HMO Rooms — only shown if property is HMO */}
         {isHmo && (
