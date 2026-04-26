@@ -153,11 +153,10 @@ export default function AddTenancy() {
       if (!landlord) throw new Error('Landlord record not found')
 
       // Create tenancy linked to the selected property
-      const tenancyPayload = {
+      // Note: tenant is linked via tenancy_tenants junction table, not directly on tenancies
+      const tenancyPayload: Record<string, any> = {
         landlord_id: landlord.id,
         property_id: propertyId,
-        tenant_id: tenantId || null,
-        unit_id: null,
         legal_entity_id: selectedProperty?.legal_entity_id || null,
         tenancy_type: formData.tenancy_type,
         start_date: formData.start_date,

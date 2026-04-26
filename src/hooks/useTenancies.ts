@@ -8,11 +8,15 @@ export function useTenancies() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tenancies')
-        .select('*, properties(*), tenants(*)')
+        .select('*, properties(*), tenancy_tenants(*, tenants(*))')
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      return data as (Tenancy & { properties: any; tenants: any })[]
+      // Flatten: extract first tenant from junction table for backwards compatibility
+      return (data || []).map((t: any) => ({
+        ...t,
+        tenants: t.tenancy_tenants?.[0]?.tenants || null,
+      })) as (Tenancy & { properties: any; tenants: any })[]
     },
   })
 }
@@ -25,12 +29,16 @@ export function useTenancy(tenancyId: string | undefined) {
 
       const { data, error } = await supabase
         .from('tenancies')
-        .select('*, properties(*), tenants(*)')
+        .select('*, properties(*), tenancy_tenants(*, tenants(*))')
         .eq('id', tenancyId)
         .single()
 
       if (error) throw error
-      return data as Tenancy & { properties: any; tenants: any }
+      // Flatten: extract first tenant from junction for backwards compatibility
+      return {
+        ...data,
+        tenants: data.tenancy_tenants?.[0]?.tenants || null,
+      } as Tenancy & { properties: any; tenants: any }
     },
     enabled: !!tenancyId,
   })
@@ -41,10 +49,13 @@ export function useLinkTenant() {
 
   return useMutation({
     mutationFn: async ({ tenancyId, tenantId }: { tenancyId: string; tenantId: string }) => {
+      // Link tenant via the tenancy_tenants junction table
       const { error } = await supabase
-        .from('tenancies')
-        .update({ tenant_id: tenantId })
-        .eq('id', tenancyId)
+        .from('tenancy_tenants')
+        .upsert(
+          { tenancy_id: tenancyId, tenant_id: tenantId, status: 'active' },
+          { onConflict: 'tenancy_id,tenant_id' }
+        )
 
       if (error) throw error
     },

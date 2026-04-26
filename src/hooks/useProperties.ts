@@ -44,12 +44,16 @@ export function usePropertyTenancies(propertyId: string | undefined) {
 
       const { data, error } = await supabase
         .from('tenancies')
-        .select('*, tenants(*)')
+        .select('*, tenancy_tenants(*, tenants(*))')
         .eq('property_id', propertyId)
         .order('start_date', { ascending: false })
 
       if (error) throw error
-      return data
+      // Flatten: extract first tenant from junction table
+      return (data || []).map((t: any) => ({
+        ...t,
+        tenants: t.tenancy_tenants?.[0]?.tenants || null,
+      }))
     },
     enabled: !!propertyId,
   })

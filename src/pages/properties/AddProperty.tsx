@@ -284,9 +284,9 @@ export default function AddProperty() {
         }
       }
 
-      // Auto-create EPC document record linked to gov.uk certificate
-      if (epcData && epcData.lmk_key && property) {
-        const epcCertUrl = `https://find-energy-certificate.service.gov.uk/energy-certificate/${epcData.lmk_key}`
+      // Auto-create EPC document record — link to postcode search on gov.uk
+      if (epcData && property) {
+        const epcSearchUrl = `https://find-energy-certificate.service.gov.uk/find-a-certificate/search-by-postcode?postcode=${encodeURIComponent(formData.postcode)}`
         const { error: epcDocError } = await supabase.from('documents').insert({
           landlord_id: landlord.id,
           scope: 'property',
@@ -295,8 +295,8 @@ export default function AddProperty() {
           document_type: 'epc',
           title: `EPC Certificate — Rating ${epcData.epc_rating}${epcData.epc_score ? ` (${epcData.epc_score})` : ''}`,
           description: `Auto-imported from gov.uk EPC register. Valid to ${epcData.epc_expiry ? formatDate(epcData.epc_expiry) : 'N/A'}.`,
-          file_path: epcCertUrl,
-          file_name: `EPC-${epcData.epc_rating}-${property.address_line1}.html`,
+          file_path: epcSearchUrl,
+          file_name: `EPC-${epcData.epc_rating}-${formData.address_line1}.html`,
           file_size: 0,
           mime_type: 'text/html',
           valid_from: null,
