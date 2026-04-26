@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLandlord } from '../hooks/useLandlord'
-import { supabase } from '../lib/supabase'
+import { createBillingRequestFlow } from '../lib/gocardless'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
@@ -42,21 +42,14 @@ export default function Settings() {
     if (!landlord) return
     setUpgrading(true)
     try {
-      const { data, error } = await supabase.functions.invoke('gocardless-create-billing-request', {
-        body: {
-          landlordId: landlord.id,
-          email: landlord.email,
-          fullName: landlord.full_name,
-          successUrl: `${window.location.origin}/settings?upgraded=true`,
-          exitUrl: `${window.location.origin}/settings`,
-        },
+      const { authorisation_url } = await createBillingRequestFlow({
+        landlordId: landlord.id,
+        email: landlord.email,
+        fullName: landlord.full_name,
+        successUrl: `${window.location.origin}/settings?upgraded=true`,
+        exitUrl: `${window.location.origin}/settings`,
       })
-      if (error) throw error
-      if (data?.authorisation_url) {
-        window.location.href = data.authorisation_url
-      } else {
-        throw new Error('No authorisation URL returned')
-      }
+      window.location.href = authorisation_url
     } catch (err) {
       console.error('Upgrade error:', err)
       alert('Payment setup is not yet available. Contact hello@tenancy-portal.co.uk to upgrade.')

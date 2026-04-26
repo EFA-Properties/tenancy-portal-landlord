@@ -1,14 +1,12 @@
 /**
  * GoCardless Integration — LIVE
  *
- * Uses Supabase Edge Function to create billing requests securely.
- * The access token is stored as a Supabase secret, never exposed client-side.
+ * Uses Cloudflare Pages Function to create billing requests securely.
+ * The access token is stored as a Cloudflare env var, never exposed client-side.
  */
 
-import { supabase } from './supabase'
-
 /**
- * Create a GoCardless Billing Request Flow via Supabase Edge Function.
+ * Create a GoCardless Billing Request Flow via Pages Function.
  * Returns a hosted page URL where the landlord sets up their DD mandate.
  */
 export async function createBillingRequestFlow(params: {
@@ -18,16 +16,20 @@ export async function createBillingRequestFlow(params: {
   successUrl: string
   exitUrl: string
 }): Promise<{ authorisation_url: string }> {
-  const { data, error } = await supabase.functions.invoke('gocardless-create-billing-request', {
-    body: params,
+  const response = await fetch('/api/gocardless/create-billing-request', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
   })
 
-  if (error) {
-    console.error('GoCardless billing request error:', error)
-    throw new Error(error.message || 'Failed to create billing request')
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error((errorData as any).error || 'Failed to create billing request')
   }
 
-  if (!data?.authorisation_url) {
+  const data = await response.json() as { authorisation_url: string }
+
+  if (!data.authorisation_url) {
     throw new Error('No authorisation URL returned from GoCardless')
   }
 
