@@ -7,11 +7,13 @@ import { Card, CardBody } from '../components/ui/Card'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, resetPassword } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,6 +27,23 @@ export default function Login() {
       setError(err instanceof Error ? err.message : 'Login failed')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Enter your email address above, then click Forgot password.')
+      return
+    }
+    setError('')
+    setResetLoading(true)
+    try {
+      await resetPassword(email)
+      setResetSent(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send reset email')
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -55,6 +74,12 @@ export default function Login() {
               </div>
             )}
 
+            {resetSent && (
+              <div className="mb-5 p-3.5 bg-teal-50 border border-teal-200 rounded-xl text-teal-700 text-sm">
+                Password reset email sent to <strong>{email}</strong>. Check your inbox and click the link to set a new password.
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-5">
               <Input
                 label="Email"
@@ -64,14 +89,26 @@ export default function Login() {
                 required
                 placeholder="name@example.com"
               />
-              <Input
-                label="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Enter your password"
-              />
+              <div>
+                <Input
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="Enter your password"
+                />
+                <div className="mt-2 text-right">
+                  <button
+                    type="button"
+                    onClick={handleForgotPassword}
+                    disabled={resetLoading}
+                    className="text-sm text-teal-700 hover:text-teal-800 font-medium disabled:opacity-50"
+                  >
+                    {resetLoading ? 'Sending...' : 'Forgot password?'}
+                  </button>
+                </div>
+              </div>
               <Button
                 type="submit"
                 loading={loading}
