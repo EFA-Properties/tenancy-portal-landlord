@@ -18,10 +18,27 @@ export function useTenants() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('No user')
 
+      // Get landlord record
+      const { data: landlord } = await supabase
+        .from('landlords')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .single()
+      if (!landlord) throw new Error('Not a landlord')
+
+      // Get tenant IDs linked to this landlord's properties via junction table
+      const { data: links } = await supabase
+        .from('tenancy_tenants')
+        .select('tenant_id, tenancies!inner(property_id, properties!inner(landlord_id))')
+        .eq('tenancies.properties.landlord_id', landlord.id)
+
+      const tenantIds = [...new Set((links || []).map((l: any) => l.tenant_id))]
+      if (tenantIds.length === 0) return [] as Tenant[]
+
       const { data, error } = await supabase
         .from('tenants')
         .select('*')
-        .eq('user_id', user.id)
+        .in('id', tenantIds)
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -41,11 +58,28 @@ export function useTenantsWithStatus() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('No user')
 
-      // Get all tenants
+      // Get landlord record
+      const { data: landlord } = await supabase
+        .from('landlords')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .single()
+      if (!landlord) throw new Error('Not a landlord')
+
+      // Get tenant IDs linked to this landlord's properties
+      const { data: tenantLinks } = await supabase
+        .from('tenancy_tenants')
+        .select('tenant_id, tenancies!inner(property_id, properties!inner(landlord_id))')
+        .eq('tenancies.properties.landlord_id', landlord.id)
+
+      const tenantIds = [...new Set((tenantLinks || []).map((l: any) => l.tenant_id))]
+      if (tenantIds.length === 0) return [] as TenantWithStatus[]
+
+      // Get all tenants for this landlord
       const { data: tenants, error: tErr } = await supabase
         .from('tenants')
         .select('*')
-        .eq('user_id', user.id)
+        .in('id', tenantIds)
         .order('created_at', { ascending: false })
       if (tErr) throw tErr
 

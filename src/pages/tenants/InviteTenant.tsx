@@ -55,7 +55,6 @@ export default function InviteTenant() {
       const { data: tenant, error: tenantError } = await supabase
         .from('tenants')
         .insert({
-          user_id: user.id,
           full_name: formData.full_name,
           email: formData.email,
           phone: formData.phone || null,

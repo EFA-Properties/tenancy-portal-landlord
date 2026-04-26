@@ -114,8 +114,6 @@ export default function UploadDocument() {
       const fileName = `${Date.now()}-${file.name}`
       const storagePath = `${folderId}/${fileName}`
 
-      console.log('Upload attempt:', { bucket, storagePath, folderId, landlordId: landlord.id })
-
       const { data: storageData, error: storageError } = await supabase.storage
         .from(bucket)
         .upload(storagePath, file)
@@ -124,8 +122,6 @@ export default function UploadDocument() {
         console.error('Storage upload error:', storageError)
         throw new Error(`Storage upload failed: ${storageError.message}`)
       }
-
-      console.log('Storage upload success:', storageData)
 
       // Create document record
       const docPayload = {
@@ -144,8 +140,6 @@ export default function UploadDocument() {
         valid_to: formData.valid_to || null,
         uploaded_by: landlord.id,
       }
-
-      console.log('Document insert payload:', docPayload)
 
       const { error: docError } = await supabase.from('documents').insert(docPayload)
 

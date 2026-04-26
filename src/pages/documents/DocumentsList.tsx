@@ -160,7 +160,7 @@ export default function DocumentsList() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest mb-1">
-                    {(docs as any[])[0]?.scope === 'property' ? 'Property' : 'Property'}
+                    {(docs as any[])[0]?.scope === 'property' ? 'Property' : 'Tenancy'}
                   </p>
                   <h2 className="text-base font-semibold text-slate-900">{propertyName}</h2>
                 </div>

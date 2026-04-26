@@ -254,7 +254,6 @@ export default function AddProperty() {
         } : {}),
       }
 
-      console.log('Creating property with:', propertyPayload)
       const { data: property, error: propertyError } = await supabase
         .from('properties')
         .insert(propertyPayload)
