@@ -7,7 +7,7 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
-import { UpgradePrompt } from '../components/UpgradePrompt'
+// UpgradePrompt removed — single Pro plan, no free tier
 
 type PropertyType = 'single_btl' | 'hmo' | 'mixed_use'
 
@@ -139,6 +139,22 @@ export default function Onboarding() {
     </div>
   )
 
+  // Skip onboarding — mark complete and go to dashboard
+  const handleSkipOnboarding = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      await supabase
+        .from('landlords')
+        .update({ onboarding_completed: true })
+        .eq('id', landlord?.id)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to skip onboarding')
+      setLoading(false)
+    }
+  }
+
   // Step 1: Add First Property
   const handleStep1Submit = async () => {
     setError('')
@@ -171,17 +187,19 @@ export default function Onboarding() {
     setLoading(true)
 
     try {
+      const isHmo = stepData.property.propertyType === 'hmo'
+
       const { data, error: insertError } = await supabase
         .from('properties')
         .insert({
           landlord_id: landlord?.id,
-          address_line_1: stepData.property.addressLine1,
-          address_line_2: stepData.property.addressLine2 || null,
+          address_line1: stepData.property.addressLine1,
+          address_line2: stepData.property.addressLine2 || null,
           town: stepData.property.town,
           county: stepData.property.county || null,
           postcode: stepData.property.postcode,
           property_type: stepData.property.propertyType,
-          rooms: stepData.property.propertyType === 'hmo' ? parseInt(stepData.property.rooms) : null,
+          is_hmo: isHmo,
         })
         .select()
 
@@ -189,6 +207,17 @@ export default function Onboarding() {
 
       if (data && data.length > 0) {
         setPropertyId(data[0].id)
+
+        // If HMO, create room records
+        if (isHmo && stepData.property.rooms) {
+          const roomCount = parseInt(stepData.property.rooms)
+          const roomRows = Array.from({ length: roomCount }, (_, i) => ({
+            property_id: data[0].id,
+            room_label: `Room ${i + 1}`,
+          }))
+
+          await supabase.from('property_rooms').insert(roomRows)
+        }
       }
 
       setCurrentStep(2)
@@ -496,7 +525,7 @@ export default function Onboarding() {
                   </Button>
                   <Button
                     variant="ghost"
-                    onClick={() => navigate('/dashboard')}
+                    onClick={handleSkipOnboarding}
                     disabled={loading}
                   >
                     Skip — I'll add later
@@ -678,15 +707,7 @@ export default function Onboarding() {
                   Upload Your First Document
                 </h2>
 
-                {landlord?.plan === 'free' ? (
-                  <div className="mb-8">
-                    <UpgradePrompt
-                      feature="Document upload"
-                      description="Upload and deliver documents to your tenants, keep everything organized in one place."
-                    />
-                  </div>
-                ) : (
-                  <form className="space-y-5 mb-8">
+                <form className="space-y-5 mb-8">
                     <Select
                       label="Document Type"
                       value={stepData.document.documentType}
@@ -735,7 +756,6 @@ export default function Onboarding() {
                       </p>
                     </div>
                   </form>
-                )}
 
                 <div className="flex gap-3 pt-8 border-t border-border">
                   <Button
@@ -743,17 +763,15 @@ export default function Onboarding() {
                     onClick={handleStep4Skip}
                     disabled={loading}
                   >
-                    {landlord?.plan === 'free' ? 'Continue to Dashboard' : 'Skip for Now'}
+                    Skip for Now
                   </Button>
-                  {landlord?.plan === 'pro' && (
-                    <Button
-                      onClick={handleStep4Submit}
-                      loading={loading}
-                      className="ml-auto"
-                    >
-                      Upload & Finish
-                    </Button>
-                  )}
+                  <Button
+                    onClick={handleStep4Submit}
+                    loading={loading}
+                    className="ml-auto"
+                  >
+                    Upload & Finish
+                  </Button>
                 </div>
               </div>
             )}
