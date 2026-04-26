@@ -259,19 +259,27 @@ export default function PropertyDetail() {
                     )}
                   </div>
                 </div>
-                {property.postcode && (
-                  <a
-                    href={`https://find-energy-certificate.service.gov.uk/find-a-certificate/search-by-postcode?postcode=${encodeURIComponent(property.postcode)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-teal-700 bg-teal-50 rounded-xl hover:bg-teal-100 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    View Full EPC Certificate
-                  </a>
-                )}
+                {(() => {
+                  // Use the EPC document's file_path (direct cert URL) if available,
+                  // then property.epc_certificate_url, then postcode search fallback
+                  const epcDoc = propertyDocs.find((d) => d.document_type === 'epc')
+                  const epcLink = (epcDoc?.file_path?.startsWith('http') ? epcDoc.file_path : null)
+                    || property.epc_certificate_url
+                    || (property.postcode ? `https://find-energy-certificate.service.gov.uk/find-a-certificate/search-by-postcode?postcode=${encodeURIComponent(property.postcode)}` : null)
+                  return epcLink ? (
+                    <a
+                      href={epcLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-teal-700 bg-teal-50 rounded-xl hover:bg-teal-100 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      View Full EPC Certificate
+                    </a>
+                  ) : null
+                })()}
               </div>
             ) : (
               <p className="text-sm text-slate-400">No EPC data available.</p>

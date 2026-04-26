@@ -16,6 +16,7 @@ export interface Database {
           epc_rating: string | null
           epc_score: number | null
           epc_expiry: string | null
+          epc_certificate_url: string | null
           created_at: string
           updated_at: string
         }
@@ -33,6 +34,7 @@ export interface Database {
           epc_rating?: string | null
           epc_score?: number | null
           epc_expiry?: string | null
+          epc_certificate_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -50,6 +52,7 @@ export interface Database {
           epc_rating?: string | null
           epc_score?: number | null
           epc_expiry?: string | null
+          epc_certificate_url?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -291,6 +294,7 @@ export interface Property {
   epc_rating: string | null
   epc_score: number | null
   epc_expiry: string | null
+  epc_certificate_url: string | null
   eicr_status: string | null
   eicr_expiry: string | null
   gas_safety_expiry: string | null

@@ -43,6 +43,7 @@ export default function AddProperty() {
     epc_score: number | null
     epc_expiry: string
     lmk_key: string | null
+    certificate_url: string | null
   } | null>(null)
 
   // Load existing legal entities
@@ -160,6 +161,7 @@ export default function AddProperty() {
       epc_score: epc.current_score ? parseInt(epc.current_score) : null,
       epc_expiry: epc.expiry_date || '',
       lmk_key: epc.lmk_key || null,
+      certificate_url: epc.certificate_url || null,
     })
     if (!formData.address_line1 && epc.address) {
       const parts = epc.address.split(',').map((p: string) => p.trim())
@@ -251,6 +253,7 @@ export default function AddProperty() {
           epc_score: epcData.epc_score,
           epc_expiry: epcData.epc_expiry || null,
           uprn: epcData.lmk_key || null,
+          epc_certificate_url: epcData.certificate_url || null,
         } : {}),
       }
 
@@ -284,9 +287,11 @@ export default function AddProperty() {
         }
       }
 
-      // Auto-create EPC document record — link to postcode search on gov.uk
+      // Auto-create EPC document record — link directly to gov.uk certificate
       if (epcData && property) {
-        const epcSearchUrl = `https://find-energy-certificate.service.gov.uk/find-a-certificate/search-by-postcode?postcode=${encodeURIComponent(formData.postcode)}`
+        // Use the direct certificate URL (RRN-based) if available, fall back to postcode search
+        const epcUrl = epcData.certificate_url
+          || `https://find-energy-certificate.service.gov.uk/find-a-certificate/search-by-postcode?postcode=${encodeURIComponent(formData.postcode)}`
         const { error: epcDocError } = await supabase.from('documents').insert({
           landlord_id: landlord.id,
           scope: 'property',
@@ -295,7 +300,7 @@ export default function AddProperty() {
           document_type: 'epc',
           title: `EPC Certificate — Rating ${epcData.epc_rating}${epcData.epc_score ? ` (${epcData.epc_score})` : ''}`,
           description: `Auto-imported from gov.uk EPC register. Valid to ${epcData.epc_expiry ? formatDate(epcData.epc_expiry) : 'N/A'}.`,
-          file_path: epcSearchUrl,
+          file_path: epcUrl,
           file_name: `EPC-${epcData.epc_rating}-${formData.address_line1}.html`,
           file_size: 0,
           mime_type: 'text/html',
@@ -513,10 +518,10 @@ export default function AddProperty() {
                       <span className="font-medium">{formatDate(epcData.epc_expiry)}</span>
                     </div>
                   </div>
-                  {epcData.lmk_key && (
+                  {epcData.certificate_url && (
                     <div className="mt-3 pt-3 border-t border-teal-200 flex items-center gap-3">
                       <a
-                        href={`https://find-energy-certificate.service.gov.uk/energy-certificate/${epcData.lmk_key}`}
+                        href={epcData.certificate_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm font-medium text-teal-700 hover:text-teal-800 underline"

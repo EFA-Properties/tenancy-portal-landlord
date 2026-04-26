@@ -161,9 +161,9 @@ export default function AddTenancy() {
         tenancy_type: formData.tenancy_type,
         start_date: formData.start_date,
         end_date: formData.tenancy_type === 'fixed_term' ? formData.end_date : null,
-        monthly_rent: parseFloat(formData.monthly_rent),
+        monthly_rent: Math.round(parseFloat(formData.monthly_rent) * 100) / 100,
         rent_due_day: parseInt(formData.rent_due_day),
-        deposit_amount: formData.deposit_amount ? parseFloat(formData.deposit_amount) : null,
+        deposit_amount: formData.deposit_amount ? Math.round(parseFloat(formData.deposit_amount) * 100) / 100 : null,
         deposit_scheme: formData.deposit_scheme || null,
         deposit_scheme_ref: formData.deposit_scheme_ref || null,
       }

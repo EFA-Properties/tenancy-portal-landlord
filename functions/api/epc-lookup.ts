@@ -47,19 +47,29 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     const data = await epcResponse.json()
 
-    // Map to simplified format
-    const results = (data.rows || []).map((row: any) => ({
-      address: row['address'],
-      postcode: row['postcode'],
-      current_rating: row['current-energy-rating'],
-      current_score: row['current-energy-efficiency'],
-      lodgement_date: row['lodgement-date'],
-      expiry_date: row['lodgement-date'] ? calculateExpiry(row['lodgement-date']) : null,
-      property_type: row['property-type'],
-      built_form: row['built-form'],
-      floor_area: row['total-floor-area'],
-      lmk_key: row['lmk-key'],
-    }))
+    // Map to simplified format — include RRN (Report Reference Number) for direct gov.uk link
+    // The API field 'building-reference-number' contains the RRN in format XXXX-XXXX-XXXX-XXXX-XXXX
+    // which is what gov.uk uses in certificate URLs
+    const results = (data.rows || []).map((row: any) => {
+      const rrn = row['building-reference-number'] || null
+      return {
+        address: row['address'],
+        postcode: row['postcode'],
+        current_rating: row['current-energy-rating'],
+        current_score: row['current-energy-efficiency'],
+        lodgement_date: row['lodgement-date'],
+        expiry_date: row['lodgement-date'] ? calculateExpiry(row['lodgement-date']) : null,
+        property_type: row['property-type'],
+        built_form: row['built-form'],
+        floor_area: row['total-floor-area'],
+        lmk_key: row['lmk-key'],
+        certificate_number: rrn,
+        // Direct gov.uk certificate URL using the RRN
+        certificate_url: rrn
+          ? `https://find-energy-certificate.service.gov.uk/energy-certificate/${rrn}`
+          : null,
+      }
+    })
 
     return new Response(JSON.stringify({ results }), {
       headers: { 'Content-Type': 'application/json' },
