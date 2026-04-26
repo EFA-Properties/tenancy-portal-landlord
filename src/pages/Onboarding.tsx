@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useLandlord } from '../hooks/useLandlord'
@@ -7,7 +8,6 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
-// UpgradePrompt removed — single Pro plan, no free tier
 
 type PropertyType = 'single_btl' | 'hmo' | 'mixed_use'
 
@@ -44,6 +44,7 @@ const STEPS = [
 
 export default function Onboarding() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { user } = useAuth()
   const { data: landlord, isLoading: landlordLoading } = useLandlord()
   const [currentStep, setCurrentStep] = useState(1)
@@ -144,10 +145,15 @@ export default function Onboarding() {
     setError('')
     setLoading(true)
     try {
-      await supabase
+      const { error: updateError } = await supabase
         .from('landlords')
         .update({ onboarding_completed: true })
         .eq('id', landlord?.id)
+
+      if (updateError) throw updateError
+
+      // Invalidate cached landlord so ProtectedRoute sees the updated value
+      await queryClient.invalidateQueries({ queryKey: ['landlord'] })
       navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to skip onboarding')
@@ -187,12 +193,16 @@ export default function Onboarding() {
     setLoading(true)
 
     try {
+      if (!landlord?.id) {
+        throw new Error('Landlord record not found. Please try logging out and back in.')
+      }
+
       const isHmo = stepData.property.propertyType === 'hmo'
 
       const { data, error: insertError } = await supabase
         .from('properties')
         .insert({
-          landlord_id: landlord?.id,
+          landlord_id: landlord.id,
           address_line1: stepData.property.addressLine1,
           address_line2: stepData.property.addressLine2 || null,
           town: stepData.property.town,
@@ -203,7 +213,10 @@ export default function Onboarding() {
         })
         .select()
 
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error('Property insert failed:', insertError)
+        throw new Error(`Failed to add property: ${insertError.message}`)
+      }
 
       if (data && data.length > 0) {
         setPropertyId(data[0].id)
@@ -360,11 +373,14 @@ export default function Onboarding() {
       if (docError) throw docError
 
       // Mark onboarding as complete
-      await supabase
+      const { error: completeError } = await supabase
         .from('landlords')
         .update({ onboarding_completed: true })
         .eq('id', landlord?.id)
 
+      if (completeError) throw completeError
+
+      await queryClient.invalidateQueries({ queryKey: ['landlord'] })
       navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload document')
@@ -377,12 +393,14 @@ export default function Onboarding() {
     setLoading(true)
 
     try {
-      // Mark onboarding as complete
-      await supabase
+      const { error: updateError } = await supabase
         .from('landlords')
         .update({ onboarding_completed: true })
         .eq('id', landlord?.id)
 
+      if (updateError) throw updateError
+
+      await queryClient.invalidateQueries({ queryKey: ['landlord'] })
       navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to complete onboarding')
