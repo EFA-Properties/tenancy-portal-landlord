@@ -91,7 +91,7 @@ export default function PaymentSuccess() {
         </Button>
 
         <p className="text-xs text-slate-400 mt-4">
-          Your first payment of £29.99 will be collected 14 days from today.
+          Your first payment of £{landlord?.plan_price?.toFixed(2) || '29.99'} will be collected 14 days from today.
           Cancel any time from Settings.
         </p>
       </div>

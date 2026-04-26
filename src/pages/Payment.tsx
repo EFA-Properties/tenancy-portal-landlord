@@ -49,6 +49,10 @@ export default function Payment() {
 
   const proPlan = PLANS.pro
 
+  // Use the landlord's plan_price if set (promo code applied at registration)
+  const displayPrice = landlord?.plan_price ?? proPlan.price
+  const hasDiscount = displayPrice < proPlan.price
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
@@ -84,7 +88,10 @@ export default function Payment() {
                 <p className="text-sm text-slate-500 mt-1">{proPlan.description}</p>
               </div>
               <div className="text-right">
-                <span className="text-3xl font-bold text-teal-700">£{proPlan.price}</span>
+                {hasDiscount && (
+                  <span className="text-lg text-slate-400 line-through mr-2">£{proPlan.price}</span>
+                )}
+                <span className="text-3xl font-bold text-teal-700">£{displayPrice.toFixed(2)}</span>
                 <span className="text-sm text-slate-400">/mo</span>
               </div>
             </div>
@@ -127,7 +134,7 @@ export default function Payment() {
         </Button>
 
         <p className="text-center text-xs text-slate-400 mt-2">
-          No charge for 14 days. Cancel before your trial ends and you won't pay a thing.
+          No charge for 14 days. Your first payment of £{displayPrice.toFixed(2)} will be collected after your trial ends. Cancel any time.
         </p>
       </div>
     </div>

@@ -77,11 +77,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           const mandateId = links.mandate
           const { data: landlord } = await supabase
             .from('landlords')
-            .select('id')
+            .select('id, plan_price')
             .eq('gc_mandate_id', mandateId)
             .single()
 
           if (landlord) {
+            // Use the landlord's plan_price (set at registration with promo code)
+            // Default to £29.99 if not set; convert pounds to pence for GoCardless
+            const priceInPounds = landlord.plan_price ?? 29.99
+            const amountInPence = Math.round(priceInPounds * 100)
+
             // Create subscription with 14-day trial (first payment deferred)
             const startDate = new Date()
             startDate.setDate(startDate.getDate() + 14)
@@ -96,13 +101,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
               },
               body: JSON.stringify({
                 subscriptions: {
-                  amount: 2999, // £29.99 in pence
+                  amount: amountInPence,
                   currency: 'GBP',
                   name: 'Tenancy Portal Pro',
                   interval_unit: 'monthly',
                   start_date: startDateStr,
                   links: { mandate: mandateId },
-                  metadata: { product: 'tenancy-portal-pro' },
+                  metadata: { product: 'tenancy-portal-pro', price: `£${priceInPounds}` },
                 },
               }),
             })
