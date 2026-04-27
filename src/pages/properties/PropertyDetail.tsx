@@ -260,10 +260,11 @@ export default function PropertyDetail() {
                   </div>
                 </div>
                 {(() => {
-                  // Use the EPC document's file_path (direct cert URL) if available,
+                  // Use the EPC document's file_path if available (can be /api/epc-certificate or http URL),
                   // then property.epc_certificate_url, then postcode search fallback
                   const epcDoc = propertyDocs.find((d) => d.document_type === 'epc')
-                  const epcLink = (epcDoc?.file_path?.startsWith('http') ? epcDoc.file_path : null)
+                  const docPath = epcDoc?.file_path
+                  const epcLink = (docPath && (docPath.startsWith('http') || docPath.startsWith('/api/')) ? docPath : null)
                     || property.epc_certificate_url
                     || (property.postcode ? `https://find-energy-certificate.service.gov.uk/find-a-certificate/search-by-postcode?postcode=${encodeURIComponent(property.postcode)}` : null)
                   return epcLink ? (

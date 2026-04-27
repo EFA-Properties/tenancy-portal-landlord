@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X, LogOut } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { useInactivityTimeout } from '../hooks/useInactivityTimeout'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -80,6 +81,7 @@ export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user, logout } = useAuth()
   const location = useLocation()
+  useInactivityTimeout()
 
   const navigationItems = [
     { label: 'Dashboard', href: '/dashboard', icon: HomeIcon },

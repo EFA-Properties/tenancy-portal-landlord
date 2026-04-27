@@ -47,13 +47,15 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     const data = await epcResponse.json()
 
-    // Map to simplified format — include RRN (Report Reference Number) for direct gov.uk link
-    // The API field 'building-reference-number' contains the RRN in format XXXX-XXXX-XXXX-XXXX-XXXX
-    // which is what gov.uk uses in certificate URLs
+    // Map to simplified format
+    // Gov.uk certificate URLs use an RRN (Report Reference Number) that the EPC API does NOT provide.
+    // Instead, we link to our own /api/epc-certificate endpoint which fetches full certificate data
+    // from the EPC API and renders a professional HTML certificate page.
     const results = (data.rows || []).map((row: any) => {
-      const rrn = row['building-reference-number'] || null
+      const lmkKey = row['lmk-key'] || null
+      const address = row['address'] || ''
       return {
-        address: row['address'],
+        address,
         postcode: row['postcode'],
         current_rating: row['current-energy-rating'],
         current_score: row['current-energy-efficiency'],
@@ -62,11 +64,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         property_type: row['property-type'],
         built_form: row['built-form'],
         floor_area: row['total-floor-area'],
-        lmk_key: row['lmk-key'],
-        certificate_number: rrn,
-        // Direct gov.uk certificate URL using the RRN
-        certificate_url: rrn
-          ? `https://find-energy-certificate.service.gov.uk/energy-certificate/${rrn}`
+        lmk_key: lmkKey,
+        // In-portal EPC certificate viewer using our Cloudflare Function
+        certificate_url: lmkKey
+          ? `/api/epc-certificate?lmk_key=${encodeURIComponent(lmkKey)}&address=${encodeURIComponent(address)}`
           : null,
       }
     })

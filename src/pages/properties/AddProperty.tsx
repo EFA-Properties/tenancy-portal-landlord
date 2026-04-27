@@ -287,11 +287,13 @@ export default function AddProperty() {
         }
       }
 
-      // Auto-create EPC document record — link directly to gov.uk certificate
+      // Auto-create EPC document record — link to in-portal certificate viewer
       if (epcData && property) {
-        // Use the direct certificate URL (RRN-based) if available, fall back to postcode search
+        // Build the in-portal certificate URL using the lmk_key
         const epcUrl = epcData.certificate_url
-          || `https://find-energy-certificate.service.gov.uk/find-a-certificate/search-by-postcode?postcode=${encodeURIComponent(formData.postcode)}`
+          || (epcData.lmk_key
+            ? `/api/epc-certificate?lmk_key=${encodeURIComponent(epcData.lmk_key)}&address=${encodeURIComponent(formData.address_line1)}`
+            : null)
         const { error: epcDocError } = await supabase.from('documents').insert({
           landlord_id: landlord.id,
           scope: 'property',
@@ -299,7 +301,7 @@ export default function AddProperty() {
           tenancy_id: null,
           document_type: 'epc',
           title: `EPC Certificate — Rating ${epcData.epc_rating}${epcData.epc_score ? ` (${epcData.epc_score})` : ''}`,
-          description: `Auto-imported from gov.uk EPC register. Valid to ${epcData.epc_expiry ? formatDate(epcData.epc_expiry) : 'N/A'}.`,
+          description: `Auto-imported from the EPC register. Valid to ${epcData.epc_expiry ? formatDate(epcData.epc_expiry) : 'N/A'}.`,
           file_path: epcUrl,
           file_name: `EPC-${epcData.epc_rating}-${formData.address_line1}.html`,
           file_size: 0,
