@@ -511,7 +511,7 @@ export default function AddProperty() {
               {epcData && (
                 <div className="p-5 bg-teal-50 border border-teal-100 rounded-xl mt-3">
                   <p className="text-sm font-medium text-teal-800 mb-3">EPC data selected:</p>
-                  <div className="grid grid-cols-3 gap-4 text-sm text-teal-700">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-teal-700">
                     <div>
                       <span className="text-xs text-teal-600 block mb-0.5">Rating</span>
                       <span className="font-semibold text-lg">{epcData.epc_rating}</span>
@@ -524,6 +524,12 @@ export default function AddProperty() {
                       <span className="text-xs text-teal-600 block mb-0.5">Expires</span>
                       <span className="font-medium">{formatDate(epcData.epc_expiry)}</span>
                     </div>
+                    {epcData.lmk_key && (
+                      <div>
+                        <span className="text-xs text-teal-600 block mb-0.5">Certificate No.</span>
+                        <span className="font-mono text-xs">{epcData.lmk_key}</span>
+                      </div>
+                    )}
                   </div>
                   {epcData.certificate_url && (
                     <div className="mt-3 pt-3 border-t border-teal-200 flex items-center gap-3">

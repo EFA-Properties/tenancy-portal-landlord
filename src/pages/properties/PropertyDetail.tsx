@@ -257,6 +257,11 @@ export default function PropertyDetail() {
                         Valid to {formatDate(property.epc_expiry)}
                       </p>
                     )}
+                    {property.uprn && (
+                      <p className="text-xs text-slate-400 mt-0.5 font-mono">
+                        Certificate: {property.uprn}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {(() => {
