@@ -12,34 +12,20 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No user')
+      const today = new Date().toISOString().split('T')[0]
 
-      // Get total and active tenancies
-      const { data: tenancies } = await supabase
-        .from('tenancies')
-        .select('status')
+      // Run all three queries in parallel
+      const [tenanciesRes, requestsRes, alertsRes] = await Promise.all([
+        supabase.from('tenancies').select('status'),
+        supabase.from('maintenance_requests').select('id').in('status', ['open', 'in_progress']),
+        supabase.from('compliance_alerts').select('id').eq('status', 'pending').lt('due_date', today),
+      ])
 
+      const tenancies = tenanciesRes.data
       const totalTenancies = tenancies?.length ?? 0
       const activeTenancies = tenancies?.filter(t => t.status === 'active').length ?? 0
-
-      // Get pending maintenance requests
-      const { data: requests } = await supabase
-        .from('maintenance_requests')
-        .select('id')
-        .in('status', ['open', 'in_progress'])
-
-      const pendingRequests = requests?.length ?? 0
-
-      // Get overdue compliance alerts
-      const today = new Date().toISOString().split('T')[0]
-      const { data: alerts } = await supabase
-        .from('compliance_alerts')
-        .select('id')
-        .eq('status', 'pending')
-        .lt('due_date', today)
-
-      const overdueAlerts = alerts?.length ?? 0
+      const pendingRequests = requestsRes.data?.length ?? 0
+      const overdueAlerts = alertsRes.data?.length ?? 0
 
       return {
         totalTenancies,

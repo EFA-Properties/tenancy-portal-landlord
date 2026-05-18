@@ -36,13 +36,28 @@ export function useDashboardActions() {
       }
       const in30 = addDays(today, 30)
 
+      // Run all three queries in parallel
+      const [propertiesRes, allDocsRes, tenantLinksRes] = await Promise.all([
+        supabase
+          .from('properties')
+          .select('id, address_line1, town, postcode, gas_safety_expiry, epc_expiry, eicr_expiry, fire_risk_expiry, hmo_licence_expiry, is_hmo, property_type, compliance_overrides'),
+        supabase
+          .from('documents')
+          .select('property_id, document_type'),
+        supabase
+          .from('tenancy_tenants')
+          .select('tenant_id, tenancy_id, status, moved_out_at, access_revoked_at, tenants(full_name), tenancies(property_id, properties(address_line1, town))')
+          .eq('status', 'moved_out')
+          .is('access_revoked_at', null),
+      ])
+
+      const properties = propertiesRes.data
+      const allDocs = allDocsRes.data
+      const tenantLinks = tenantLinksRes.data
+
       // --------------------------------------------------
       // 1. Expiring / expired certificates from properties
       // --------------------------------------------------
-      const { data: properties } = await supabase
-        .from('properties')
-        .select('id, address_line1, town, postcode, gas_safety_expiry, epc_expiry, eicr_expiry, fire_risk_expiry, hmo_licence_expiry, is_hmo, property_type, compliance_overrides')
-
       if (properties) {
         const certFields = [
           { field: 'gas_safety_expiry' as const, label: 'Gas Safety (CP12)', docType: 'gas_safety' },
@@ -92,10 +107,6 @@ export function useDashboardActions() {
       // --------------------------------------------------
       // 2. Properties missing key documents
       // --------------------------------------------------
-      const { data: allDocs } = await supabase
-        .from('documents')
-        .select('property_id, document_type')
-
       if (properties && allDocs) {
         const docsByProperty = new Map<string, Set<string>>()
         for (const doc of allDocs) {
@@ -150,12 +161,6 @@ export function useDashboardActions() {
       // --------------------------------------------------
       // 3. Tenants needing attention
       // --------------------------------------------------
-      const { data: tenantLinks } = await supabase
-        .from('tenancy_tenants')
-        .select('tenant_id, tenancy_id, status, moved_out_at, access_revoked_at, tenants(full_name), tenancies(property_id, properties(address_line1, town))')
-        .eq('status', 'moved_out')
-        .is('access_revoked_at', null)
-
       if (tenantLinks) {
         for (const link of tenantLinks as any[]) {
           const tenantName = link.tenants?.full_name || 'Unknown tenant'

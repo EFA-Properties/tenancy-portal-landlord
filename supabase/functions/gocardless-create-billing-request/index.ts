@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
 
     // 4. Update landlord with GoCardless IDs and activate Pro trial immediately
     const trialEnds = new Date()
-    trialEnds.setDate(trialEnds.getDate() + 14)
+    trialEnds.setDate(trialEnds.getDate() + 7)
 
     await supabase
       .from('landlords')

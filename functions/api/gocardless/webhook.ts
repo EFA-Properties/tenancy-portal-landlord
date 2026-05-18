@@ -15,7 +15,7 @@ interface Env {
  *   https://landlord.tenancy-portal.co.uk/api/gocardless/webhook
  *
  * Events handled:
- * - mandates.active → Create subscription with 14-day trial, activate billing
+ * - mandates.active → Create subscription with 7-day trial, activate billing
  * - mandates.failed / cancelled → Deactivate billing
  * - payments.confirmed → Log payment
  * - payments.failed → Set 7-day grace period
@@ -91,9 +91,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             // Map billing interval to GoCardless interval_unit
             const intervalUnit = billingInterval === 'annual' ? 'yearly' : 'monthly'
 
-            // Create subscription with 14-day trial (first payment deferred)
+            // Create subscription with 7-day trial (first payment deferred)
             const startDate = new Date()
-            startDate.setDate(startDate.getDate() + 14)
+            startDate.setDate(startDate.getDate() + 7)
             const startDateStr = startDate.toISOString().split('T')[0]
 
             const subRes = await fetch(`${GC_BASE}/subscriptions`, {
@@ -120,7 +120,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             const subscriptionId = subData.subscriptions.id
 
             const trialEnds = new Date()
-            trialEnds.setDate(trialEnds.getDate() + 14)
+            trialEnds.setDate(trialEnds.getDate() + 7)
 
             await supabase
               .from('landlords')

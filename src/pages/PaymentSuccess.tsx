@@ -56,7 +56,7 @@ export default function PaymentSuccess() {
 
         {isActive ? (
           <p className="text-slate-500 mb-8">
-            Your Pro subscription is active. Your 14-day free trial starts now —
+            Your Pro subscription is active. Your 7-day free trial starts now —
             you won't be charged until it ends.
           </p>
         ) : (
@@ -92,7 +92,7 @@ export default function PaymentSuccess() {
 
         <p className="text-xs text-slate-400 mt-4">
           Your first payment of £{landlord?.plan_price?.toFixed(2) || '17.99'}
-          {landlord?.billing_interval === 'annual' ? ' (annual)' : '/month'} will be collected 14 days from today.
+          {landlord?.billing_interval === 'annual' ? ' (annual)' : '/month'} will be collected 7 days from today.
           Cancel any time from Settings.
         </p>
       </div>

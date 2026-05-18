@@ -44,7 +44,7 @@ async function createSubscription(
   mandateId: string,
   amountInPence: number,
   intervalUnit: 'monthly' | 'yearly',
-  trialDays = 14,
+  trialDays = 7,
 ): Promise<string> {
   // Calculate start date after trial period
   const startDate = new Date()
@@ -119,12 +119,12 @@ Deno.serve(async (req) => {
             const amountInPence = Math.round(priceInPounds * 100)
             const intervalUnit = billingInterval === 'annual' ? 'yearly' : 'monthly'
 
-            // Create subscription with 14-day trial
+            // Create subscription with 7-day trial
             const subscriptionId = await createSubscription(mandateId, amountInPence, intervalUnit as 'monthly' | 'yearly', 14)
 
             // Calculate trial end date
             const trialEnds = new Date()
-            trialEnds.setDate(trialEnds.getDate() + 14)
+            trialEnds.setDate(trialEnds.getDate() + 7)
 
             // Update landlord billing status
             await supabase
