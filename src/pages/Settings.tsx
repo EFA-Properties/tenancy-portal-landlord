@@ -82,7 +82,7 @@ export default function Settings() {
               <div>
                 <p className="text-textSecondary mb-4">
                   You're on the <span className="font-semibold text-teal-700">Pro plan</span>
-                  {isComped ? ' (complimentary access)' : ` at £${landlord?.plan_price || '17.99'}/month`}.
+                  {isComped ? ' (complimentary access)' : landlord?.billing_interval === 'annual' ? ` at £${landlord?.plan_price || '180'}/year` : ` at £${landlord?.plan_price || '17.99'}/month`}.
                   Full access to all features.
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

@@ -39,8 +39,13 @@ function verifySignature(body: string, signature: string): boolean {
   return expectedSignature === signature
 }
 
-// Create a GoCardless subscription for monthly billing
-async function createSubscription(mandateId: string, trialDays = 14): Promise<string> {
+// Create a GoCardless subscription for billing (monthly or annual)
+async function createSubscription(
+  mandateId: string,
+  amountInPence: number,
+  intervalUnit: 'monthly' | 'yearly',
+  trialDays = 14,
+): Promise<string> {
   // Calculate start date after trial period
   const startDate = new Date()
   startDate.setDate(startDate.getDate() + trialDays)
@@ -55,13 +60,13 @@ async function createSubscription(mandateId: string, trialDays = 14): Promise<st
     },
     body: JSON.stringify({
       subscriptions: {
-        amount: 1799, // £17.99 in pence
+        amount: amountInPence,
         currency: 'GBP',
         name: 'Tenancy Portal Pro',
-        interval_unit: 'monthly',
+        interval_unit: intervalUnit,
         start_date: startDateStr,
         links: { mandate: mandateId },
-        metadata: { product: 'tenancy-portal-pro' },
+        metadata: { product: 'tenancy-portal-pro', interval: intervalUnit },
       },
     }),
   })
@@ -103,13 +108,19 @@ Deno.serve(async (req) => {
           // Find landlord by mandate ID
           const { data: landlord } = await supabase
             .from('landlords')
-            .select('id')
+            .select('id, plan_price, billing_interval')
             .eq('gc_mandate_id', mandateId)
             .single()
 
           if (landlord) {
+            // Determine billing params from landlord record
+            const billingInterval = (landlord as any).billing_interval || 'monthly'
+            const priceInPounds = (landlord as any).plan_price ?? (billingInterval === 'annual' ? 180 : 17.99)
+            const amountInPence = Math.round(priceInPounds * 100)
+            const intervalUnit = billingInterval === 'annual' ? 'yearly' : 'monthly'
+
             // Create subscription with 14-day trial
-            const subscriptionId = await createSubscription(mandateId, 14)
+            const subscriptionId = await createSubscription(mandateId, amountInPence, intervalUnit as 'monthly' | 'yearly', 14)
 
             // Calculate trial end date
             const trialEnds = new Date()

@@ -9,6 +9,7 @@ import { Card, CardBody } from '../components/ui/Card'
 
 type PortfolioType = 'btl' | 'hmo' | 'hybrid'
 type PropertyCountRange = '1' | '2-10' | '11-25' | '25+'
+type BillingPeriod = 'monthly' | 'annual'
 
 interface PromoCode {
   id: string
@@ -43,41 +44,60 @@ export default function Register() {
   const [promoError, setPromoError] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
 
+  // Billing period toggle
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly')
+
   // Everyone is on the Pro plan — 14-day free trial, then £17.99/mo via DD
   const determinedPlan = 'pro' as const
 
-  const BASE_PRICE = 17.99
+  const BASE_PRICE_MONTHLY = 17.99
+  const BASE_PRICE_ANNUAL = 180 // £180/year (save £35.88 vs monthly)
 
-  // Calculate discounted price
-  const { finalPrice, savingsText } = useMemo(() => {
+  // Calculate discounted price for both monthly and annual
+  const { finalPriceMonthly, finalPriceAnnual, savingsText } = useMemo(() => {
     if (!promoCode) {
-      return { finalPrice: BASE_PRICE, savingsText: '' }
+      return { finalPriceMonthly: BASE_PRICE_MONTHLY, finalPriceAnnual: BASE_PRICE_ANNUAL, savingsText: '' }
     }
 
     if (promoCode.discount_type === 'free_forever') {
-      return { finalPrice: 0, savingsText: 'FREE forever' }
+      return { finalPriceMonthly: 0, finalPriceAnnual: 0, savingsText: 'FREE forever' }
     }
 
     if (promoCode.discount_type === 'percentage') {
-      const discounted = BASE_PRICE * (1 - promoCode.discount_value / 100)
-      const rounded = Math.round(discounted * 100) / 100
-      return { finalPrice: rounded, savingsText: `${promoCode.discount_value}% off` }
+      const monthlyDiscounted = BASE_PRICE_MONTHLY * (1 - promoCode.discount_value / 100)
+      const annualDiscounted = BASE_PRICE_ANNUAL * (1 - promoCode.discount_value / 100)
+      return {
+        finalPriceMonthly: Math.round(monthlyDiscounted * 100) / 100,
+        finalPriceAnnual: Math.round(annualDiscounted * 100) / 100,
+        savingsText: `${promoCode.discount_value}% off`,
+      }
     }
 
     if (promoCode.discount_type === 'fixed') {
-      const discounted = Math.max(0, BASE_PRICE - promoCode.discount_value)
-      const rounded = Math.round(discounted * 100) / 100
-      return { finalPrice: rounded, savingsText: `£${promoCode.discount_value} off` }
+      // Fixed discount: applies to annual billing only (no monthly discount)
+      const annualDiscounted = Math.max(0, BASE_PRICE_ANNUAL - promoCode.discount_value)
+      return {
+        finalPriceMonthly: BASE_PRICE_MONTHLY,
+        finalPriceAnnual: Math.round(annualDiscounted * 100) / 100,
+        savingsText: `£${promoCode.discount_value} off annual`,
+      }
     }
 
-    return { finalPrice: BASE_PRICE, savingsText: '' }
+    return { finalPriceMonthly: BASE_PRICE_MONTHLY, finalPriceAnnual: BASE_PRICE_ANNUAL, savingsText: '' }
   }, [promoCode])
+
+  // The active price based on the selected billing period
+  const finalPrice = billingPeriod === 'monthly' ? finalPriceMonthly : finalPriceAnnual
 
   const planDescription = promoCode
     ? promoCode.discount_type === 'free_forever'
       ? `Pro plan — FREE with code ${promoCode.code}`
-      : `Pro plan at £${finalPrice.toFixed(2)}/mo (${savingsText} with ${promoCode.code})`
-    : '14-day free trial, then £17.99/mo via Direct Debit.'
+      : billingPeriod === 'monthly'
+        ? `Pro plan at £${finalPriceMonthly.toFixed(2)}/mo (${savingsText} with ${promoCode.code})`
+        : `Pro plan at £${finalPriceAnnual.toFixed(2)}/year (${savingsText} with ${promoCode.code})`
+    : billingPeriod === 'monthly'
+      ? '14-day free trial, then £17.99/mo via Direct Debit.'
+      : '14-day free trial, then £180/year via Direct Debit. Save £35.88!'
 
   // Validate promo code against the database
   const handleApplyPromo = useCallback(async () => {
@@ -201,6 +221,7 @@ export default function Register() {
         property_count_range: propertyCount,
         plan: isFreeForever ? 'pro' : determinedPlan,
         plan_price: finalPrice,
+        billing_interval: billingPeriod, // 'monthly' or 'annual'
         billing_active: isFreeForever,
         comped: isFreeForever,
         trial_ends_at: isFreeForever ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
@@ -405,6 +426,50 @@ export default function Register() {
                   </div>
                 )}
 
+                {/* Billing Period Toggle */}
+                {determinedPlan === 'pro' && promoCode?.discount_type !== 'free_forever' && (
+                  <div>
+                    <label className="block text-sm font-medium text-textSecondary mb-2">
+                      Billing Period
+                    </label>
+                    <div className="flex rounded-lg border border-border overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setBillingPeriod('monthly')}
+                        className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+                          billingPeriod === 'monthly'
+                            ? 'bg-teal-700 text-white'
+                            : 'bg-surface text-textSecondary hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="block">Monthly</span>
+                        <span className="block text-xs mt-0.5 opacity-80">
+                          £{finalPriceMonthly.toFixed(2)}/mo
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setBillingPeriod('annual')}
+                        className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+                          billingPeriod === 'annual'
+                            ? 'bg-teal-700 text-white'
+                            : 'bg-surface text-textSecondary hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="block">Annual</span>
+                        <span className="block text-xs mt-0.5 opacity-80">
+                          £{finalPriceAnnual.toFixed(2)}/yr
+                          {finalPriceAnnual < finalPriceMonthly * 12 && (
+                            <span className="ml-1 text-green-300 font-semibold">
+                              Save £{(finalPriceMonthly * 12 - finalPriceAnnual).toFixed(2)}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Submit Button */}
                 <Button
                   type="submit"
@@ -441,9 +506,11 @@ export default function Register() {
             </div>
             {promoCode && (
               <div className="mt-3 flex items-center gap-2">
-                <span className="text-sm text-textSecondary line-through">£{BASE_PRICE.toFixed(2)}/mo</span>
+                <span className="text-sm text-textSecondary line-through">
+                  £{billingPeriod === 'monthly' ? BASE_PRICE_MONTHLY.toFixed(2) + '/mo' : BASE_PRICE_ANNUAL.toFixed(2) + '/yr'}
+                </span>
                 <span className="text-lg font-semibold text-teal-700">
-                  {finalPrice === 0 ? 'FREE' : `£${finalPrice.toFixed(2)}/mo`}
+                  {finalPrice === 0 ? 'FREE' : `£${finalPrice.toFixed(2)}/${billingPeriod === 'monthly' ? 'mo' : 'yr'}`}
                 </span>
                 <span className="rounded-full bg-teal-100 px-2.5 py-0.5 text-xs font-medium text-teal-800">
                   {savingsText}

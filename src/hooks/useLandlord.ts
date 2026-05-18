@@ -12,6 +12,7 @@ export interface Landlord {
   property_count_range: '1' | '2-10' | '11-25' | '25+'
   plan: 'free' | 'pro'
   plan_price: number
+  billing_interval: 'monthly' | 'annual'
   billing_active: boolean
   trial_ends_at?: string
   gc_customer_id?: string

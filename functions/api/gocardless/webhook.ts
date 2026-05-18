@@ -77,15 +77,19 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           const mandateId = links.mandate
           const { data: landlord } = await supabase
             .from('landlords')
-            .select('id, plan_price')
+            .select('id, plan_price, billing_interval')
             .eq('gc_mandate_id', mandateId)
             .single()
 
           if (landlord) {
             // Use the landlord's plan_price (set at registration with promo code)
-            // Default to £17.99 if not set; convert pounds to pence for GoCardless
-            const priceInPounds = landlord.plan_price ?? 17.99
+            // and billing_interval to determine subscription type
+            const billingInterval = landlord.billing_interval || 'monthly'
+            const priceInPounds = landlord.plan_price ?? (billingInterval === 'annual' ? 180 : 17.99)
             const amountInPence = Math.round(priceInPounds * 100)
+
+            // Map billing interval to GoCardless interval_unit
+            const intervalUnit = billingInterval === 'annual' ? 'yearly' : 'monthly'
 
             // Create subscription with 14-day trial (first payment deferred)
             const startDate = new Date()
@@ -104,10 +108,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
                   amount: amountInPence,
                   currency: 'GBP',
                   name: 'Tenancy Portal Pro',
-                  interval_unit: 'monthly',
+                  interval_unit: intervalUnit,
                   start_date: startDateStr,
                   links: { mandate: mandateId },
-                  metadata: { product: 'tenancy-portal-pro', price: `£${priceInPounds}` },
+                  metadata: { product: 'tenancy-portal-pro', price: `£${priceInPounds}`, interval: billingInterval },
                 },
               }),
             })
