@@ -199,6 +199,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=86400',
+        'X-Frame-Options': 'DENY',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
       },
     })
   } catch (err) {

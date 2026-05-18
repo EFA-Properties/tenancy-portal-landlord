@@ -6,7 +6,7 @@ interface Env {
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': 'https://landlord.tenancy-portal.co.uk',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json',
