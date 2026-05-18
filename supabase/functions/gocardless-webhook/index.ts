@@ -55,7 +55,7 @@ async function createSubscription(mandateId: string, trialDays = 14): Promise<st
     },
     body: JSON.stringify({
       subscriptions: {
-        amount: 2999, // £29.99 in pence
+        amount: 1799, // £17.99 in pence
         currency: 'GBP',
         name: 'Tenancy Portal Pro',
         interval_unit: 'monthly',

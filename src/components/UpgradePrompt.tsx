@@ -42,7 +42,7 @@ export function UpgradePrompt({ feature, description }: UpgradePromptProps) {
           variant="default"
           onClick={() => navigate('/settings')}
         >
-          Upgrade to Pro — £29.99/mo
+          Upgrade to Pro — £17.99/mo
         </Button>
       </CardBody>
     </Card>

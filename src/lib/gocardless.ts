@@ -80,7 +80,8 @@ export const PLANS = {
   },
   pro: {
     name: 'Pro',
-    price: 29.99,
+    price: 17.99,
+    priceAnnual: 180,
     description: 'Full feature set for all property types',
     features: [
       'Everything in Free',

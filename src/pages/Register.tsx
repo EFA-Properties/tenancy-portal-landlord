@@ -43,10 +43,10 @@ export default function Register() {
   const [promoError, setPromoError] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
 
-  // Everyone is on the Pro plan — 14-day free trial, then £29.99/mo via DD
+  // Everyone is on the Pro plan — 14-day free trial, then £17.99/mo via DD
   const determinedPlan = 'pro' as const
 
-  const BASE_PRICE = 29.99
+  const BASE_PRICE = 17.99
 
   // Calculate discounted price
   const { finalPrice, savingsText } = useMemo(() => {
@@ -77,7 +77,7 @@ export default function Register() {
     ? promoCode.discount_type === 'free_forever'
       ? `Pro plan — FREE with code ${promoCode.code}`
       : `Pro plan at £${finalPrice.toFixed(2)}/mo (${savingsText} with ${promoCode.code})`
-    : '14-day free trial, then £29.99/mo via Direct Debit.'
+    : '14-day free trial, then £17.99/mo via Direct Debit.'
 
   // Validate promo code against the database
   const handleApplyPromo = useCallback(async () => {

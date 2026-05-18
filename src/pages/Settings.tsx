@@ -82,7 +82,7 @@ export default function Settings() {
               <div>
                 <p className="text-textSecondary mb-4">
                   You're on the <span className="font-semibold text-teal-700">Pro plan</span>
-                  {isComped ? ' (complimentary access)' : ` at £${landlord?.plan_price || '29.99'}/month`}.
+                  {isComped ? ' (complimentary access)' : ` at £${landlord?.plan_price || '17.99'}/month`}.
                   Full access to all features.
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -142,7 +142,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <h3 className="font-semibold text-textPrimary">Pro</h3>
-                        <p className="text-2xl font-fraunces font-bold text-teal-700 mt-1">£29.99<span className="text-sm font-normal text-textMuted">/month</span></p>
+                        <p className="text-2xl font-fraunces font-bold text-teal-700 mt-1">£17.99<span className="text-sm font-normal text-textMuted">/month</span></p>
                       </div>
                     </div>
                     <div className="space-y-2 mb-6">

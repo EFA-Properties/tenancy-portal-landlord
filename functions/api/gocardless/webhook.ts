@@ -83,8 +83,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
           if (landlord) {
             // Use the landlord's plan_price (set at registration with promo code)
-            // Default to £29.99 if not set; convert pounds to pence for GoCardless
-            const priceInPounds = landlord.plan_price ?? 29.99
+            // Default to £17.99 if not set; convert pounds to pence for GoCardless
+            const priceInPounds = landlord.plan_price ?? 17.99
             const amountInPence = Math.round(priceInPounds * 100)
 
             // Create subscription with 14-day trial (first payment deferred)

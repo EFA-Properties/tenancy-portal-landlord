@@ -368,3 +368,265 @@ export function generateAgreementPdfBlob(
   const doc = generateAgreementPdf(data, landlordSignature, tenantSignature)
   return doc.output('blob')
 }
+
+/**
+ * Generate a PDF from pre-built editable clauses (for the custom agreement builder).
+ * This takes clauses directly rather than generating them from form data.
+ */
+export function downloadEditableAgreementPdf(opts: {
+  title: string
+  subtitle: string
+  landlordName: string
+  tenantName: string
+  propertyAddress: string
+  propertyPostcode: string
+  monthlyRent: number
+  depositAmount: number
+  startDate: string
+  clauses: AgreementClause[]
+  isRoomLicence?: boolean
+  roomNumber?: string
+}) {
+  const doc = new jsPDF('p', 'mm', 'a4')
+  let y = MARGIN_TOP
+
+  function checkPageBreak(needed: number) {
+    if (y + needed > PAGE_HEIGHT - MARGIN_BOTTOM) {
+      doc.addPage()
+      y = MARGIN_TOP
+      // Mini header on continuation pages
+      doc.setFillColor(...TEAL)
+      doc.rect(0, 0, PAGE_WIDTH, 3, 'F')
+      doc.setFontSize(7)
+      doc.setTextColor(...SLATE_400)
+      doc.setFont('helvetica', 'normal')
+      doc.text(opts.title, MARGIN_LEFT, 10)
+      doc.text(opts.propertyAddress, PAGE_WIDTH - MARGIN_RIGHT, 10, { align: 'right' })
+      doc.setDrawColor(...SLATE_400)
+      doc.setLineWidth(0.2)
+      doc.line(MARGIN_LEFT, 14, PAGE_WIDTH - MARGIN_RIGHT, 14)
+      y = 20
+    }
+  }
+
+  // ── Title Page ─────────────────────────────────────────
+  doc.setFillColor(...TEAL)
+  doc.rect(0, 0, PAGE_WIDTH, 60, 'F')
+
+  doc.setTextColor(...WHITE)
+  doc.setFontSize(22)
+  doc.setFont('helvetica', 'bold')
+  doc.text(opts.title, MARGIN_LEFT, 30)
+  doc.setFontSize(14)
+  doc.setFont('helvetica', 'normal')
+  doc.text(opts.subtitle, MARGIN_LEFT, 40)
+
+  doc.setFontSize(9)
+  doc.text('Under the Housing Act 1988 (as amended by the Renters\' Rights Act 2025)', MARGIN_LEFT, 52)
+
+  y = 75
+
+  // Summary box
+  doc.setFillColor(248, 250, 252)
+  const boxHeight = opts.isRoomLicence ? 78 : 68
+  doc.roundedRect(MARGIN_LEFT, y, CONTENT_WIDTH, boxHeight, 3, 3, 'F')
+
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...TEAL)
+  doc.text('PARTIES', MARGIN_LEFT + 8, y + 10)
+
+  doc.setFontSize(9)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...SLATE_900)
+  doc.text(`Landlord:   ${opts.landlordName}`, MARGIN_LEFT + 8, y + 18)
+  doc.text(`${opts.isRoomLicence ? 'Licensee' : 'Tenant'}:       ${opts.tenantName}`, MARGIN_LEFT + 8, y + 25)
+
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...TEAL)
+  doc.text('PROPERTY', MARGIN_LEFT + 8, y + 36)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...SLATE_900)
+  doc.text(opts.propertyAddress, MARGIN_LEFT + 8, y + 44)
+  doc.text(opts.propertyPostcode, MARGIN_LEFT + 8, y + 51)
+  if (opts.isRoomLicence && opts.roomNumber) {
+    doc.text(`Room: ${opts.roomNumber}`, MARGIN_LEFT + 8, y + 58)
+  }
+
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...TEAL)
+  doc.text('KEY TERMS', MARGIN_LEFT + CONTENT_WIDTH / 2, y + 36)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...SLATE_900)
+  doc.text(`${opts.isRoomLicence ? 'Licence Fee' : 'Rent'}: £${opts.monthlyRent.toLocaleString('en-GB', { minimumFractionDigits: 2 })} pcm`, MARGIN_LEFT + CONTENT_WIDTH / 2, y + 44)
+  doc.text(`Start: ${formatDateLong(opts.startDate)}`, MARGIN_LEFT + CONTENT_WIDTH / 2, y + 51)
+  doc.text(`Deposit: £${opts.depositAmount.toLocaleString('en-GB', { minimumFractionDigits: 2 })}`, MARGIN_LEFT + CONTENT_WIDTH / 2, y + 58)
+
+  y += boxHeight + 12
+
+  // Important notice
+  doc.setFillColor(254, 252, 232)
+  doc.roundedRect(MARGIN_LEFT, y, CONTENT_WIDTH, 20, 2, 2, 'F')
+  doc.setDrawColor(251, 191, 36)
+  doc.setLineWidth(0.3)
+  doc.roundedRect(MARGIN_LEFT, y, CONTENT_WIDTH, 20, 2, 2, 'S')
+
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(146, 64, 14)
+  doc.text('IMPORTANT', MARGIN_LEFT + 8, y + 7)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.5)
+  doc.text('This is a Written Statement of Terms as required by the Renters\' Rights Act 2025.', MARGIN_LEFT + 8, y + 13)
+  doc.text('Both parties should read and understand all terms before signing.', MARGIN_LEFT + 8, y + 18)
+
+  // ── Clauses Pages ──────────────────────────────────────
+  doc.addPage()
+  y = MARGIN_TOP
+  // First clause page header
+  doc.setFillColor(...TEAL)
+  doc.rect(0, 0, PAGE_WIDTH, 3, 'F')
+  doc.setFontSize(7)
+  doc.setTextColor(...SLATE_400)
+  doc.setFont('helvetica', 'normal')
+  doc.text(opts.title, MARGIN_LEFT, 10)
+  doc.text(opts.propertyAddress, PAGE_WIDTH - MARGIN_RIGHT, 10, { align: 'right' })
+  doc.setDrawColor(...SLATE_400)
+  doc.setLineWidth(0.2)
+  doc.line(MARGIN_LEFT, 14, PAGE_WIDTH - MARGIN_RIGHT, 14)
+  y = 20
+
+  for (const clause of opts.clauses) {
+    checkPageBreak(20)
+
+    doc.setFillColor(...TEAL)
+    doc.roundedRect(MARGIN_LEFT, y, 8, 8, 1.5, 1.5, 'F')
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...WHITE)
+    doc.text(clause.number, MARGIN_LEFT + 4, y + 5.8, { align: 'center' })
+
+    doc.setTextColor(...SLATE_900)
+    doc.setFontSize(11)
+    doc.text(clause.title, MARGIN_LEFT + 12, y + 5.8)
+
+    doc.setDrawColor(...SLATE_400)
+    doc.setLineWidth(0.15)
+    doc.line(MARGIN_LEFT, y + 10, PAGE_WIDTH - MARGIN_RIGHT, y + 10)
+    y += 15
+
+    if (clause.text) {
+      checkPageBreak(8)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(...SLATE_600)
+      const introLines = doc.splitTextToSize(clause.text, CONTENT_WIDTH - 5)
+      doc.text(introLines, MARGIN_LEFT + 5, y)
+      y += introLines.length * 4.2 + 2
+    }
+
+    if (clause.subclauses) {
+      for (let i = 0; i < clause.subclauses.length; i++) {
+        const subText = clause.subclauses[i]
+        doc.setFontSize(8.5)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(...SLATE_900)
+
+        const wrappedLines = doc.splitTextToSize(subText, CONTENT_WIDTH - 18)
+        const blockHeight = wrappedLines.length * 3.8 + 3
+        checkPageBreak(blockHeight)
+
+        doc.setTextColor(...TEAL)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${clause.number}.${i + 1}`, MARGIN_LEFT + 5, y)
+
+        doc.setTextColor(...SLATE_900)
+        doc.setFont('helvetica', 'normal')
+        doc.text(wrappedLines, MARGIN_LEFT + 18, y)
+        y += blockHeight
+      }
+    }
+
+    y += 6
+  }
+
+  // ── Signature Blocks ───────────────────────────────────
+  if (y > PAGE_HEIGHT - MARGIN_BOTTOM - 110) {
+    doc.addPage()
+    y = MARGIN_TOP
+    doc.setFillColor(...TEAL)
+    doc.rect(0, 0, PAGE_WIDTH, 3, 'F')
+    y = 20
+  }
+
+  doc.setFillColor(...TEAL)
+  doc.rect(MARGIN_LEFT, y, CONTENT_WIDTH, 10, 'F')
+  doc.setFontSize(11)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...WHITE)
+  doc.text('SIGNATURES', MARGIN_LEFT + 5, y + 7)
+  y += 18
+
+  doc.setFontSize(8.5)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...SLATE_600)
+  doc.text('By signing below, both parties confirm they have read, understood, and agree to the terms of this Agreement.', MARGIN_LEFT, y)
+  y += 10
+
+  // Landlord sig block
+  doc.setFillColor(248, 250, 252)
+  doc.roundedRect(MARGIN_LEFT, y, CONTENT_WIDTH, 40, 2, 2, 'F')
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...TEAL)
+  doc.text('LANDLORD', MARGIN_LEFT + 5, y + 7)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...SLATE_900)
+  doc.setFontSize(9)
+  doc.text(`Name: ${opts.landlordName}`, MARGIN_LEFT + 5, y + 15)
+  doc.setDrawColor(...SLATE_400)
+  doc.setLineWidth(0.2)
+  doc.line(MARGIN_LEFT + 45, y + 32, MARGIN_LEFT + CONTENT_WIDTH / 2 - 5, y + 32)
+  doc.setFontSize(7)
+  doc.setTextColor(...SLATE_400)
+  doc.text('Signature', MARGIN_LEFT + 45, y + 36)
+  doc.line(MARGIN_LEFT + CONTENT_WIDTH / 2 + 10, y + 32, PAGE_WIDTH - MARGIN_RIGHT - 5, y + 32)
+  doc.text('Date', MARGIN_LEFT + CONTENT_WIDTH / 2 + 10, y + 36)
+  y += 48
+
+  // Tenant/Licensee sig block
+  doc.setFillColor(248, 250, 252)
+  doc.roundedRect(MARGIN_LEFT, y, CONTENT_WIDTH, 40, 2, 2, 'F')
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'bold')
+  doc.setTextColor(...TEAL)
+  doc.text(opts.isRoomLicence ? 'LICENSEE' : 'TENANT', MARGIN_LEFT + 5, y + 7)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...SLATE_900)
+  doc.setFontSize(9)
+  doc.text(`Name: ${opts.tenantName}`, MARGIN_LEFT + 5, y + 15)
+  doc.setDrawColor(...SLATE_400)
+  doc.setLineWidth(0.2)
+  doc.line(MARGIN_LEFT + 45, y + 32, MARGIN_LEFT + CONTENT_WIDTH / 2 - 5, y + 32)
+  doc.setFontSize(7)
+  doc.setTextColor(...SLATE_400)
+  doc.text('Signature', MARGIN_LEFT + 45, y + 36)
+  doc.line(MARGIN_LEFT + CONTENT_WIDTH / 2 + 10, y + 32, PAGE_WIDTH - MARGIN_RIGHT - 5, y + 32)
+  doc.text('Date', MARGIN_LEFT + CONTENT_WIDTH / 2 + 10, y + 36)
+
+  // Page numbers
+  const totalPages = doc.getNumberOfPages()
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i)
+    doc.setFontSize(7)
+    doc.setTextColor(...SLATE_400)
+    doc.setFont('helvetica', 'normal')
+    doc.text(`Page ${i} of ${totalPages}`, PAGE_WIDTH / 2, PAGE_HEIGHT - 12, { align: 'center' })
+    doc.text('Generated by Tenancy Portal', MARGIN_LEFT, PAGE_HEIGHT - 12)
+  }
+
+  const filename = `${opts.isRoomLicence ? 'Room_Licence' : 'Tenancy_Agreement'}_${opts.propertyPostcode.replace(/\s+/g, '_')}_${opts.tenantName.replace(/\s+/g, '_')}.pdf`
+  doc.save(filename)
+}
