@@ -66,44 +66,35 @@ export function useTenantsWithStatus() {
         .single()
       if (!landlord) throw new Error('Not a landlord')
 
-      // Get tenant IDs linked to this landlord's properties
-      const { data: tenantLinks } = await supabase
-        .from('tenancy_tenants')
-        .select('tenant_id, tenancies!inner(property_id, properties!inner(landlord_id))')
-        .eq('tenancies.properties.landlord_id', landlord.id)
-
-      const tenantIds = [...new Set((tenantLinks || []).map((l: any) => l.tenant_id))]
-      if (tenantIds.length === 0) return [] as TenantWithStatus[]
-
-      // Get all tenants for this landlord
-      const { data: tenants, error: tErr } = await supabase
-        .from('tenants')
-        .select('*')
-        .in('id', tenantIds)
-        .order('created_at', { ascending: false })
-      if (tErr) throw tErr
-
-      // Get all tenancy_tenants links with property info
+      // Single query: get all tenancy_tenant links with tenant and property info in one go
       const { data: links, error: lErr } = await supabase
         .from('tenancy_tenants')
-        .select('tenant_id, tenancy_id, status, moved_out_at, access_revoked_at, tenancies(id, property_id, properties(address_line1, town))')
+        .select('tenant_id, tenancy_id, status, moved_out_at, access_revoked_at, tenants(*), tenancies!inner(id, property_id, properties!inner(landlord_id, address_line1, town))')
+        .eq('tenancies.properties.landlord_id', landlord.id)
       if (lErr) throw lErr
 
-      // Merge status onto tenants
-      return (tenants || []).map((t) => {
-        const link = (links || []).find((l: any) => l.tenant_id === t.id)
-        const tenancy = link?.tenancies as any
-        return {
-          ...t,
-          tenancy_status: link?.status || 'active',
-          tenancy_id: link?.tenancy_id,
-          property_address: tenancy?.properties
-            ? `${tenancy.properties.address_line1}, ${tenancy.properties.town}`
-            : undefined,
-          moved_out_at: link?.moved_out_at,
-          access_revoked_at: link?.access_revoked_at,
-        } as TenantWithStatus
-      })
+      // Deduplicate by tenant_id (a tenant may appear in multiple tenancies)
+      const seen = new Set<string>()
+      return (links || [])
+        .filter((l: any) => {
+          if (seen.has(l.tenant_id)) return false
+          seen.add(l.tenant_id)
+          return true
+        })
+        .map((link: any) => {
+          const tenant = link.tenants || {}
+          const tenancy = link.tenancies as any
+          return {
+            ...tenant,
+            tenancy_status: link.status || 'active',
+            tenancy_id: link.tenancy_id,
+            property_address: tenancy?.properties
+              ? `${tenancy.properties.address_line1}, ${tenancy.properties.town}`
+              : undefined,
+            moved_out_at: link.moved_out_at,
+            access_revoked_at: link.access_revoked_at,
+          } as TenantWithStatus
+        })
     },
   })
 }

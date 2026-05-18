@@ -105,17 +105,34 @@ export function useMessageInbox() {
 
       if (tErr) throw tErr
 
-      // Get latest message for each tenancy
-      const { data: messages, error: mErr } = await supabase
-        .from('messages')
-        .select('tenancy_id, body, sender_type, created_at, read_at')
-        .order('created_at', { ascending: false })
+      // Get latest message per tenancy and unread counts in parallel
+      const tenancyIds = (tenancies || []).map((t: any) => t.id)
+      const [latestMsgRes, unreadRes] = await Promise.all([
+        // Latest message per tenancy — fetch only for active tenancies
+        tenancyIds.length > 0
+          ? supabase
+              .from('messages')
+              .select('tenancy_id, body, sender_type, created_at, read_at')
+              .in('tenancy_id', tenancyIds)
+              .order('created_at', { ascending: false })
+              .limit(100)
+          : Promise.resolve({ data: [], error: null }),
+        // Unread count — only tenant messages not yet read
+        tenancyIds.length > 0
+          ? supabase
+              .from('messages')
+              .select('tenancy_id')
+              .in('tenancy_id', tenancyIds)
+              .eq('sender_type', 'tenant')
+              .is('read_at', null)
+          : Promise.resolve({ data: [], error: null }),
+      ])
 
-      if (mErr) throw mErr
+      if (latestMsgRes.error) throw latestMsgRes.error
 
       // Group latest message by tenancy_id
       const latestByTenancy = new Map<string, any>()
-      for (const msg of (messages || [])) {
+      for (const msg of (latestMsgRes.data || [])) {
         if (!latestByTenancy.has(msg.tenancy_id)) {
           latestByTenancy.set(msg.tenancy_id, msg)
         }
@@ -123,10 +140,8 @@ export function useMessageInbox() {
 
       // Count unread messages per tenancy
       const unreadByTenancy = new Map<string, number>()
-      for (const msg of (messages || [])) {
-        if (msg.sender_type === 'tenant' && !msg.read_at) {
-          unreadByTenancy.set(msg.tenancy_id, (unreadByTenancy.get(msg.tenancy_id) || 0) + 1)
-        }
+      for (const msg of (unreadRes.data || [])) {
+        unreadByTenancy.set(msg.tenancy_id, (unreadByTenancy.get(msg.tenancy_id) || 0) + 1)
       }
 
       return (tenancies || []).map((t: any) => {

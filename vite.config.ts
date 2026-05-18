@@ -9,6 +9,16 @@ export default defineConfig({
   },
   build: {
     target: 'es2020',
-    outDir: 'dist'
+    outDir: 'dist',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-query': ['@tanstack/react-query'],
+          'vendor-pdf': ['jspdf'],
+        },
+      },
+    },
   }
 })
