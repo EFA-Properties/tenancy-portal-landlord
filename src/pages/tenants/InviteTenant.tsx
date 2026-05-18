@@ -74,9 +74,13 @@ export default function InviteTenant() {
         : undefined
 
       // 3. Send invite email via Cloudflare Pages Function
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
       const emailRes = await fetch('/api/invite-tenant', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(currentSession?.access_token ? { 'Authorization': `Bearer ${currentSession.access_token}` } : {}),
+        },
         body: JSON.stringify({
           tenantName: formData.full_name,
           tenantEmail: formData.email,

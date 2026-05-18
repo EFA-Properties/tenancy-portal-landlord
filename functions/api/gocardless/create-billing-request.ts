@@ -36,6 +36,25 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+  // Verify authentication and ownership
+  const authHeader = context.request.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(
+      JSON.stringify({ error: 'Authentication required' }),
+      { status: 401, headers: corsHeaders }
+    )
+  }
+
+  const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(
+    authHeader.replace('Bearer ', '')
+  )
+  if (authError || !authUser) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid or expired token' }),
+      { status: 401, headers: corsHeaders }
+    )
+  }
+
   try {
     const { landlordId, email, fullName, successUrl, exitUrl } = await context.request.json() as any
 
@@ -43,6 +62,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: landlordId, email, fullName' }),
         { status: 400, headers: corsHeaders }
+      )
+    }
+
+    // Verify the authenticated user owns this landlord record (prevent IDOR)
+    const { data: landlord } = await supabase
+      .from('landlords')
+      .select('id')
+      .eq('id', landlordId)
+      .eq('auth_user_id', authUser.id)
+      .single()
+
+    if (!landlord) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorised: you do not own this account' }),
+        { status: 403, headers: corsHeaders }
       )
     }
 
@@ -121,7 +155,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   } catch (err: any) {
     console.error('Error creating billing request:', err)
     return new Response(
-      JSON.stringify({ error: err.message || 'Internal error' }),
+      JSON.stringify({ error: 'Failed to set up billing. Please try again.' }),
       { status: 500, headers: corsHeaders }
     )
   }

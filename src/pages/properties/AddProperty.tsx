@@ -137,7 +137,12 @@ export default function AddProperty() {
     setEpcResults([])
     setEpcData(null)
     try {
-      const res = await fetch(`/api/epc-lookup?postcode=${encodeURIComponent(formData.postcode)}`)
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`/api/epc-lookup?postcode=${encodeURIComponent(formData.postcode)}`, {
+        headers: {
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+        },
+      })
       const data = await res.json()
       if (data.error) {
         setError(data.error)

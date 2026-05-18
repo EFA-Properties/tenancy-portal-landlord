@@ -42,11 +42,19 @@ export function useInactivityTimeout() {
       font-size: 14px; line-height: 1.5; max-width: 360px;
       animation: slideIn 0.3s ease-out;
     `
-    el.innerHTML = `
-      <style>@keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }</style>
-      <p style="margin:0 0 4px 0; font-weight:600;">Session expiring soon</p>
-      <p style="margin:0; opacity:0.8; font-size:13px;">You'll be signed out in 2 minutes due to inactivity. Move your mouse or press any key to stay signed in.</p>
-    `
+    const style = document.createElement('style')
+    style.textContent = '@keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }'
+    el.appendChild(style)
+
+    const title = document.createElement('p')
+    title.style.cssText = 'margin:0 0 4px 0; font-weight:600;'
+    title.textContent = 'Session expiring soon'
+    el.appendChild(title)
+
+    const msg = document.createElement('p')
+    msg.style.cssText = 'margin:0; opacity:0.8; font-size:13px;'
+    msg.textContent = "You'll be signed out in 2 minutes due to inactivity. Move your mouse or press any key to stay signed in."
+    el.appendChild(msg)
     document.body.appendChild(el)
     warningElRef.current = el
   }, [])

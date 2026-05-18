@@ -1,6 +1,19 @@
+import { createClient } from '@supabase/supabase-js'
+
 interface Env {
   RESEND_API_KEY?: string
   TENANT_PORTAL_URL?: string
+  SUPABASE_URL: string
+  SUPABASE_SERVICE_ROLE_KEY: string
+}
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
@@ -17,8 +30,33 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const resendKey = context.env.RESEND_API_KEY
   if (!resendKey) {
-    return new Response(JSON.stringify({ error: 'RESEND_API_KEY not configured' }), {
+    return new Response(JSON.stringify({ error: 'Server configuration error' }), {
       status: 500,
+      headers: corsHeaders,
+    })
+  }
+
+  // Verify authentication
+  const authHeader = context.request.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Authentication required' }), {
+      status: 401,
+      headers: corsHeaders,
+    })
+  }
+
+  try {
+    const supabase = createClient(context.env.SUPABASE_URL, context.env.SUPABASE_SERVICE_ROLE_KEY)
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+        status: 401,
+        headers: corsHeaders,
+      })
+    }
+  } catch {
+    return new Response(JSON.stringify({ error: 'Authentication failed' }), {
+      status: 401,
       headers: corsHeaders,
     })
   }
@@ -54,11 +92,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       </div>
 
       <h2 style="font-size: 22px; font-weight: 600; margin: 0 0 16px;">
-        Hi ${tenantName},
+        Hi ${escapeHtml(tenantName)},
       </h2>
 
       <p style="font-size: 15px; line-height: 1.6; margin: 0 0 12px;">
-        ${landlordName ? `<strong>${landlordName}</strong> has` : 'Your landlord has'} invited you to the Tenancy Portal${propertyAddress ? ` for <strong>${propertyAddress}</strong>` : ''}.
+        ${landlordName ? `<strong>${escapeHtml(landlordName)}</strong> has` : 'Your landlord has'} invited you to the Tenancy Portal${propertyAddress ? ` for <strong>${escapeHtml(propertyAddress)}</strong>` : ''}.
       </p>
 
       <p style="font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
@@ -96,7 +134,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       body: JSON.stringify({
         from: 'Tenancy Portal <noreply@tenancy-portal.co.uk>',
         to: [tenantEmail],
-        subject: `${landlordName || 'Your landlord'} has invited you to the Tenancy Portal`,
+        subject: `${escapeHtml(landlordName || 'Your landlord')} has invited you to the Tenancy Portal`,
         html: emailHtml,
       }),
     })
@@ -104,7 +142,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (!resendResponse.ok) {
       const errorText = await resendResponse.text()
       console.error('Resend error:', errorText)
-      return new Response(JSON.stringify({ error: 'Failed to send invitation email', details: errorText }), {
+      return new Response(JSON.stringify({ error: 'Failed to send invitation email' }), {
         status: 500,
         headers: corsHeaders,
       })

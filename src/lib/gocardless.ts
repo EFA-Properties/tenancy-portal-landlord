@@ -1,3 +1,5 @@
+import { supabase } from './supabase'
+
 /**
  * GoCardless Integration — LIVE
  *
@@ -16,9 +18,13 @@ export async function createBillingRequestFlow(params: {
   successUrl: string
   exitUrl: string
 }): Promise<{ authorisation_url: string }> {
+  const { data: { session } } = await supabase.auth.getSession()
   const response = await fetch('/api/gocardless/create-billing-request', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+    },
     body: JSON.stringify(params),
   })
 

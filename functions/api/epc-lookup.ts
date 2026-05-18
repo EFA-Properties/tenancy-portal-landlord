@@ -1,6 +1,21 @@
+import { createClient } from '@supabase/supabase-js'
+
 interface Env {
   EPC_API_EMAIL?: string
   EPC_API_KEY?: string
+  SUPABASE_URL: string
+  SUPABASE_SERVICE_ROLE_KEY: string
+}
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': 'https://landlord.tenancy-portal.co.uk',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Content-Type': 'application/json',
+}
+
+export const onRequestOptions: PagesFunction = async () => {
+  return new Response(null, { headers: corsHeaders })
 }
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -10,7 +25,32 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!postcode) {
     return new Response(JSON.stringify({ error: 'postcode parameter is required' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' },
+      headers: corsHeaders,
+    })
+  }
+
+  // Verify authentication
+  const authHeader = context.request.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({ error: 'Authentication required' }), {
+      status: 401,
+      headers: corsHeaders,
+    })
+  }
+
+  try {
+    const supabase = createClient(context.env.SUPABASE_URL, context.env.SUPABASE_SERVICE_ROLE_KEY)
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+        status: 401,
+        headers: corsHeaders,
+      })
+    }
+  } catch {
+    return new Response(JSON.stringify({ error: 'Authentication failed' }), {
+      status: 401,
+      headers: corsHeaders,
     })
   }
 
@@ -18,9 +58,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const apiKey = context.env.EPC_API_KEY || ''
 
   if (!apiEmail || !apiKey) {
-    return new Response(JSON.stringify({ error: 'EPC API credentials not configured' }), {
+    return new Response(JSON.stringify({ error: 'Server configuration error' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: corsHeaders,
     })
   }
 
@@ -38,10 +78,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     )
 
     if (!epcResponse.ok) {
-      const text = await epcResponse.text()
-      return new Response(JSON.stringify({ error: `EPC API error: ${epcResponse.status}`, details: text }), {
-        status: epcResponse.status,
-        headers: { 'Content-Type': 'application/json' },
+      console.error('EPC API error:', epcResponse.status)
+      return new Response(JSON.stringify({ error: 'Failed to look up EPC data' }), {
+        status: 502,
+        headers: corsHeaders,
       })
     }
 
@@ -73,12 +113,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     })
 
     return new Response(JSON.stringify({ results }), {
-      headers: { 'Content-Type': 'application/json' },
+      headers: corsHeaders,
     })
   } catch (err) {
+    console.error('EPC lookup error:', err)
     return new Response(JSON.stringify({ error: 'Failed to fetch EPC data' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: corsHeaders,
     })
   }
 }

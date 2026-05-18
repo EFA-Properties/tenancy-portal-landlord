@@ -63,9 +63,13 @@ export function useSendMessage() {
 
       // Fire-and-forget email notification
       if (notifyRecipient?.recipientEmail) {
+        const { data: { session } } = await supabase.auth.getSession()
         fetch('/api/notify-message', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
+          },
           body: JSON.stringify({
             recipientName: notifyRecipient.recipientName,
             recipientEmail: notifyRecipient.recipientEmail,
