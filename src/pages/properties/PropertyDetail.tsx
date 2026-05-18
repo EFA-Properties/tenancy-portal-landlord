@@ -266,6 +266,7 @@ export default function PropertyDetail() {
                   const docPath = epcDoc?.file_path
                   const epcLink = (docPath && (docPath.startsWith('http') || docPath.startsWith('/api/')) ? docPath : null)
                     || property.epc_certificate_url
+                    || (property.uprn ? `/api/epc-certificate?lmk_key=${encodeURIComponent(property.uprn)}` : null)
                     || (property.postcode ? `https://find-energy-certificate.service.gov.uk/find-a-certificate/search-by-postcode?postcode=${encodeURIComponent(property.postcode)}` : null)
                   return epcLink ? (
                     <a
