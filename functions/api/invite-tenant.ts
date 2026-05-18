@@ -80,7 +80,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     })
   }
 
-  const portalUrl = context.env.TENANT_PORTAL_URL || 'https://tenant.tenancy-portal.co.uk'
+  const portalUrl = context.env.TENANT_PORTAL_URL || 'https://portal.tenancy-portal.co.uk'
   const inviteLink = `${portalUrl}/register?invite=${inviteToken}`
 
   const emailHtml = `

@@ -92,7 +92,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   // Link to the appropriate portal
   const isRecipientTenant = senderType === 'landlord'
   const portalUrl = isRecipientTenant
-    ? (context.env.TENANT_PORTAL_URL || 'https://tenant.tenancy-portal.co.uk')
+    ? (context.env.TENANT_PORTAL_URL || 'https://portal.tenancy-portal.co.uk')
     : (context.env.LANDLORD_PORTAL_URL || 'https://landlord.tenancy-portal.co.uk')
   const messagesLink = `${portalUrl}/messages/${tenancyId || ''}`
 
