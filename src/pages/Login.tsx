@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card, CardBody } from '../components/ui/Card'
@@ -8,6 +10,7 @@ import { Card, CardBody } from '../components/ui/Card'
 export default function Login() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const queryClient = useQueryClient()
   const { login, resetPassword } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -24,6 +27,24 @@ export default function Login() {
 
     try {
       await login(email, password)
+
+      // Prefetch landlord data so it's cached before ProtectedRoute mounts
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        queryClient.prefetchQuery({
+          queryKey: ['landlord', user.id],
+          queryFn: async () => {
+            const { data, error } = await supabase
+              .from('landlords')
+              .select('*')
+              .eq('auth_user_id', user.id)
+              .single()
+            if (error) throw error
+            return data
+          },
+        })
+      }
+
       navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
