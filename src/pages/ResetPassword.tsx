@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Card, CardBody } from '../components/ui/Card'
+import { AuthFooter } from '../components/AuthFooter'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 
@@ -72,7 +73,7 @@ export default function ResetPassword() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f8fafb' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: '#f8fafb' }}>
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
       </div>
     )
@@ -80,7 +81,7 @@ export default function ResetPassword() {
 
   if (!hasSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#f8fafb' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ backgroundColor: '#f8fafb' }}>
         <div className="w-full max-w-md">
           <div className="flex items-center gap-2.5 justify-center mb-8">
             <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center shrink-0">
@@ -106,12 +107,13 @@ export default function ResetPassword() {
             </CardBody>
           </Card>
         </div>
+        <AuthFooter />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#f8fafb' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ backgroundColor: '#f8fafb' }}>
       <div className="w-full max-w-md">
         <div className="flex items-center gap-2.5 justify-center mb-8">
           <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center shrink-0">
@@ -184,6 +186,7 @@ export default function ResetPassword() {
           </CardBody>
         </Card>
       </div>
+      <AuthFooter />
     </div>
   )
 }

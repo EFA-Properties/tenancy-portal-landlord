@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { Card, CardBody } from '../components/ui/Card'
+import { AuthFooter } from '../components/AuthFooter'
 
 type PortfolioType = 'btl' | 'hmo' | 'hybrid'
 type PropertyCountRange = '1' | '2-10' | '11-25' | '25+'
@@ -267,7 +268,7 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Form Column */}
         <div>
@@ -573,6 +574,7 @@ export default function Register() {
           </Card>
         </div>
       </div>
+      <AuthFooter />
     </div>
   )
 }
