@@ -1,6 +1,5 @@
 -- Tenancy Portal: tenant records privacy fix
--- Supabase project tenancy-portal (fpgqqxaltegfjhqlhimk). Runs as one transaction:
--- if any line fails, nothing is changed.
+-- Supabase project tenancy-portal (fpgqqxaltegfjhqlhimk). Applied 22 Oct 2026.
 begin;
 
 -- 1. Record which landlord created each tenant record.
@@ -30,32 +29,33 @@ returns boolean language sql stable security definer set search_path = public as
   );
 $$;
 
--- 2. Replace the "everyone can read every tenant" rule with landlord scoped rules.
-drop policy if exists "landlord_read_tenants" on public.tenants;
-drop policy if exists "Landlords can view own tenants" on public.tenants;
-create policy "Landlords can view own tenants" on public.tenants
-  for select to authenticated
+-- 2. Scope the existing rules (altered in place) so landlords only see their own tenants.
+alter policy "landlord_read_tenants" on public.tenants
+  to authenticated
   using (landlord_id = public.current_landlord_id() or public.is_tenant_on_my_tenancy(id));
-
-drop policy if exists "Landlords can update own tenants" on public.tenants;
-create policy "Landlords can update own tenants" on public.tenants
-  for update to authenticated
+alter policy "Landlords can view own tenants" on public.tenants
+  to authenticated
+  using (landlord_id = public.current_landlord_id() or public.is_tenant_on_my_tenancy(id));
+alter policy "Landlords can update own tenants" on public.tenants
+  to authenticated
   using (landlord_id = public.current_landlord_id() or public.is_tenant_on_my_tenancy(id))
   with check (landlord_id = public.current_landlord_id() or public.is_tenant_on_my_tenancy(id));
 
 -- Only signed in landlords can create tenant records, and only for themselves.
-drop policy if exists "Landlords can insert tenants" on public.tenants;
-drop policy if exists "landlord_create_tenants" on public.tenants;
-create policy "Landlords can insert own tenants" on public.tenants
-  for insert to authenticated
+alter policy "Landlords can insert tenants" on public.tenants
+  to authenticated
+  with check (landlord_id = public.current_landlord_id());
+alter policy "landlord_create_tenants" on public.tenants
+  to authenticated
   with check (landlord_id = public.current_landlord_id());
 
 -- Tenants keep reading and updating their own record through the existing rules
 -- "Tenants can read own record", "Tenant can update own record" and "tenant_own_record".
 
 -- 3. Invite links. The old rule let anyone on the internet list every pending tenant.
--- Replace it with two functions that only work with the secret invite link.
-drop policy if exists "Anon can read tenant by invite" on public.tenants;
+-- It is switched off, and two functions that only work with the secret invite link replace it.
+alter policy "Anon can read tenant by invite" on public.tenants
+  using (false);
 
 create or replace function public.get_tenant_invite(p_token uuid)
 returns table (full_name text, email text, invite_status text, property_address text, landlord_name text)
