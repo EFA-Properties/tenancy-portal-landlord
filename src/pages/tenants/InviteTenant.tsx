@@ -68,6 +68,31 @@ export default function InviteTenant() {
 
       if (tenantError) throw tenantError
 
+      // 1b. Link the tenant to the property's active tenancy, so they only see that property's documents
+      let linkWarning: string | null = null
+      if (formData.property_id) {
+        const { data: tenancy } = await supabase
+          .from('tenancies')
+          .select('id')
+          .eq('property_id', formData.property_id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (tenancy) {
+          const { error: linkError } = await supabase
+            .from('tenancy_tenants')
+            .upsert(
+              { tenancy_id: tenancy.id, tenant_id: tenant.id, status: 'active' },
+              { onConflict: 'tenancy_id,tenant_id' }
+            )
+          if (linkError) linkWarning = 'Tenant created but could not be linked to the tenancy. You can link them from the tenancy page.'
+        } else {
+          linkWarning = 'This property has no active tenancy yet. Add a tenancy for it, then link this tenant from the tenancy page.'
+        }
+      }
+
       // 2. Get the property address for the email
       const selectedProp = properties.find((p) => p.id === formData.property_id)
       const propertyAddress = selectedProp
@@ -98,15 +123,17 @@ export default function InviteTenant() {
         setError('Tenant created but invitation email could not be sent. You can resend from the tenant detail page.')
         setSuccess(true)
       } else {
+        if (linkWarning) setError(linkWarning)
         setSuccess(true)
       }
 
       // 4. Invalidate tenant queries so lists update
       queryClient.invalidateQueries({ queryKey: ['tenants'] })
       queryClient.invalidateQueries({ queryKey: ['tenants-with-status'] })
+      queryClient.invalidateQueries({ queryKey: ['tenancies'] })
 
       // Navigate after a brief delay so user sees success
-      setTimeout(() => navigate('/tenants'), 1500)
+      setTimeout(() => navigate('/tenants'), linkWarning ? 6000 : 1500)
     } catch (err) {
       console.error('Error inviting tenant:', err)
       setError(err instanceof Error ? err.message : 'Failed to invite tenant')
@@ -198,7 +225,7 @@ export default function InviteTenant() {
 
               {properties.length > 0 && (
                 <Select
-                  label="Property (optional)"
+                  label="Property (links the tenant to its current tenancy)"
                   name="property_id"
                   value={formData.property_id}
                   onChange={handleChange}
