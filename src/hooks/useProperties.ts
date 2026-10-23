@@ -65,15 +65,27 @@ export function usePropertyDocuments(propertyId: string | undefined) {
     queryFn: async () => {
       if (!propertyId) throw new Error('No property ID')
 
+      // Include documents uploaded to this property's tenancies (e.g. tenancy agreements)
+      const { data: tenancyRows } = await supabase
+        .from('tenancies')
+        .select('id')
+        .eq('property_id', propertyId)
+      const tenancyIds = (tenancyRows || []).map((t: { id: string }) => t.id)
+      const scopeFilter = tenancyIds.length > 0
+        ? `property_id.eq.${propertyId},tenancy_id.in.(${tenancyIds.join(',')})`
+        : `property_id.eq.${propertyId}`
+
       const { data, error } = await supabase
         .from('documents')
-        .select('id, document_type, title, valid_to, file_path, uploaded_at, served_at, served_to_tenant_id, tenant_opened_at, tenant_confirmed_at, tenants:served_to_tenant_id(full_name)')
-        .eq('property_id', propertyId)
+        .select('id, scope, tenancy_id, document_type, title, valid_to, file_path, uploaded_at, served_at, served_to_tenant_id, tenant_opened_at, tenant_confirmed_at, tenants:served_to_tenant_id(full_name)')
+        .or(scopeFilter)
         .order('uploaded_at', { ascending: false })
 
       if (error) throw error
       return data as unknown as Array<{
         id: string
+        scope: string
+        tenancy_id: string | null
         document_type: string
         title: string
         valid_to: string | null

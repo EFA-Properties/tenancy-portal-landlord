@@ -323,6 +323,7 @@ export default function PropertyDetail() {
                 inventory: 'Inventory & Schedule of Condition', ast: 'Tenancy Agreement', other: 'Other Document',
               }
 
+              const activeTenancyId = (tenancies as any[]).find((t) => t.status === 'active')?.id as string | undefined
               const getDoc = (type: string) => propertyDocs.find((d) => d.document_type === type)
               const hasDocType = (type: string) => propertyDocs.some((d) => d.document_type === type)
               const getDocExpiry = (type: string) => getDoc(type)?.valid_to || null
@@ -339,6 +340,7 @@ export default function PropertyDetail() {
                   { docType: 'fire_emergency_procedures', section: 'hmo', hasIt: hasDocType('fire_emergency_procedures'), expiry: getDocExpiry('fire_emergency_procedures') },
                   { docType: 'house_rules', section: 'hmo', hasIt: hasDocType('house_rules'), expiry: getDocExpiry('house_rules') },
                 ] : []),
+                { docType: 'ast', section: 'tenant', hasIt: hasDocType('ast'), expiry: getDocExpiry('ast') },
                 { docType: 'how_to_rent', section: 'tenant', hasIt: hasDocType('how_to_rent'), expiry: getDocExpiry('how_to_rent') },
                 { docType: 'renter_rights', section: 'tenant', hasIt: hasDocType('renter_rights'), expiry: getDocExpiry('renter_rights') },
                 { docType: 'deposit_certificate', section: 'tenant', hasIt: hasDocType('deposit_certificate'), expiry: getDocExpiry('deposit_certificate') },
@@ -458,7 +460,7 @@ export default function PropertyDetail() {
                                         if (doc.file_path?.startsWith('http')) {
                                           window.open(doc.file_path, '_blank')
                                         } else if (doc.file_path) {
-                                          const bucket = 'property-documents'
+                                          const bucket = doc.scope === 'tenancy' ? 'tenancy-documents' : 'property-documents'
                                           const { data, error } = await supabase.storage.from(bucket).createSignedUrl(doc.file_path, 3600)
                                           if (!error && data?.signedUrl) window.open(data.signedUrl, '_blank')
                                         }
@@ -481,7 +483,9 @@ export default function PropertyDetail() {
                                   </a>
                                 )}
                                 {!item.hasIt && !isNa && item.docType !== 'right_to_rent' && (
-                                  <Link to={`/documents/upload?property_id=${property.id}&document_type=${item.docType}`}>
+                                  <Link to={item.docType === 'ast' && activeTenancyId
+                                    ? `/documents/upload?tenancy_id=${activeTenancyId}&document_type=ast`
+                                    : `/documents/upload?property_id=${property.id}&document_type=${item.docType}`}>
                                     <Button size="sm">Upload</Button>
                                   </Link>
                                 )}
@@ -555,7 +559,7 @@ export default function PropertyDetail() {
                                   try {
                                     if (doc.file_path?.startsWith('http')) { window.open(doc.file_path, '_blank') }
                                     else if (doc.file_path) {
-                                      const bucket = 'property-documents'
+                                      const bucket = doc.scope === 'tenancy' ? 'tenancy-documents' : 'property-documents'
                                       const { data, error } = await supabase.storage.from(bucket).createSignedUrl(doc.file_path, 3600)
                                       if (!error && data?.signedUrl) window.open(data.signedUrl, '_blank')
                                     }
