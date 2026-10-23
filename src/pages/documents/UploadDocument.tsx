@@ -23,7 +23,7 @@ export default function UploadDocument() {
 
   // Auto-title lookup for known doc types
   const knownDocTitles: Record<string, string> = {
-    ast: 'Tenancy Agreement',
+    ast: 'Assured Periodic Tenancy Agreement / Written Statement of Terms',
     epc: 'EPC Certificate',
     gas_safety: 'Gas Safety Certificate (CP12)',
     eicr: 'EICR (Electrical Safety)',
@@ -197,7 +197,7 @@ export default function UploadDocument() {
   }
 
   const docTypes = [
-    { value: 'ast', label: 'Assured Shorthold Tenancy' },
+    { value: 'ast', label: 'Assured Periodic Tenancy Agreement / Written Statement of Terms' },
     { value: 'epc', label: 'Energy Performance Certificate' },
     { value: 'gas_safety', label: 'Gas Safety Certificate' },
     { value: 'eicr', label: 'EICR (Electrical)' },

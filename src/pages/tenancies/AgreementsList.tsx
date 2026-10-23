@@ -102,7 +102,7 @@ export default function AgreementsList() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-slate-400">
-                      <span>{a.type === 'inventory' ? 'Inventory' : 'Tenancy Agreement'}</span>
+                      <span>{a.type === 'inventory' ? 'Inventory' : 'Assured Periodic Tenancy Agreement / Written Statement of Terms'}</span>
                       <span>Created {formatDate(a.created_at)}</span>
                       {a.landlord_signed_at && (
                         <span>Landlord signed {formatDate(a.landlord_signed_at)}</span>

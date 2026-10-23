@@ -320,7 +320,7 @@ export default function PropertyDetail() {
                 fire_emergency_procedures: 'Fire & Emergency Procedures', house_rules: 'House Rules / Guidance',
                 how_to_rent: 'How to Rent Guide', renter_rights: "Renter's Rights",
                 deposit_certificate: 'Deposit Protection Certificate', right_to_rent: 'Right to Rent Check',
-                inventory: 'Inventory & Schedule of Condition', ast: 'Tenancy Agreement', other: 'Other Document',
+                inventory: 'Inventory & Schedule of Condition', ast: 'Assured Periodic Tenancy Agreement / Written Statement of Terms', other: 'Other Document',
               }
 
               const activeTenancyId = (tenancies as any[]).find((t) => t.status === 'active')?.id as string | undefined

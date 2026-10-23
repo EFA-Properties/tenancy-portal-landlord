@@ -10,7 +10,7 @@ import { formatDate, formatDateTime } from '../../lib/utils'
 import { FeatureGate } from '../../components/FeatureGate'
 
 const docTypeLabels: Record<string, string> = {
-  ast: 'Tenancy Agreement',
+  ast: 'Assured Periodic Tenancy Agreement / Written Statement of Terms',
   epc: 'EPC Certificate',
   gas_safety: 'Gas Safety Certificate (CP12)',
   eicr: 'EICR (Electrical Safety)',
