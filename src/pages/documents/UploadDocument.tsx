@@ -53,7 +53,7 @@ export default function UploadDocument() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [properties, setProperties] = useState<Array<{ id: string; address_line1: string; town: string }>>([])
-  const [tenancies, setTenancies] = useState<Array<{ id: string; property_id: string; properties: any; tenants: any }>>([])
+  const [tenancies, setTenancies] = useState<Array<{ id: string; property_id: string; properties: any; tenancy_tenants: any }>>([])
   const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function UploadDocument() {
             .eq('landlord_id', landlord.id),
           supabase
             .from('tenancies')
-            .select('id, property_id, properties(address_line1, town), tenants(full_name)')
+            .select('id, property_id, properties(address_line1, town), tenancy_tenants(tenants(full_name))')
             .eq('landlord_id', landlord.id),
         ])
 
@@ -164,7 +164,7 @@ export default function UploadDocument() {
         file_size: file.size,
         mime_type: file.type,
         valid_from: formData.valid_from || null,
-        valid_to: formData.valid_to || null,
+        valid_to: formData.document_type === 'ast' ? null : (formData.valid_to || null),
         uploaded_by: landlord.id,
       }
 
@@ -293,10 +293,16 @@ export default function UploadDocument() {
                 name="tenancy_id"
                 value={formData.tenancy_id}
                 onChange={handleChange}
-                options={tenancies.map((t) => ({
-                  value: t.id,
-                  label: `${(t as any).properties?.address_line1 || 'Unknown'}, ${(t as any).properties?.town || ''}${(t as any).tenants ? ` — ${(t as any).tenants.full_name}` : ''}`,
-                }))}
+                options={tenancies.map((t) => {
+                  const names = ((t as any).tenancy_tenants || [])
+                    .map((tt: any) => tt.tenants?.full_name)
+                    .filter(Boolean)
+                    .join(', ')
+                  return {
+                    value: t.id,
+                    label: `${(t as any).properties?.address_line1 || 'Unknown'}, ${(t as any).properties?.town || ''}${names ? ` (${names})` : ''}`,
+                  }
+                })}
                 required
               />
             )}
@@ -335,21 +341,24 @@ export default function UploadDocument() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Periodic tenancy agreements roll on with no end date, so no expiry is asked for */}
+            <div className={formData.document_type === 'ast' ? '' : 'grid grid-cols-2 gap-4'}>
               <Input
-                label="Valid From (optional)"
+                label={formData.document_type === 'ast' ? 'Start Date (optional)' : 'Valid From (optional)'}
                 name="valid_from"
                 type="date"
                 value={formData.valid_from}
                 onChange={handleChange}
               />
-              <Input
-                label="Valid To (optional)"
-                name="valid_to"
-                type="date"
-                value={formData.valid_to}
-                onChange={handleChange}
-              />
+              {formData.document_type !== 'ast' && (
+                <Input
+                  label="Valid To (optional)"
+                  name="valid_to"
+                  type="date"
+                  value={formData.valid_to}
+                  onChange={handleChange}
+                />
+              )}
             </div>
 
             <div>
