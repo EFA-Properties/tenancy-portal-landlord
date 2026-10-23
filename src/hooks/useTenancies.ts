@@ -64,3 +64,24 @@ export function useLinkTenant() {
     },
   })
 }
+
+export function useUpdateTenancy() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ tenancyId, updates }: {
+      tenancyId: string
+      updates: { monthly_rent: number; rent_due_day: number; start_date: string; end_date: string | null }
+    }) => {
+      const { error } = await supabase
+        .from('tenancies')
+        .update(updates)
+        .eq('id', tenancyId)
+
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tenancies'] })
+    },
+  })
+}
