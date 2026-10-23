@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { useTenancy, useLinkTenant } from '../../hooks/useTenancies'
+import { useTenancy, useLinkTenant, useUpdateTenancy } from '../../hooks/useTenancies'
 import { supabase } from '../../lib/supabase'
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { Select } from '../../components/ui/Select'
+import { Input } from '../../components/ui/Input'
 import { formatDate } from '../../lib/utils'
 
 export default function TenancyDetail() {
@@ -14,6 +15,11 @@ export default function TenancyDetail() {
   const navigate = useNavigate()
   const { data: tenancy, isLoading } = useTenancy(id)
   const linkTenant = useLinkTenant()
+  const updateTenancy = useUpdateTenancy()
+
+  const [editingFinancial, setEditingFinancial] = useState(false)
+  const [financialForm, setFinancialForm] = useState({ monthly_rent: '', rent_due_day: '', start_date: '', end_date: '' })
+  const [financialError, setFinancialError] = useState<string | null>(null)
 
   const [showLinkForm, setShowLinkForm] = useState(false)
   const [selectedTenantId, setSelectedTenantId] = useState('')
@@ -37,6 +43,51 @@ export default function TenancyDetail() {
       setSelectedTenantId('')
     } catch (err) {
       console.error('Failed to link tenant:', err)
+    }
+  }
+
+  const startEditFinancial = () => {
+    if (!tenancy) return
+    setFinancialForm({
+      monthly_rent: String(tenancy.monthly_rent ?? ''),
+      rent_due_day: String((tenancy as any).rent_due_day ?? 1),
+      start_date: tenancy.start_date || '',
+      end_date: tenancy.end_date || '',
+    })
+    setFinancialError(null)
+    setEditingFinancial(true)
+  }
+
+  const handleSaveFinancial = async () => {
+    if (!id) return
+    const rent = parseFloat(financialForm.monthly_rent)
+    const dueDay = parseInt(financialForm.rent_due_day, 10)
+    if (isNaN(rent) || rent <= 0) {
+      setFinancialError('Please enter the monthly rent.')
+      return
+    }
+    if (isNaN(dueDay) || dueDay < 1 || dueDay > 31) {
+      setFinancialError('Rent due day must be between 1 and 31.')
+      return
+    }
+    if (!financialForm.start_date) {
+      setFinancialError('Please enter the start date.')
+      return
+    }
+    try {
+      await updateTenancy.mutateAsync({
+        tenancyId: id,
+        updates: {
+          monthly_rent: rent,
+          rent_due_day: dueDay,
+          start_date: financialForm.start_date,
+          end_date: financialForm.end_date || null,
+        },
+      })
+      setEditingFinancial(false)
+    } catch (err) {
+      console.error('Failed to update tenancy:', err)
+      setFinancialError('Could not save the changes. Please try again.')
     }
   }
 
@@ -134,10 +185,65 @@ export default function TenancyDetail() {
         {/* Financial */}
         <Card>
           <CardHeader>
-            <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
-              Financial
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+                Financial
+              </h2>
+              {!editingFinancial && (
+                <Button variant="outline" size="sm" onClick={startEditFinancial}>
+                  Edit
+                </Button>
+              )}
+            </div>
           </CardHeader>
+          {editingFinancial ? (
+          <CardBody className="space-y-4">
+            {financialError && (
+              <p className="text-sm text-red-600">{financialError}</p>
+            )}
+            <Input
+              label="Monthly Rent (£)"
+              type="number"
+              step="0.01"
+              min="0"
+              value={financialForm.monthly_rent}
+              onChange={(e) => setFinancialForm((f) => ({ ...f, monthly_rent: e.target.value }))}
+              required
+            />
+            <Input
+              label="Rent Due Day (1 to 31)"
+              type="number"
+              min="1"
+              max="31"
+              value={financialForm.rent_due_day}
+              onChange={(e) => setFinancialForm((f) => ({ ...f, rent_due_day: e.target.value }))}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Start Date"
+                type="date"
+                value={financialForm.start_date}
+                onChange={(e) => setFinancialForm((f) => ({ ...f, start_date: e.target.value }))}
+                required
+              />
+              <Input
+                label="End Date"
+                type="date"
+                value={financialForm.end_date}
+                onChange={(e) => setFinancialForm((f) => ({ ...f, end_date: e.target.value }))}
+                helperText="Leave blank for a periodic tenancy"
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button size="sm" onClick={handleSaveFinancial} loading={updateTenancy.isPending}>
+                Save
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setEditingFinancial(false)}>
+                Cancel
+              </Button>
+            </div>
+          </CardBody>
+          ) : (
           <CardBody className="space-y-5">
             <div>
               <p className="text-xs text-slate-400 mb-1">Monthly Rent</p>
@@ -158,6 +264,7 @@ export default function TenancyDetail() {
               )}
             </div>
           </CardBody>
+          )}
         </Card>
 
         {/* Tenant Info */}
