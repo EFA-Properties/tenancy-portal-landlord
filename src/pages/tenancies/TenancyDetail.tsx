@@ -358,7 +358,12 @@ export default function TenancyDetail() {
         {/* Actions */}
         <Card className="lg:col-span-2">
           <CardBody>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Link to={`/documents/upload?tenancy_id=${tenancy.id}&document_type=ast`}>
+                <Button className="w-full">
+                  Upload Tenancy Agreement
+                </Button>
+              </Link>
               <Link to={`/documents?tenancy_id=${tenancy.id}`}>
                 <Button variant="outline" className="w-full">
                   View Documents
