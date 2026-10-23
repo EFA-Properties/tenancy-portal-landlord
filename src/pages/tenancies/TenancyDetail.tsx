@@ -361,7 +361,7 @@ export default function TenancyDetail() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Link to={`/documents/upload?tenancy_id=${tenancy.id}&document_type=ast`}>
                 <Button className="w-full">
-                  Upload Tenancy Agreement
+                  Upload Written Statement of Terms
                 </Button>
               </Link>
               <Link to={`/documents?tenancy_id=${tenancy.id}`}>
