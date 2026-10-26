@@ -109,7 +109,7 @@ export function useDocumentAcknowledgements(documentIds: string[]) {
       if (!documentIds.length) return []
       const { data, error } = await supabase
         .from('document_acknowledgements')
-        .select('id, document_id, tenant_id, tenancy_id, served_at, opened_at, confirmed_at, tenants:tenant_id(full_name)')
+        .select('id, document_id, tenant_id, tenancy_id, served_at, opened_at, confirmed_at, receipt_file_path, tenants:tenant_id(full_name)')
         .in('document_id', documentIds)
       if (error) throw error
       return data as unknown as Array<{
@@ -120,6 +120,7 @@ export function useDocumentAcknowledgements(documentIds: string[]) {
         served_at: string | null
         opened_at: string | null
         confirmed_at: string | null
+        receipt_file_path: string | null
         tenants: { full_name: string } | null
       }>
     },
