@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTenant, useTenantLinkStatus, useMoveOutTenant, useRevokeAccess, useRestoreTenant } from '../../hooks/useTenants'
 import { supabase } from '../../lib/supabase'
+import { openSignedCopy } from '../../lib/receipts'
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -71,7 +72,7 @@ function useTenantAcknowledgements(tenantId: string | undefined) {
       if (!tenantId) return []
       const { data, error } = await supabase
         .from('document_acknowledgements')
-        .select('id, document_id, served_at, opened_at, confirmed_at')
+        .select('id, document_id, served_at, opened_at, confirmed_at, receipt_file_path')
         .eq('tenant_id', tenantId)
       if (error) throw error
       return data || []
@@ -412,6 +413,14 @@ export default function TenantDetail() {
                                 Awaiting confirmation
                               </span>
                             ) : null}
+                            {ack.receipt_file_path && (
+                              <button
+                                onClick={() => openSignedCopy(ack.receipt_file_path)}
+                                className="text-xs text-teal-700 hover:text-teal-600 underline"
+                              >
+                                Signed copy
+                              </button>
+                            )}
                           </div>
                         )}
                         {doc && !ack && (

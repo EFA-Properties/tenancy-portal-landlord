@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useProperty, usePropertyTenancies, usePropertyDocuments, useDocumentAcknowledgements, usePropertyTenants } from '../../hooks/useProperties'
 import { useRightToRentByProperty } from '../../hooks/useRightToRent'
 import { supabase } from '../../lib/supabase'
+import { openSignedCopy } from '../../lib/receipts'
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
@@ -432,6 +433,17 @@ export default function PropertyDetail() {
                               ) : (
                                 <span className="text-textMuted">—</span>
                               )}
+                              {doc && acknowledgements
+                                .filter((a) => a.document_id === doc.id && a.receipt_file_path)
+                                .map((a) => (
+                                  <button
+                                    key={a.id}
+                                    onClick={() => openSignedCopy(a.receipt_file_path!)}
+                                    className="block text-xs text-teal-700 hover:text-teal-600 underline mt-1"
+                                  >
+                                    Signed copy{a.tenants?.full_name ? ` (${a.tenants.full_name.split(' ')[0]})` : ''}
+                                  </button>
+                                ))}
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap">
                               {(item.expiry || doc?.valid_to) ? (
