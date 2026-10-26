@@ -7,6 +7,11 @@ alter table public.landlord_updates
   add column if not exists emailed_status text,
   add column if not exists emailed_at timestamptz;
 
+-- Updates already on the page before emails existed count as sent, so turning emails on
+-- doesn't send old news.
+update public.landlord_updates set emailed_status = status
+where published_at is not null and emailed_status is null;
+
 -- When an update is published (or moves to 'action_needed'), ask the landlord portal to
 -- email it. The portal function only sends published updates it hasn't already sent.
 create or replace function public.send_landlord_update_emails()
