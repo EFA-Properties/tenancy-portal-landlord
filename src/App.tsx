@@ -28,6 +28,7 @@ const TenantsList = lazy(() => import('./pages/tenants/TenantsList'))
 const TenantDetail = lazy(() => import('./pages/tenants/TenantDetail'))
 const InviteTenant = lazy(() => import('./pages/tenants/InviteTenant'))
 const ComplianceAlerts = lazy(() => import('./pages/compliance/ComplianceAlerts'))
+const WhatsChanging = lazy(() => import('./pages/updates/WhatsChanging'))
 const MessagesList = lazy(() => import('./pages/messages/MessagesList'))
 const MessageThread = lazy(() => import('./pages/messages/MessageThread'))
 const AgreementsList = lazy(() => import('./pages/tenancies/AgreementsList'))
@@ -278,6 +279,17 @@ export default function App() {
               <ProtectedRoute>
                 <Layout>
                   <ComplianceAlerts />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/whats-changing"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <WhatsChanging />
                 </Layout>
               </ProtectedRoute>
             }
