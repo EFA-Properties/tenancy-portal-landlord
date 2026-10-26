@@ -1,6 +1,7 @@
 import React from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import { useMaintenanceRequests } from '../../hooks/useMaintenanceRequests'
+import { useProperties } from '../../hooks/useProperties'
 import { Card, CardBody } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
@@ -11,6 +12,7 @@ export default function MaintenanceList() {
   const [searchParams] = useSearchParams()
   const tenancyId = searchParams.get('tenancy_id')
   const { data: requests = [], isLoading } = useMaintenanceRequests(tenancyId || undefined)
+  const { data: properties = [] } = useProperties()
 
   if (isLoading) {
     return (
@@ -50,7 +52,7 @@ export default function MaintenanceList() {
           <CardBody>
             <EmptyState
               title="No maintenance requests"
-              description="Your property is in good shape! Report an issue if you need maintenance."
+              description={`${properties.length > 1 ? 'Your properties are' : 'Your property is'} in good shape! Any issues your tenants report will appear here.`}
             />
           </CardBody>
         </Card>
