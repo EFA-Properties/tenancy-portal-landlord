@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import { openSignedCopy } from '../../lib/receipts'
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
+import { NOT_LET_YET_KEY, isNotLetYet } from '../../lib/notLetYet'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { Input } from '../../components/ui/Input'
@@ -177,6 +178,28 @@ export default function PropertyDetail() {
     }
   }
 
+  const notLetYet = isNotLetYet(overrides)
+
+  const toggleNotLetYet = async () => {
+    if (!id || !property) return
+    const currentOverrides = { ...(property as any).compliance_overrides || {} }
+    if (isNotLetYet(currentOverrides)) {
+      delete currentOverrides[NOT_LET_YET_KEY]
+    } else {
+      currentOverrides[NOT_LET_YET_KEY] = 'true'
+    }
+
+    const { error } = await supabase
+      .from('properties')
+      .update({ compliance_overrides: currentOverrides })
+      .eq('id', id)
+
+    if (!error) {
+      queryClient.invalidateQueries({ queryKey: ['properties'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-actions'] })
+    }
+  }
+
   const serveToAllTenants = async (documentId: string) => {
     if (!propertyTenants.length) return
     setServingDoc(documentId)
@@ -231,8 +254,11 @@ export default function PropertyDetail() {
                 {property.property_type.replace('_', ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
               </Badge>
             )}
-            {property.is_hmo && (
+            {property.is_hmo && property.property_type !== 'hmo' && (
               <Badge variant="secondary" size="sm">HMO</Badge>
+            )}
+            {notLetYet && (
+              <Badge variant="warning" size="sm">Not let yet</Badge>
             )}
             {(property as any).legal_entities && (
               <Badge variant="default" size="sm">
@@ -345,11 +371,27 @@ export default function PropertyDetail() {
                 </h2>
               </div>
               <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={notLetYet}
+                    onChange={toggleNotLetYet}
+                    className="w-4 h-4 rounded border-slate-300"
+                  />
+                  Not let yet
+                </label>
                 <Link to={`/documents/upload?property_id=${property.id}`}>
                   <Button size="sm">Upload Document</Button>
                 </Link>
               </div>
             </div>
+            {notLetYet && (
+              <p className="mt-4 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
+                This property is marked as not let yet, so nothing here shows as missing and it won't appear in
+                your dashboard reminders. You can still upload documents as you get them. Untick "Not let yet"
+                when it's ready to let.
+              </p>
+            )}
           </CardHeader>
           <div className="overflow-x-auto">
             {(() => {
@@ -422,7 +464,10 @@ export default function PropertyDetail() {
                       // Status
                       let statusLabel = 'Missing'
                       let statusColor = 'text-amber-600 bg-amber-50'
-                      if (isNa) {
+                      if (notLetYet && !isNa && !item.hasIt) {
+                        statusLabel = 'Not let yet'
+                        statusColor = 'text-slate-400 bg-slate-100'
+                      } else if (isNa) {
                         statusLabel = 'N/A'
                         statusColor = 'text-slate-400 bg-slate-100'
                       } else if (item.hasIt) {

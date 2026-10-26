@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { isNotLetYet } from '../lib/notLetYet'
 
 export type ActionPriority = 'urgent' | 'warning' | 'info'
 
@@ -68,6 +69,7 @@ export function useDashboardActions() {
         for (const prop of properties) {
           const address = `${prop.address_line1}, ${prop.town}`
           const overrides = (prop.compliance_overrides as Record<string, string>) || {}
+          if (isNotLetYet(overrides)) continue
 
           for (const cert of certFields) {
             // Skip if marked N/A
@@ -132,6 +134,7 @@ export function useDashboardActions() {
         for (const prop of properties) {
           const address = `${prop.address_line1}, ${prop.town}`
           const overrides = (prop.compliance_overrides as Record<string, string>) || {}
+          if (isNotLetYet(overrides)) continue
           const propDocs = docsByProperty.get(prop.id) || new Set()
           const propIsHmo = (prop as any).is_hmo || (prop as any).property_type === 'hmo'
 
