@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Select } from '../components/ui/Select'
 import { Card, CardBody, CardHeader } from '../components/ui/Card'
+import { safeFileName } from '../lib/storagePath'
 
 type PropertyType = 'single_btl' | 'hmo' | 'mixed_use'
 
@@ -349,7 +350,7 @@ export default function Onboarding() {
     setLoading(true)
 
     try {
-      const fileName = `${landlord?.id}/${propertyId}/${Date.now()}-${stepData.document.file.name}`
+      const fileName = `${landlord?.id}/${propertyId}/${Date.now()}-${safeFileName(stepData.document.file.name)}`
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
