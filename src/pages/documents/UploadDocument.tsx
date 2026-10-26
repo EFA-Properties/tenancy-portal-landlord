@@ -194,6 +194,22 @@ export default function UploadDocument() {
         if (hideError) console.error('Could not hide earlier versions:', hideError)
       }
 
+      // Let the tenants know by email (a link to the portal only, never the file).
+      // A failed email doesn't stop the upload.
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession()
+        await fetch('/api/notify-new-document', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(currentSession?.access_token ? { 'Authorization': `Bearer ${currentSession.access_token}` } : {}),
+          },
+          body: JSON.stringify({ documentId: newDoc.id }),
+        })
+      } catch (notifyErr) {
+        console.error('Could not email tenants about the new document:', notifyErr)
+      }
+
       // Invalidate cached queries so lists update immediately
       await queryClient.invalidateQueries({ queryKey: ['documents'] })
       await queryClient.invalidateQueries({ queryKey: ['property-documents'] })
