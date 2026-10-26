@@ -4,6 +4,7 @@ import { useProperties } from '../../hooks/useProperties'
 import { Card, CardBody } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
+import { isNotLetYet } from '../../lib/notLetYet'
 import { EmptyState } from '../../components/ui/EmptyState'
 
 function PropertyIcon() {
@@ -44,7 +45,10 @@ function PropertyRow({ property }: { property: any }) {
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            {property.is_hmo && (
+            {isNotLetYet(property.compliance_overrides) && (
+              <Badge variant="warning" size="sm">Not let yet</Badge>
+            )}
+            {property.is_hmo && property.property_type !== 'hmo' && (
               <Badge variant="secondary" size="sm">HMO</Badge>
             )}
             {property.property_type && (
