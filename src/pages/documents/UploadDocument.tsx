@@ -168,11 +168,29 @@ export default function UploadDocument() {
         uploaded_by: landlord.id,
       }
 
-      const { error: docError } = await supabase.from('documents').insert(docPayload)
+      const { data: newDoc, error: docError } = await supabase
+        .from('documents')
+        .insert(docPayload)
+        .select('id')
+        .single()
 
       if (docError) {
         console.error('Document insert error:', docError)
         throw new Error(`Document record failed: ${docError.message}`)
+      }
+
+      // A new version replaces the earlier one for tenants. The earlier version and
+      // any signed copies stay on file for the landlord.
+      if (formData.document_type !== 'other') {
+        const scopeColumn = formData.scope === 'property' ? 'property_id' : 'tenancy_id'
+        const scopeValue = formData.scope === 'property' ? formData.property_id : formData.tenancy_id
+        const { error: hideError } = await supabase
+          .from('documents')
+          .update({ tenant_visible: false })
+          .eq(scopeColumn, scopeValue)
+          .eq('document_type', formData.document_type)
+          .neq('id', newDoc.id)
+        if (hideError) console.error('Could not hide earlier versions:', hideError)
       }
 
       // Invalidate cached queries so lists update immediately
