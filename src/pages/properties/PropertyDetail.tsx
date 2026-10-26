@@ -8,11 +8,22 @@ import { openSignedCopy } from '../../lib/receipts'
 import { Breadcrumb } from '../../components/Breadcrumb'
 import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { NOT_LET_YET_KEY, isNotLetYet } from '../../lib/notLetYet'
+import { TenantDocumentsCard } from '../../components/TenantDocumentsCard'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { Input } from '../../components/ui/Input'
 import { Modal } from '../../components/ui/Modal'
 import { formatDate, formatDateTime, epcRatingColor } from '../../lib/utils'
+
+const docTypeLabels: Record<string, string> = {
+  gas_safety: 'Gas Safety Certificate (CP12)', epc: 'EPC Certificate',
+  eicr: 'EICR (Electrical Safety)', hmo_licence: 'HMO Licence',
+  emergency_lighting: 'Emergency Lighting Report', fire_risk_assessment: 'Fire Risk Assessment',
+  fire_emergency_procedures: 'Fire & Emergency Procedures', house_rules: 'House Rules / Guidance',
+  how_to_rent: 'How to Rent Guide', renter_rights: "Renter's Rights",
+  deposit_certificate: 'Deposit Protection Certificate', right_to_rent: 'Right to Rent Check',
+  inventory: 'Inventory & Schedule of Condition', ast: 'Assured Periodic Tenancy Agreement / Written Statement of Terms', other: 'Other Document',
+}
 
 interface PropertyRoom {
   id: string
@@ -406,15 +417,6 @@ export default function PropertyDetail() {
           </CardHeader>
           <div className="overflow-x-auto">
             {(() => {
-              const docTypeLabels: Record<string, string> = {
-                gas_safety: 'Gas Safety Certificate (CP12)', epc: 'EPC Certificate',
-                eicr: 'EICR (Electrical Safety)', hmo_licence: 'HMO Licence',
-                emergency_lighting: 'Emergency Lighting Report', fire_risk_assessment: 'Fire Risk Assessment',
-                fire_emergency_procedures: 'Fire & Emergency Procedures', house_rules: 'House Rules / Guidance',
-                how_to_rent: 'How to Rent Guide', renter_rights: "Renter's Rights",
-                deposit_certificate: 'Deposit Protection Certificate', right_to_rent: 'Right to Rent Check',
-                inventory: 'Inventory & Schedule of Condition', ast: 'Assured Periodic Tenancy Agreement / Written Statement of Terms', other: 'Other Document',
-              }
 
               const activeTenancyId = (tenancies as any[]).find((t) => t.status === 'active')?.id as string | undefined
               const getDoc = (type: string) => propertyDocs.find((d) => d.document_type === type)
@@ -740,6 +742,14 @@ export default function PropertyDetail() {
             })()}
           </div>
         </Card>
+
+        <TenantDocumentsCard
+          tenants={propertyTenants}
+          documents={propertyDocs}
+          acknowledgements={acknowledgements}
+          overrides={overrides}
+          docTypeLabels={docTypeLabels}
+        />
 
         {/* HMO Rooms — only shown if property is HMO */}
         {isHmo && (
