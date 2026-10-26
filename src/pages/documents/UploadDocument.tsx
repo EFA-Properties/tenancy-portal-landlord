@@ -10,6 +10,7 @@ import { Input } from '../../components/ui/Input'
 import { Select } from '../../components/ui/Select'
 import { Upload } from 'lucide-react'
 import { FeatureGate } from '../../components/FeatureGate'
+import { safeFileName } from '../../lib/storagePath'
 
 export default function UploadDocument() {
   const navigate = useNavigate()
@@ -138,7 +139,7 @@ export default function UploadDocument() {
       // Storage RLS policies expect the first folder to be the property_id or tenancy_id
       const bucket = formData.scope === 'property' ? 'property-documents' : 'tenancy-documents'
       const folderId = formData.scope === 'property' ? formData.property_id : formData.tenancy_id
-      const fileName = `${Date.now()}-${file.name}`
+      const fileName = `${Date.now()}-${safeFileName(file.name)}`
       const storagePath = `${folderId}/${fileName}`
 
       const { data: storageData, error: storageError } = await supabase.storage
