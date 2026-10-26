@@ -402,11 +402,11 @@ export default function PropertyDetail() {
                   <thead>
                     <tr className="border-b border-border bg-slate-50/50">
                       <th className="text-left px-6 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Document</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Uploaded</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Tenant Accepted</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Valid To</th>
-                      <th className="text-left px-4 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Status</th>
-                      <th className="px-4 py-3"></th>
+                      <th className="text-left px-3 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Uploaded</th>
+                      <th className="text-left px-3 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Tenant Accepted</th>
+                      <th className="text-left px-3 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Valid To</th>
+                      <th className="text-left px-3 py-3 text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">Status</th>
+                      <th className="px-3 py-3"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -460,16 +460,16 @@ export default function PropertyDetail() {
                                   </svg>
                                 ) : item.hasIt ? <CheckCircle /> : <EmptyCircle />}
                                 <div className="min-w-0">
-                                  <p className="font-medium text-textPrimary truncate">
+                                  <p className="font-medium text-textPrimary break-words">
                                     {doc?.title || docTypeLabels[item.docType] || item.docType}
                                   </p>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 py-4 text-textSecondary whitespace-nowrap">
+                            <td className="px-3 py-4 text-textSecondary whitespace-nowrap">
                               {doc?.uploaded_at ? formatDateTime(doc.uploaded_at) : <span className="text-textMuted">—</span>}
                             </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
+                            <td className="px-3 py-4 whitespace-nowrap">
                               {doc?.tenant_confirmed_at ? (
                                 <span className="text-success font-medium">{formatDateTime(doc.tenant_confirmed_at)}</span>
                               ) : (
@@ -488,7 +488,7 @@ export default function PropertyDetail() {
                                   </button>
                                 ))}
                             </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
+                            <td className="px-3 py-4 whitespace-nowrap">
                               {(item.expiry || doc?.valid_to) ? (
                                 <span className={new Date(item.expiry || doc?.valid_to || '') < new Date() ? 'text-error font-medium' : 'text-textSecondary'}>
                                   {formatDate(item.expiry || doc?.valid_to)}
@@ -498,13 +498,13 @@ export default function PropertyDetail() {
                                 <span className="text-textMuted">—</span>
                               )}
                             </td>
-                            <td className="px-4 py-4">
+                            <td className="px-3 py-4">
                               <span className={`text-[10px] font-mono font-medium uppercase tracking-wider px-2.5 py-1 rounded-pill ${statusColor}`}>
                                 {statusLabel}
                               </span>
                             </td>
-                            <td className="px-4 py-4 text-right">
-                              <div className="flex items-center justify-end gap-2">
+                            <td className="px-3 py-4 text-right">
+                              <div className="flex flex-col items-end gap-0.5">
                                 {item.hasIt && doc && (
                                   <Button
                                     variant="ghost"
@@ -610,28 +610,29 @@ export default function PropertyDetail() {
                                 <div className="flex items-center gap-3">
                                   <CheckCircle />
                                   <div className="min-w-0">
-                                    <p className="font-medium text-textPrimary truncate">
+                                    <p className="font-medium text-textPrimary break-words">
                                       {doc.title || docTypeLabels[doc.document_type] || doc.file_name || 'Untitled'}
                                     </p>
                                     <span className="text-xs text-textMuted">{docTypeLabels[doc.document_type] || doc.document_type}</span>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-4 py-4 text-textSecondary whitespace-nowrap">{formatDateTime(doc.uploaded_at)}</td>
-                              <td className="px-4 py-4 whitespace-nowrap">
+                              <td className="px-3 py-4 text-textSecondary whitespace-nowrap">{formatDateTime(doc.uploaded_at)}</td>
+                              <td className="px-3 py-4 whitespace-nowrap">
                                 {doc.tenant_confirmed_at ? <span className="text-success font-medium">{formatDateTime(doc.tenant_confirmed_at)}</span> : <span className="text-textMuted">—</span>}
                               </td>
-                              <td className="px-4 py-4 whitespace-nowrap">
+                              <td className="px-3 py-4 whitespace-nowrap">
                                 {doc.valid_to ? (
                                   <span className={new Date(doc.valid_to) < new Date() ? 'text-error font-medium' : 'text-textSecondary'}>
                                     {formatDate(doc.valid_to)}{new Date(doc.valid_to) < new Date() && ' (expired)'}
                                   </span>
                                 ) : <span className="text-textMuted">—</span>}
                               </td>
-                              <td className="px-4 py-4">
+                              <td className="px-3 py-4">
                                 <span className={`text-[10px] font-mono font-medium uppercase tracking-wider px-2.5 py-1 rounded-pill ${statusColor}`}>{statusLabel}</span>
                               </td>
-                              <td className="px-4 py-4 text-right">
+                              <td className="px-3 py-4 text-right">
+                                <div className="flex flex-col items-end gap-0.5">
                                 <Button variant="ghost" size="sm" onClick={async () => {
                                   setDownloadingId(doc.id)
                                   try {
@@ -660,6 +661,7 @@ export default function PropertyDetail() {
                                 <Link to={replaceLink(doc.document_type, doc.scope, doc.tenancy_id)}>
                                   <Button variant="ghost" size="sm">Replace</Button>
                                 </Link>
+                                </div>
                               </td>
                             </tr>
                           )
