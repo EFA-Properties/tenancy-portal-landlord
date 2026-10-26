@@ -368,6 +368,18 @@ export interface ComplianceAlert {
   updated_at: string
 }
 
+export interface LandlordUpdate {
+  id: string
+  title: string
+  summary: string
+  applies_to: string[]
+  takes_effect: string | null
+  status: 'heads_up' | 'action_needed'
+  source_url: string | null
+  published_at: string | null
+  created_at: string
+}
+
 export interface LegalEntity {
   id: string
   user_id: string
