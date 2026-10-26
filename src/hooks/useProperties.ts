@@ -77,7 +77,7 @@ export function usePropertyDocuments(propertyId: string | undefined) {
 
       const { data, error } = await supabase
         .from('documents')
-        .select('id, scope, tenancy_id, document_type, title, valid_from, valid_to, file_path, uploaded_at, served_at, served_to_tenant_id, tenant_opened_at, tenant_confirmed_at, tenants:served_to_tenant_id(full_name)')
+        .select('id, scope, tenancy_id, document_type, title, valid_from, valid_to, file_path, uploaded_at, served_at, served_to_tenant_id, tenant_opened_at, tenant_confirmed_at, tenant_visible, tenants:served_to_tenant_id(full_name)')
         .or(scopeFilter)
         .order('uploaded_at', { ascending: false })
 
@@ -96,6 +96,7 @@ export function usePropertyDocuments(propertyId: string | undefined) {
         served_to_tenant_id: string | null
         tenant_opened_at: string | null
         tenant_confirmed_at: string | null
+        tenant_visible: boolean | null
         tenants: { full_name: string } | null
       }>
     },
