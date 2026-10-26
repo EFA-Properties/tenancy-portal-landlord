@@ -101,7 +101,7 @@ export default function WhatsChanging() {
                   )}
                   {update.published_at && (
                     <div>
-                      <dt className="inline font-medium text-slate-700">Posted: </dt>
+                      <dt className="inline font-medium text-slate-700">Announced: </dt>
                       <dd className="inline">{format(new Date(update.published_at), 'd MMMM yyyy')}</dd>
                     </div>
                   )}
