@@ -180,6 +180,17 @@ export default function PropertyDetail() {
 
   const notLetYet = isNotLetYet(overrides)
 
+  // Tenant documents summary for the current tenancy, shown on its row in the Tenancies card
+  const currentTenancy = (tenancies as any[]).find((t) => t.status === 'active')
+  const tenantDocTypes = ['ast', 'how_to_rent', 'renter_rights', 'deposit_certificate', 'right_to_rent', 'inventory']
+    .filter((type) => overrides[type] !== 'na')
+  const tenantDocsAccepted = tenantDocTypes.filter((type) =>
+    type === 'right_to_rent'
+      ? rtrChecks.length > 0
+      : propertyDocs.some((d) => d.document_type === type && d.tenant_confirmed_at)).length
+  const scrollToTenantDocs = () =>
+    document.getElementById('tenant-documents')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+
   const toggleNotLetYet = async () => {
     if (!id || !property) return
     const currentOverrides = { ...(property as any).compliance_overrides || {} }
@@ -489,9 +500,19 @@ export default function PropertyDetail() {
                       return (
                         <React.Fragment key={item.docType}>
                           {showSectionHeader && (
-                            <tr>
+                            <tr id={item.section === 'tenant' ? 'tenant-documents' : undefined}>
                               <td colSpan={6} className="px-6 pt-5 pb-2 bg-white">
-                                <p className="text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">{sectionLabel}</p>
+                                <p className="text-[10px] font-mono font-medium text-textMuted uppercase tracking-widest">
+                                  {sectionLabel}
+                                  {item.section === 'tenant' && currentTenancy && (
+                                    <>
+                                      {' · '}
+                                      <Link to={`/tenancies/${currentTenancy.id}`} className="text-teal-700 hover:text-teal-800">
+                                        {currentTenancy.tenants?.full_name || 'Current tenancy'}
+                                      </Link>
+                                    </>
+                                  )}
+                                </p>
                               </td>
                             </tr>
                           )}
@@ -826,7 +847,8 @@ export default function PropertyDetail() {
             ) : (
               <div className="space-y-3">
                 {tenancies.map((tenancy: any) => (
-                  <Link key={tenancy.id} to={`/tenancies/${tenancy.id}`}>
+                  <div key={tenancy.id}>
+                  <Link to={`/tenancies/${tenancy.id}`}>
                     <div className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-50 transition-colors">
                       <div>
                         <p className="text-sm font-medium text-slate-900">
@@ -850,6 +872,16 @@ export default function PropertyDetail() {
                       </Badge>
                     </div>
                   </Link>
+                  {tenancy.id === currentTenancy?.id && tenantDocTypes.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={scrollToTenantDocs}
+                      className="ml-4 -mt-2 mb-1 text-xs font-medium text-teal-700 hover:text-teal-800"
+                    >
+                      Tenant documents: {tenantDocsAccepted} of {tenantDocTypes.length} accepted ›
+                    </button>
+                  )}
+                  </div>
                 ))}
               </div>
             )}
