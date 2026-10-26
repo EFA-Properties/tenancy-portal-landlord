@@ -10,6 +10,7 @@ import { Card, CardBody, CardHeader } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
 import { Input } from '../../components/ui/Input'
+import { Modal } from '../../components/ui/Modal'
 import { formatDate, formatDateTime, epcRatingColor } from '../../lib/utils'
 
 interface PropertyRoom {
@@ -50,6 +51,44 @@ export default function PropertyDetail() {
   const queryClient = useQueryClient()
   const [servingDoc, setServingDoc] = useState<string | null>(null)
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+
+  // Editing a document's details (title and dates)
+  const [editingDoc, setEditingDoc] = useState<{ id: string; document_type: string; title: string; valid_from: string; valid_to: string } | null>(null)
+  const [savingDoc, setSavingDoc] = useState(false)
+  const [editDocError, setEditDocError] = useState<string | null>(null)
+
+  const saveDocDetails = async () => {
+    if (!editingDoc) return
+    if (!editingDoc.title.trim()) {
+      setEditDocError('Please enter a title.')
+      return
+    }
+    setSavingDoc(true)
+    setEditDocError(null)
+    const { error } = await supabase
+      .from('documents')
+      .update({
+        title: editingDoc.title.trim(),
+        valid_from: editingDoc.valid_from || null,
+        valid_to: editingDoc.document_type === 'ast' ? null : (editingDoc.valid_to || null),
+      })
+      .eq('id', editingDoc.id)
+    setSavingDoc(false)
+    if (error) {
+      setEditDocError('Sorry, that did not save. Please try again.')
+      return
+    }
+    await queryClient.invalidateQueries({ queryKey: ['property-documents'] })
+    setEditingDoc(null)
+  }
+
+  const currentTenancyId = (tenancies as any[]).find((t) => t.status === 'active')?.id as string | undefined
+  const replaceLink = (docType: string, scope?: string, tenancyId?: string | null) =>
+    scope === 'tenancy' && tenancyId
+      ? `/documents/upload?tenancy_id=${tenancyId}&document_type=${docType}`
+      : docType === 'ast' && currentTenancyId
+        ? `/documents/upload?tenancy_id=${currentTenancyId}&document_type=ast`
+        : `/documents/upload?property_id=${id}&document_type=${docType}`
 
   // HMO Rooms
   const [rooms, setRooms] = useState<PropertyRoom[]>([])
@@ -351,7 +390,10 @@ export default function PropertyDetail() {
 
               // Also include any extra uploaded docs not in the required list (e.g. "other" type)
               const requiredDocTypes = new Set(requiredItems.map((r) => r.docType))
-              const extraDocs = propertyDocs.filter((d) => !requiredDocTypes.has(d.document_type))
+              // Newest first, so a replaced version drops out unless it's a one off "other" document
+              const extraDocs = propertyDocs.filter((d, i) =>
+                !requiredDocTypes.has(d.document_type) &&
+                (d.document_type === 'other' || propertyDocs.findIndex((x) => x.document_type === d.document_type) === i))
 
               let lastSection = ''
 
@@ -434,14 +476,15 @@ export default function PropertyDetail() {
                                 <span className="text-textMuted">—</span>
                               )}
                               {doc && acknowledgements
-                                .filter((a) => a.document_id === doc.id && a.receipt_file_path)
+                                .filter((a) => a.receipt_file_path && propertyDocs.some((d) => d.id === a.document_id && d.document_type === doc.document_type))
                                 .map((a) => (
                                   <button
                                     key={a.id}
                                     onClick={() => openSignedCopy(a.receipt_file_path!)}
                                     className="block text-xs text-teal-700 hover:text-teal-600 underline mt-1"
                                   >
-                                    Signed copy{a.tenants?.full_name ? ` (${a.tenants.full_name.split(' ')[0]})` : ''}
+                                    Signed copy{a.tenants?.full_name ? ` (${a.tenants.full_name.split(' ')[0]}` : ' ('}
+                                    {a.document_id !== doc.id ? `${a.tenants?.full_name ? ', ' : ''}earlier version)` : a.tenants?.full_name ? ')' : ''}
                                   </button>
                                 ))}
                             </td>
@@ -484,6 +527,29 @@ export default function PropertyDetail() {
                                   >
                                     {doc.file_path?.startsWith('http') ? 'View' : 'Download'}
                                   </Button>
+                                )}
+                                {item.hasIt && doc && (
+                                  <>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setEditDocError(null)
+                                        setEditingDoc({
+                                          id: doc.id,
+                                          document_type: doc.document_type,
+                                          title: doc.title || docTypeLabels[doc.document_type] || '',
+                                          valid_from: doc.valid_from || '',
+                                          valid_to: doc.valid_to || '',
+                                        })
+                                      }}
+                                    >
+                                      Edit
+                                    </Button>
+                                    <Link to={replaceLink(item.docType, doc.scope, doc.tenancy_id)}>
+                                      <Button variant="ghost" size="sm">Replace</Button>
+                                    </Link>
+                                  </>
                                 )}
                                 {!item.hasIt && !isNa && item.docType === 'right_to_rent' && (
                                   <a
@@ -579,6 +645,21 @@ export default function PropertyDetail() {
                                 }} loading={downloadingId === doc.id}>
                                   {doc.file_path?.startsWith('http') ? 'View' : 'Download'}
                                 </Button>
+                                <Button variant="ghost" size="sm" onClick={() => {
+                                  setEditDocError(null)
+                                  setEditingDoc({
+                                    id: doc.id,
+                                    document_type: doc.document_type,
+                                    title: doc.title || docTypeLabels[doc.document_type] || '',
+                                    valid_from: doc.valid_from || '',
+                                    valid_to: doc.valid_to || '',
+                                  })
+                                }}>
+                                  Edit
+                                </Button>
+                                <Link to={replaceLink(doc.document_type, doc.scope, doc.tenancy_id)}>
+                                  <Button variant="ghost" size="sm">Replace</Button>
+                                </Link>
                               </td>
                             </tr>
                           )
@@ -746,6 +827,41 @@ export default function PropertyDetail() {
           </CardBody>
         </Card>
       </div>
+
+      <Modal open={!!editingDoc} onClose={() => setEditingDoc(null)} title="Edit document details">
+        {editingDoc && (
+          <div className="space-y-4">
+            <Input
+              label="Title"
+              value={editingDoc.title}
+              onChange={(e) => setEditingDoc({ ...editingDoc, title: e.target.value })}
+              required
+            />
+            <Input
+              label={editingDoc.document_type === 'ast' ? 'Start Date (optional)' : 'Valid From'}
+              type="date"
+              value={editingDoc.valid_from}
+              onChange={(e) => setEditingDoc({ ...editingDoc, valid_from: e.target.value })}
+            />
+            {editingDoc.document_type !== 'ast' && (
+              <Input
+                label="Valid To"
+                type="date"
+                value={editingDoc.valid_to}
+                onChange={(e) => setEditingDoc({ ...editingDoc, valid_to: e.target.value })}
+              />
+            )}
+            <p className="text-xs text-textMuted">
+              To change the file itself, use Replace. Your tenants will then be asked to read and confirm the new version.
+            </p>
+            {editDocError && <p className="text-xs text-red-500">{editDocError}</p>}
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setEditingDoc(null)}>Cancel</Button>
+              <Button onClick={saveDocDetails} loading={savingDoc}>Save</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }
