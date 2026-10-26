@@ -1,5 +1,5 @@
 /**
- * Confirm Document — Supabase Edge Function
+ * Confirm Document - Supabase Edge Function
  *
  * Called by the tenant portal when a tenant taps "I have received and read this".
  * Records the confirmation (time comes from the database, not the phone), then

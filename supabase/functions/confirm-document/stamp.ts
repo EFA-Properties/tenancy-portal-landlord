@@ -18,10 +18,10 @@ export interface ReceiptDetails {
 // Standard PDF fonts only cover basic Latin characters
 function safe(text: string): string {
   return (text || '')
-    .replace(/[‘’]/g, "'")
-    .replace(/[“”]/g, '"')
-    .replace(/[–—]/g, '-')
-    .replace(/£/g, 'GBP ')
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/\u00A3/g, 'GBP ')
     .replace(/[^\x20-\x7E]/g, '')
 }
 
