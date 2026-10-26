@@ -34,7 +34,8 @@ function json(body: unknown, status = 200) {
 // Emails landlords about published "What's Changing" updates that haven't been sent yet.
 // Each update is claimed before sending, so calling this more than once never sends twice.
 // A heads up is emailed once; the same update is emailed again only when it moves to
-// 'action_needed'. Nothing is sent for an update until it has a published_at date.
+// 'action_needed'. Emails only link to our own portal, never to outside sites.
+// Nothing is sent for an update until it has a published_at date.
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const resendKey = context.env.RESEND_API_KEY
   if (!resendKey) return json({ error: 'Server configuration error' }, 500)
@@ -86,21 +87,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const actionNeeded = update.status === 'action_needed'
     const appliesLabel = appliesTo.map((t) => propertyTypeLabels[t] ?? t).join(', ')
+    // Calm subjects with our name first: urgent wording is what spam and phishing filters look for
     const subject = actionNeeded
-      ? `Time to act: ${update.title}`
-      : `Heads up, no action needed yet: ${update.title}`
+      ? `Tenancy Portal update: ${update.title}`
+      : `Tenancy Portal heads up: ${update.title}`
     const intro = actionNeeded
       ? "We mentioned this change before, and it's now time to get it sorted for the properties it applies to."
       : "Just giving you a heads up about an upcoming change. There's nothing you need to do right now, and we'll let you know when it's time to act."
-    let sourceLink = ''
-    if (update.source_url) {
-      let host = 'the official website'
-      try { host = new URL(update.source_url).hostname.replace(/^www\./, '') } catch { /* keep default */ }
-      sourceLink = `<p style="font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
-        <a href="${escapeHtml(update.source_url)}" style="color: #0f766e;">View on ${escapeHtml(host)} (external site)</a>
-      </p>`
-    }
-
     for (const l of recipients) {
       const firstName = (l.full_name || '').split(' ')[0]
       const html = `
@@ -117,13 +110,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           Applies to: ${escapeHtml(appliesLabel)}${update.takes_effect ? `<br />Expected from: ${formatDate(update.takes_effect)}` : ''}
         </p>
       </div>
-      ${sourceLink}
       <div style="text-align: center; margin: 32px 0;">
         <a href="https://landlord.tenancy-portal.co.uk/whats-changing" style="display: inline-block; background: #0f766e; color: white; padding: 14px 32px; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none;">
           See What's Changing
         </a>
       </div>
       <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 32px;">
+        The official source for this update is linked on the What's Changing page.
         This summary is general information from Tenancy Portal, not legal advice. You're receiving it because you have a
         Tenancy Portal landlord account. Questions? Just reply to this email.
       </p>
