@@ -63,10 +63,10 @@ export default function Dashboard() {
   const infoActions = actions.filter((a) => a.priority === 'info')
 
   const statCards = [
-    { label: 'Active Tenancies', value: stats?.activeTenancies ?? 0, color: 'text-teal-700' },
-    { label: 'Properties', value: properties.length, color: 'text-slate-900' },
-    { label: 'Pending', value: stats?.pendingRequests ?? 0, color: 'text-warning' },
-    { label: 'Actions', value: actions.length, color: actions.some((a) => a.priority === 'urgent') ? 'text-error' : 'text-warning' },
+    { label: 'Active Tenancies', value: stats?.activeTenancies ?? 0, color: 'text-teal-700', href: '/tenants' },
+    { label: 'Properties', value: properties.length, color: 'text-slate-900', href: '/properties' },
+    { label: 'Pending Repairs', value: stats?.pendingRequests ?? 0, color: 'text-warning', href: '/maintenance' },
+    { label: 'Actions', value: actions.length, color: actions.some((a) => a.priority === 'urgent') ? 'text-error' : 'text-warning', href: '#actions' },
   ]
 
   const renderAction = (action: DashboardAction) => (
@@ -103,23 +103,41 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
-        {statCards.map((stat) => (
-          <Card key={stat.label}>
-            <CardBody className="!py-5 !px-6">
-              <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
-                {stat.label}
-              </p>
-              <p className={`text-3xl font-bold ${stat.color}`}>
-                {isLoading ? '–' : stat.value}
-              </p>
-            </CardBody>
-          </Card>
-        ))}
+        {statCards.map((stat) => {
+          const card = (
+            <Card className="h-full hover:shadow-card-hover hover:border-teal-700 transition-all cursor-pointer">
+              <CardBody className="!py-5 !px-6">
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">
+                  {stat.label}
+                </p>
+                <p className={`text-3xl font-bold ${stat.color}`}>
+                  {isLoading ? '–' : stat.value}
+                </p>
+              </CardBody>
+            </Card>
+          )
+          return stat.href.startsWith('#') ? (
+            <a
+              key={stat.label}
+              href={stat.href}
+              onClick={(e) => {
+                e.preventDefault()
+                document.getElementById(stat.href.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+            >
+              {card}
+            </a>
+          ) : (
+            <Link key={stat.label} to={stat.href}>
+              {card}
+            </Link>
+          )
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Action feed — spans 3 cols */}
-        <Card className="lg:col-span-3">
+        <Card id="actions" className="lg:col-span-3 scroll-mt-6">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
