@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { format } from 'date-fns'
 import { useLandlordUpdates } from '../../hooks/useLandlordUpdates'
 import { useProperties } from '../../hooks/useProperties'
@@ -15,6 +15,25 @@ const propertyTypeLabels: Record<string, string> = {
   commercial: 'Commercial',
 }
 
+type SortKey = 'action' | 'newest' | 'oldest' | 'soonest'
+type FilterKey = 'all' | 'action' | 'heads_up' | 'mine'
+
+const sortOptions: { key: SortKey; label: string }[] = [
+  { key: 'action', label: 'Time to act first' },
+  { key: 'newest', label: 'Newest announced' },
+  { key: 'oldest', label: 'Oldest announced' },
+  { key: 'soonest', label: 'Coming in soonest' },
+]
+
+const filterOptions: { key: FilterKey; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'action', label: 'Time to act' },
+  { key: 'heads_up', label: 'Heads up' },
+  { key: 'mine', label: 'Affects my properties' },
+]
+
+const time = (d: string | null | undefined) => (d ? new Date(d).getTime() : NaN)
+
 function sourceLabel(url: string) {
   try {
     const host = new URL(url).hostname.replace(/^www\./, '')
@@ -27,6 +46,8 @@ function sourceLabel(url: string) {
 export default function WhatsChanging() {
   const { data: updates = [], isLoading } = useLandlordUpdates()
   const { data: properties = [] } = useProperties()
+  const [sortBy, setSortBy] = useState<SortKey>('action')
+  const [filter, setFilter] = useState<FilterKey>('all')
 
   // Property types this landlord owns, so we can flag the updates that affect them
   const ownedTypes = new Set<string>()
@@ -36,6 +57,35 @@ export default function WhatsChanging() {
   })
   const affectsYou = (appliesTo: string[]) =>
     properties.length > 0 && (appliesTo.includes('all') || appliesTo.some((t) => ownedTypes.has(t)))
+
+  const filtered = updates.filter((u) => {
+    if (filter === 'action') return u.status === 'action_needed'
+    if (filter === 'heads_up') return u.status !== 'action_needed'
+    if (filter === 'mine') return affectsYou(u.applies_to)
+    return true
+  })
+
+  const byNewest = (a: typeof updates[number], b: typeof updates[number]) =>
+    time(b.published_at) - time(a.published_at)
+
+  const shown = [...filtered].sort((a, b) => {
+    if (sortBy === 'newest') return byNewest(a, b)
+    if (sortBy === 'oldest') return -byNewest(a, b)
+    if (sortBy === 'soonest') {
+      // Changes still to come first, nearest date at the top; past or undated ones after, newest first
+      const now = Date.now()
+      const ta = time(a.takes_effect)
+      const tb = time(b.takes_effect)
+      const aUpcoming = ta >= now
+      const bUpcoming = tb >= now
+      if (aUpcoming && bUpcoming) return ta - tb
+      if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1
+      return byNewest(a, b)
+    }
+    // Time to act first, then newest announced
+    const diff = Number(b.status === 'action_needed') - Number(a.status === 'action_needed')
+    return diff !== 0 ? diff : byNewest(a, b)
+  })
 
   if (isLoading) {
     return (
@@ -73,7 +123,49 @@ export default function WhatsChanging() {
         </Card>
       ) : (
         <div className="space-y-4 max-w-3xl">
-          {updates.map((update) => (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Show">
+              {filterOptions.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => setFilter(f.key)}
+                  aria-pressed={filter === f.key}
+                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    filter === f.key
+                      ? 'bg-teal-700 border-teal-700 text-white'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-teal-700 hover:text-teal-700'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              Sort by
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortKey)}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-800 focus:border-teal-700 focus:outline-none"
+              >
+                {sortOptions.map((o) => (
+                  <option key={o.key} value={o.key}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {shown.length === 0 && (
+            <Card>
+              <CardBody>
+                <p className="text-sm text-slate-600">Nothing matches this filter right now.</p>
+              </CardBody>
+            </Card>
+          )}
+
+          {shown.map((update) => (
             <Card key={update.id}>
               <CardBody>
                 <div className="flex flex-wrap items-center gap-2 mb-3">
