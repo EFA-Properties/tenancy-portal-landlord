@@ -108,7 +108,7 @@ export default function AgreementView() {
     <div>
       <Breadcrumb
         items={[
-          { label: 'Tenancies', href: '/tenancies' },
+          { label: 'Tenants', href: '/tenants' },
           {
             label: property ? property.address_line1 : 'Tenancy',
             href: `/tenancies/${tenancyId}`,

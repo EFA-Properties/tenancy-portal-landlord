@@ -331,7 +331,7 @@ export default function CreateAgreement() {
       <div>
         <Breadcrumb
           items={[
-            { label: 'Tenancies', href: '/tenancies' },
+            { label: 'Tenants', href: '/tenants' },
             { label: 'Tenancy', href: `/tenancies/${tenancyId}` },
             { label: 'Create Agreement' },
           ]}
@@ -397,7 +397,7 @@ export default function CreateAgreement() {
       <div>
         <Breadcrumb
           items={[
-            { label: 'Tenancies', href: '/tenancies' },
+            { label: 'Tenants', href: '/tenants' },
             { label: property ? property.address_line1 : 'Tenancy', href: `/tenancies/${tenancyId}` },
             { label: 'Agreements', href: `/tenancies/${tenancyId}/agreements` },
             { label: 'Create Agreement' },
@@ -482,7 +482,7 @@ export default function CreateAgreement() {
       <div>
         <Breadcrumb
           items={[
-            { label: 'Tenancies', href: '/tenancies' },
+            { label: 'Tenants', href: '/tenants' },
             { label: property ? property.address_line1 : 'Tenancy', href: `/tenancies/${tenancyId}` },
             { label: 'Agreements', href: `/tenancies/${tenancyId}/agreements` },
             { label: 'Create Agreement' },
@@ -829,7 +829,7 @@ export default function CreateAgreement() {
       <div>
         <Breadcrumb
           items={[
-            { label: 'Tenancies', href: '/tenancies' },
+            { label: 'Tenants', href: '/tenants' },
             { label: property ? property.address_line1 : 'Tenancy', href: `/tenancies/${tenancyId}` },
             { label: 'Agreements', href: `/tenancies/${tenancyId}/agreements` },
             { label: 'Edit Agreement' },
@@ -998,7 +998,7 @@ export default function CreateAgreement() {
     <div>
       <Breadcrumb
         items={[
-          { label: 'Tenancies', href: '/tenancies' },
+          { label: 'Tenants', href: '/tenants' },
           { label: property ? property.address_line1 : 'Tenancy', href: `/tenancies/${tenancyId}` },
           { label: 'Agreement Saved' },
         ]}

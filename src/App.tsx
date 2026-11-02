@@ -14,7 +14,6 @@ const Payment = lazy(() => import('./pages/Payment'))
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Settings = lazy(() => import('./pages/Settings'))
-const TenanciesList = lazy(() => import('./pages/tenancies/TenanciesList'))
 const TenancyDetail = lazy(() => import('./pages/tenancies/TenancyDetail'))
 const AddTenancy = lazy(() => import('./pages/tenancies/AddTenancy'))
 const DocumentsList = lazy(() => import('./pages/documents/DocumentsList'))
@@ -87,16 +86,8 @@ export default function App() {
             }
           />
 
-          <Route
-            path="/tenancies"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <TenanciesList />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
+          {/* Tenancies are now listed on the Tenants page */}
+          <Route path="/tenancies" element={<Navigate to="/tenants" replace />} />
           <Route
             path="/tenancies/:id"
             element={

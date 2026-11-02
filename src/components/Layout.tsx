@@ -25,15 +25,6 @@ function PropertiesIcon() {
   )
 }
 
-function TenanciesIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="3" width="12" height="14" rx="1" />
-      <path d="M8 7h4M8 10h4M8 13h2" />
-    </svg>
-  )
-}
-
 function TenantsIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -95,7 +86,6 @@ export function Layout({ children }: LayoutProps) {
   const navigationItems = [
     { label: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { label: 'Properties', href: '/properties', icon: PropertiesIcon },
-    { label: 'Tenancies', href: '/tenancies', icon: TenanciesIcon },
     { label: 'Tenants', href: '/tenants', icon: TenantsIcon },
     { label: 'Documents', href: '/documents', icon: DocumentIcon },
     { label: 'Messages', href: '/messages', icon: MessageIcon },
@@ -104,7 +94,11 @@ export function Layout({ children }: LayoutProps) {
     { label: 'Settings', href: '/settings', icon: SettingsIcon },
   ]
 
-  const isActive = (href: string) => location.pathname === href || location.pathname.startsWith(href + '/')
+  const isActive = (href: string) =>
+    location.pathname === href ||
+    location.pathname.startsWith(href + '/') ||
+    // Tenancies live under the Tenants menu item
+    (href === '/tenants' && location.pathname.startsWith('/tenancies'))
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#f8f9fb' }}>
