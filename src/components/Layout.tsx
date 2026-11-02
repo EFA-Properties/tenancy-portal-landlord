@@ -51,14 +51,6 @@ function WrenchIcon() {
   )
 }
 
-function MessageIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 4h14a1 1 0 011 1v8a1 1 0 01-1 1H6l-3 3V5a1 1 0 011-1z" />
-    </svg>
-  )
-}
-
 function BellIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -88,7 +80,6 @@ export function Layout({ children }: LayoutProps) {
     { label: 'Properties', href: '/properties', icon: PropertiesIcon },
     { label: 'Tenants', href: '/tenants', icon: TenantsIcon },
     { label: 'Documents', href: '/documents', icon: DocumentIcon },
-    { label: 'Messages', href: '/messages', icon: MessageIcon },
     { label: 'Maintenance', href: '/maintenance', icon: WrenchIcon },
     { label: "What's Changing", href: '/whats-changing', icon: BellIcon },
     { label: 'Settings', href: '/settings', icon: SettingsIcon },

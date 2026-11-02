@@ -28,8 +28,6 @@ const TenantDetail = lazy(() => import('./pages/tenants/TenantDetail'))
 const InviteTenant = lazy(() => import('./pages/tenants/InviteTenant'))
 const ComplianceAlerts = lazy(() => import('./pages/compliance/ComplianceAlerts'))
 const WhatsChanging = lazy(() => import('./pages/updates/WhatsChanging'))
-const MessagesList = lazy(() => import('./pages/messages/MessagesList'))
-const MessageThread = lazy(() => import('./pages/messages/MessageThread'))
 const AgreementsList = lazy(() => import('./pages/tenancies/AgreementsList'))
 const CreateAgreement = lazy(() => import('./pages/tenancies/CreateAgreement'))
 const AgreementView = lazy(() => import('./pages/tenancies/AgreementView'))
@@ -243,26 +241,8 @@ export default function App() {
             }
           />
 
-          <Route
-            path="/messages"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <MessagesList />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/messages/:tenancyId"
-            element={
-              <ProtectedRoute>
-                <Layout>
-                  <MessageThread />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
+          {/* Messaging removed: tenants contact landlords outside the portal */}
+          <Route path="/messages/*" element={<Navigate to="/dashboard" replace />} />
 
           <Route
             path="/compliance"
