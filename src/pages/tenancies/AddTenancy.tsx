@@ -196,7 +196,7 @@ export default function AddTenancy() {
         }
       }
 
-      navigate('/tenancies')
+      navigate('/tenants')
     } catch (err) {
       console.error('Error creating tenancy:', err)
       setError(err instanceof Error ? err.message : 'Failed to create tenancy')
@@ -221,7 +221,7 @@ export default function AddTenancy() {
       <div>
         <Breadcrumb
           items={[
-            { label: 'Tenancies', href: '/tenancies' },
+            { label: 'Tenants', href: '/tenants' },
             { label: 'Add Tenancy' },
           ]}
         />
@@ -239,7 +239,7 @@ export default function AddTenancy() {
     <div>
       <Breadcrumb
         items={[
-          { label: 'Tenancies', href: '/tenancies' },
+          { label: 'Tenants', href: '/tenants' },
           { label: 'Add Tenancy' },
         ]}
       />
@@ -481,7 +481,7 @@ export default function AddTenancy() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate('/tenancies')}
+            onClick={() => navigate('/tenants')}
           >
             Cancel
           </Button>

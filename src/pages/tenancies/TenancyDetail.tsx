@@ -110,7 +110,7 @@ export default function TenancyDetail() {
     <div>
       <Breadcrumb
         items={[
-          { label: 'Tenancies', href: '/tenancies' },
+          { label: 'Tenants', href: '/tenants' },
           { label: property
             ? `${property.address_line1}, ${property.town}`
             : `Tenancy`
@@ -142,7 +142,7 @@ export default function TenancyDetail() {
             )}
           </div>
         </div>
-        <Button variant="outline" onClick={() => navigate('/tenancies')}>
+        <Button variant="outline" onClick={() => navigate('/tenants')}>
           Back
         </Button>
       </div>
