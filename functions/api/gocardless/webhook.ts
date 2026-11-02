@@ -15,7 +15,7 @@ interface Env {
  *   https://landlord.tenancy-portal.co.uk/api/gocardless/webhook
  *
  * Events handled:
- * - mandates.active → Create subscription with 7-day trial, activate billing
+ * - mandates.active → Create subscription (first payment as soon as possible), activate billing
  * - mandates.failed / cancelled → Deactivate billing
  * - payments.confirmed → Log payment
  * - payments.failed → Set 7-day grace period
@@ -91,10 +91,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             // Map billing interval to GoCardless interval_unit
             const intervalUnit = billingInterval === 'annual' ? 'yearly' : 'monthly'
 
-            // Create subscription with 7-day trial (first payment deferred)
-            const startDate = new Date()
-            startDate.setDate(startDate.getDate() + 7)
-            const startDateStr = startDate.toISOString().split('T')[0]
+            // Create subscription with no free trial. Leaving out start_date makes
+            // GoCardless take the first payment on the earliest possible date.
 
             const subRes = await fetch(`${GC_BASE}/subscriptions`, {
               method: 'POST',
@@ -109,7 +107,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
                   currency: 'GBP',
                   name: 'Tenancy Portal Pro',
                   interval_unit: intervalUnit,
-                  start_date: startDateStr,
                   links: { mandate: mandateId },
                   metadata: { product: 'tenancy-portal-pro', price: `£${priceInPounds}`, interval: billingInterval },
                 },
@@ -119,16 +116,13 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
             if (!subRes.ok) throw new Error(`GoCardless error: ${JSON.stringify(subData)}`)
             const subscriptionId = subData.subscriptions.id
 
-            const trialEnds = new Date()
-            trialEnds.setDate(trialEnds.getDate() + 7)
-
             await supabase
               .from('landlords')
               .update({
                 billing_active: true,
                 plan: 'pro',
                 gc_subscription_id: subscriptionId,
-                trial_ends_at: trialEnds.toISOString(),
+                trial_ends_at: null,
                 billing_grace_until: null,
               })
               .eq('id', landlord.id)

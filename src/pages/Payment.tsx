@@ -64,10 +64,10 @@ export default function Payment() {
             </svg>
           </div>
           <h1 className="text-3xl font-fraunces font-semibold text-slate-900 mb-2">
-            Start Your 7-Day Free Trial
+            Set Up Your Direct Debit
           </h1>
           <p className="text-slate-500">
-            Set up Direct Debit now — you won't be charged until your trial ends.
+            Set up Direct Debit to start your Pro subscription.
           </p>
         </div>
 
@@ -118,7 +118,7 @@ export default function Payment() {
                 </span>
               </div>
               <p className="text-xs text-slate-400 ml-6">
-                Powered by GoCardless. Secure. Cancel any time. First payment taken after 7-day trial.
+                Powered by GoCardless. Secure. Cancel any time.
               </p>
             </div>
           </CardBody>
@@ -130,11 +130,11 @@ export default function Payment() {
           loading={loading}
           className="w-full mb-3"
         >
-          Start Free Trial — Set Up Direct Debit
+          Set Up Direct Debit
         </Button>
 
         <p className="text-center text-xs text-slate-400 mt-2">
-          No charge for 7 days. Your first payment of £{displayPrice.toFixed(2)} will be collected after your trial ends. Cancel any time.
+          Your first payment of £{displayPrice.toFixed(2)} will be collected once your Direct Debit is set up, usually within a few working days. Cancel any time.
         </p>
       </div>
     </div>

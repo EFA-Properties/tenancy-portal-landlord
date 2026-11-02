@@ -33,7 +33,6 @@ function escapeHtml(str: string): string {
 
 const roles: Record<string, string> = { landlord: 'Landlord', tenant: 'Tenant' }
 const topics: Record<string, string> = {
-  trial: 'Starting a free trial',
   account: 'My account or signing in',
   billing: 'Billing and subscription',
   documents: 'Documents',
