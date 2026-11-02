@@ -119,7 +119,12 @@ export function Layout({ children }: LayoutProps) {
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="px-6 py-5 border-b border-slate-800/60">
-            <div className="flex items-center gap-2.5">
+            <Link
+              to="/dashboard"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Go to dashboard"
+              className="flex items-center gap-2.5 w-fit hover:opacity-90 transition-opacity"
+            >
               <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center shrink-0">
                 <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M2 9l7-7 7 7M4 8v7c0 .5.5 1 1 1h8c.5 0 1-.5 1-1V8" />
@@ -128,7 +133,7 @@ export function Layout({ children }: LayoutProps) {
               <span className="font-fraunces font-semibold text-white text-[17px]">
                 TenancyPortal
               </span>
-            </div>
+            </Link>
           </div>
 
           {/* Navigation */}
