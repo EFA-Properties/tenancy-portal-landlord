@@ -133,9 +133,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const authorisationUrl = flowData.billing_request_flows.authorisation_url
     const mandateId = billingReqData.billing_requests?.links?.mandate_request_mandate
 
-    // 4. Update landlord with GoCardless IDs and activate Pro trial
-    const trialEnds = new Date()
-    trialEnds.setDate(trialEnds.getDate() + 7)
+    // 4. Update landlord with GoCardless IDs and activate Pro (no free trial)
 
     await supabase
       .from('landlords')
@@ -144,7 +142,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         gc_mandate_id: mandateId || null,
         plan: 'pro',
         billing_active: true,
-        trial_ends_at: trialEnds.toISOString(),
+        trial_ends_at: null,
       })
       .eq('id', landlordId)
 

@@ -48,7 +48,7 @@ export default function Register() {
   // Billing period toggle
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly')
 
-  // Everyone is on the Pro plan — 7-day free trial, then £17.99/mo via DD
+  // Everyone is on the Pro plan: £17.99/mo (or £180/year) via Direct Debit, no free trial
   const determinedPlan = 'pro' as const
 
   const BASE_PRICE_MONTHLY = 17.99
@@ -97,8 +97,8 @@ export default function Register() {
         ? `Pro plan at £${finalPriceMonthly.toFixed(2)}/mo (${savingsText} with ${promoCode.code})`
         : `Pro plan at £${finalPriceAnnual.toFixed(2)}/year (${savingsText} with ${promoCode.code})`
     : billingPeriod === 'monthly'
-      ? '7-day free trial, then £17.99/mo via Direct Debit.'
-      : '7-day free trial, then £180/year via Direct Debit. Save £35.88!'
+      ? '£17.99/mo via Direct Debit. Cancel any time.'
+      : '£180/year via Direct Debit. Save £35.88!'
 
   // Validate promo code against the database
   const handleApplyPromo = useCallback(async () => {
@@ -225,7 +225,7 @@ export default function Register() {
         billing_interval: billingPeriod, // 'monthly' or 'annual'
         billing_active: isFreeForever,
         comped: isFreeForever,
-        trial_ends_at: isFreeForever ? null : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        trial_ends_at: null,
         onboarding_completed: false,
       }
 
@@ -258,7 +258,7 @@ export default function Register() {
       if (isFreeForever) {
         navigate('/onboarding')
       } else {
-        // Go to payment page for GoCardless DD setup (trial starts immediately)
+        // Go to payment page for GoCardless DD setup
         navigate('/payment')
       }
     } catch (err) {
