@@ -7,6 +7,15 @@ export default {
   theme: {
     extend: {
       colors: {
+        brand: {
+          DEFAULT: '#642E3D',
+          dark: '#4f2330',
+          oat: '#F5F0E7',
+          rose: '#DABCB5',
+          roseLight: '#efe0dc',
+          ink: '#302D2E',
+          card: '#fbf8f3',
+        },
         primary: '#0f766e',
         primaryHover: '#0d9488',
         navyDark: '#1e2a3a',
@@ -42,6 +51,7 @@ export default {
         },
       },
       fontFamily: {
+        'manrope': ['Manrope', 'system-ui', 'sans-serif'],
         'fraunces': ['Fraunces', 'serif'],
         'sans': ['DM Sans', 'sans-serif'],
         'mono': ['DM Mono', 'monospace'],

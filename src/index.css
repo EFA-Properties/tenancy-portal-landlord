@@ -44,3 +44,11 @@ select:focus {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Brand look for sign in, sign up and payment pages (burgundy and oat) */
+.brand-auth { font-family: 'Manrope', system-ui, sans-serif; color: #302D2E; }
+.brand-auth .bg-teal-700, .brand-auth .bg-blue-600 { background-color: #642E3D; }
+.brand-auth .hover\:bg-teal-600:hover, .brand-auth .bg-blue-600:hover { background-color: #4f2330; opacity: 1; }
+.brand-auth input:focus, .brand-auth select:focus, .brand-auth textarea:focus { border-color: #642E3D; --tw-ring-color: rgb(100 46 61 / 0.2); }
+.brand-auth a { color: #642E3D; }
+.brand-auth button[type="submit"] { font-weight: 700; }

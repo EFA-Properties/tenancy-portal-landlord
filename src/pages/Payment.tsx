@@ -5,6 +5,7 @@ import { useLandlord } from '../hooks/useLandlord'
 import { Card, CardBody } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { PLANS, createBillingRequestFlow } from '../lib/gocardless'
+import { BrandLogo } from '../components/BrandLogo'
 
 export default function Payment() {
   const navigate = useNavigate()
@@ -15,8 +16,8 @@ export default function Payment() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
+      <div className="brand-auth min-h-screen bg-brand-oat flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand" />
       </div>
     )
   }
@@ -54,16 +55,12 @@ export default function Payment() {
   const hasDiscount = displayPrice < proPlan.price
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="brand-auth min-h-screen bg-brand-oat flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-teal-700 rounded-lg flex items-center justify-center mx-auto mb-4">
-            <svg width="24" height="24" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.5">
-              <path d="M2 9l7-7 7 7M4 8v7c0 .5.5 1 1 1h8c.5 0 1-.5 1-1V8" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-fraunces font-semibold text-slate-900 mb-2">
+          <BrandLogo className="justify-center mb-6" />
+          <h1 className="text-3xl font-manrope font-extrabold tracking-tight text-slate-900 mb-2">
             Set Up Your Direct Debit
           </h1>
           <p className="text-slate-500">
@@ -78,11 +75,11 @@ export default function Payment() {
         )}
 
         {/* Plan summary card */}
-        <Card className="mb-6">
+        <Card className="!bg-brand-card !border-2 !border-brand-rose !shadow-none mb-6">
           <CardBody className="p-6">
             <div className="flex items-baseline justify-between mb-6">
               <div>
-                <h2 className="text-xl font-fraunces font-semibold text-slate-900">
+                <h2 className="text-xl font-manrope font-extrabold tracking-tight text-slate-900">
                   {proPlan.name} Plan
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">{proPlan.description}</p>
@@ -91,7 +88,7 @@ export default function Payment() {
                 {hasDiscount && (
                   <span className="text-lg text-slate-400 line-through mr-2">£{proPlan.price}</span>
                 )}
-                <span className="text-3xl font-bold text-teal-700">£{displayPrice.toFixed(2)}</span>
+                <span className="text-3xl font-bold text-brand">£{displayPrice.toFixed(2)}</span>
                 <span className="text-sm text-slate-400">/mo</span>
               </div>
             </div>
@@ -100,7 +97,7 @@ export default function Payment() {
               {proPlan.features.map((feature) => (
                 <div key={feature} className="flex items-start gap-3">
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="shrink-0 mt-0.5">
-                    <circle cx="9" cy="9" r="9" fill="#0f766e" />
+                    <circle cx="9" cy="9" r="9" fill="#642E3D" />
                     <path d="M5.5 9l2 2L12.5 7" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                   <span className="text-sm text-slate-700">{feature}</span>
