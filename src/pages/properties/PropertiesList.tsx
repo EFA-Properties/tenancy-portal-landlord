@@ -10,7 +10,7 @@ import { EmptyState } from '../../components/ui/EmptyState'
 function PropertyIcon() {
   return (
     <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0">
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#0f766e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#642E3D" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 10l7-7 7 7M5 8v8a1 1 0 001 1h8a1 1 0 001-1V8" />
         <path d="M8 17v-5h4v5" />
       </svg>

@@ -40,8 +40,8 @@ function PriorityIcon({ priority }: { priority: DashboardAction['priority'] }) {
   return (
     <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="7" stroke="#2563eb" strokeWidth="1.5" />
-        <path d="M8 7v4M8 5v.5" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="8" cy="8" r="7" stroke="#642E3D" strokeWidth="1.5" />
+        <path d="M8 7v4M8 5v.5" stroke="#642E3D" strokeWidth="2" strokeLinecap="round" />
       </svg>
     </div>
   )
@@ -146,7 +146,7 @@ export default function Dashboard() {
                 </p>
                 <h2 className="text-xl font-fraunces font-semibold text-slate-900">
                   {actions.length === 0 ? (
-                    <>All clear <span className="text-teal-600">— nothing to action</span></>
+                    <>All clear<span className="text-teal-600">, nothing to action</span></>
                   ) : (
                     <>{actions.length} item{actions.length !== 1 ? 's' : ''} need{actions.length === 1 ? 's' : ''} attention</>
                   )}
@@ -176,8 +176,8 @@ export default function Dashboard() {
             <div className="px-8 py-12 text-center">
               <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center mx-auto mb-4">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="#0f766e" strokeWidth="2" />
-                  <path d="M8 12l2.5 2.5L16 9" stroke="#0f766e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="12" r="10" stroke="#642E3D" strokeWidth="2" />
+                  <path d="M8 12l2.5 2.5L16 9" stroke="#642E3D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <p className="text-sm font-medium text-slate-900 mb-1">You're all caught up</p>

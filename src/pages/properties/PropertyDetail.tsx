@@ -36,7 +36,7 @@ interface PropertyRoom {
 function CheckCircle() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
-      <circle cx="14" cy="14" r="14" fill="#0f766e" />
+      <circle cx="14" cy="14" r="14" fill="#642E3D" />
       <path d="M9 14l3 3L19 10.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
@@ -327,7 +327,7 @@ export default function PropertyDetail() {
                   <div
                     className="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-bold text-white"
                     style={{
-                      backgroundColor: ['A', 'B'].includes(property.epc_rating.toUpperCase()) ? '#0f766e'
+                      backgroundColor: ['A', 'B'].includes(property.epc_rating.toUpperCase()) ? '#642E3D'
                         : property.epc_rating.toUpperCase() === 'C' ? '#0d9488'
                         : property.epc_rating.toUpperCase() === 'D' ? '#d97706'
                         : '#dc2626'

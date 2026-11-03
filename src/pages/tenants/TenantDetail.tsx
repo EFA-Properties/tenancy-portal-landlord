@@ -14,7 +14,7 @@ import { formatDate } from '../../lib/utils'
 function CheckCircle() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
-      <circle cx="14" cy="14" r="14" fill="#0f766e" />
+      <circle cx="14" cy="14" r="14" fill="#642E3D" />
       <path d="M9 14l3 3L19 10.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )

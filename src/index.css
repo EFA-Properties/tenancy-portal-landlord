@@ -7,20 +7,20 @@ html {
 }
 
 body {
-  background-color: #f8f9fb;
-  color: #141820;
-  font-family: 'DM Sans', sans-serif;
+  background-color: #F5F0E7;
+  color: #302D2E;
+  font-family: 'Manrope', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 a {
-  color: #0f766e;
+  color: #642E3D;
   transition: color 0.2s;
 }
 
 a:hover {
-  color: #115e59;
+  color: #4f2330;
 }
 
 button:disabled {
@@ -32,8 +32,8 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  box-shadow: 0 0 0 2px #0f766e33;
-  border-color: #0f766e;
+  box-shadow: 0 0 0 2px #642E3D33;
+  border-color: #642E3D;
 }
 
 /* Hide scrollbar for scroll areas */
