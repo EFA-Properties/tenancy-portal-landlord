@@ -48,7 +48,7 @@ function DocIcon() {
 function CheckCircle() {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className="shrink-0">
-      <circle cx="11" cy="11" r="11" fill="#0f766e" />
+      <circle cx="11" cy="11" r="11" fill="#642E3D" />
       <path d="M7 11l2.5 2.5L15 8.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )

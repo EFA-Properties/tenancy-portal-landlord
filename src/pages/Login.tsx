@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { Card, CardBody } from '../components/ui/Card'
+import { BrandLogo } from '../components/BrandLogo'
 import { AuthFooter } from '../components/AuthFooter'
 
 export default function Login() {
@@ -72,22 +73,13 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ backgroundColor: '#f8fafb' }}>
+    <div className="brand-auth min-h-screen bg-brand-oat flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="flex items-center gap-2.5 justify-center mb-8">
-          <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center shrink-0">
-            <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 9l7-7 7 7M4 8v7c0 .5.5 1 1 1h8c.5 0 1-.5 1-1V8" />
-            </svg>
-          </div>
-          <span className="text-xl font-fraunces font-semibold text-slate-900">
-            TenancyPortal
-          </span>
-        </div>
+        <BrandLogo className="justify-center mb-8" />
 
-        <Card>
+        <Card className="!bg-brand-card !border-2 !border-brand-rose !shadow-none">
           <CardBody className="!p-8">
-            <h2 className="text-xl font-fraunces font-semibold text-slate-900 mb-1">
+            <h2 className="text-xl font-manrope font-extrabold tracking-tight text-slate-900 mb-1">
               Welcome back
             </h2>
             <p className="text-slate-400 text-sm mb-7">Sign in to your landlord account</p>
@@ -105,7 +97,7 @@ export default function Login() {
             )}
 
             {resetSent && (
-              <div className="mb-5 p-3.5 bg-teal-50 border border-teal-200 rounded-xl text-teal-700 text-sm">
+              <div className="mb-5 p-3.5 bg-brand-roseLight border border-brand-rose rounded-xl text-brand text-sm">
                 Password reset email sent to <strong>{email}</strong>. Check your inbox and click the link to set a new password.
               </div>
             )}
@@ -133,7 +125,7 @@ export default function Login() {
                     type="button"
                     onClick={handleForgotPassword}
                     disabled={resetLoading}
-                    className="text-sm text-teal-700 hover:text-teal-800 font-medium disabled:opacity-50"
+                    className="text-sm text-brand hover:text-brand-dark font-medium disabled:opacity-50"
                   >
                     {resetLoading ? 'Sending...' : 'Forgot password?'}
                   </button>
@@ -154,7 +146,7 @@ export default function Login() {
                 Don't have an account?{' '}
                 <button
                   onClick={() => navigate('/register')}
-                  className="text-teal-700 hover:text-teal-800 font-medium"
+                  className="text-brand hover:text-brand-dark font-medium"
                 >
                   Sign up
                 </button>

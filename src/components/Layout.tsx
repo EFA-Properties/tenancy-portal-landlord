@@ -1,3 +1,4 @@
+import { BrandLogo } from './BrandLogo'
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, X, LogOut } from 'lucide-react'
@@ -92,7 +93,7 @@ export function Layout({ children }: LayoutProps) {
     (href === '/tenants' && location.pathname.startsWith('/tenancies'))
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#f8f9fb' }}>
+    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: '#F5F0E7' }}>
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -103,27 +104,20 @@ export function Layout({ children }: LayoutProps) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[260px] bg-slate-900 transform transition-transform lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-[260px] bg-[#302D2E] transform transition-transform lg:relative lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="px-6 py-5 border-b border-slate-800/60">
+          <div className="px-6 py-5 border-b border-white/10">
             <Link
               to="/dashboard"
               onClick={() => setSidebarOpen(false)}
               aria-label="Go to dashboard"
               className="flex items-center gap-2.5 w-fit hover:opacity-90 transition-opacity"
             >
-              <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center shrink-0">
-                <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 9l7-7 7 7M4 8v7c0 .5.5 1 1 1h8c.5 0 1-.5 1-1V8" />
-                </svg>
-              </div>
-              <span className="font-fraunces font-semibold text-white text-[17px]">
-                TenancyPortal
-              </span>
+              <BrandLogo light className="[&_svg]:w-8 [&_svg]:h-8 [&_span]:text-[20px]" />
             </Link>
           </div>
 
@@ -141,7 +135,7 @@ export function Layout({ children }: LayoutProps) {
                       className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] transition-all ${
                         active
                           ? 'bg-teal-600/90 text-white font-medium'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                          : 'text-slate-400 hover:text-white hover:bg-white/10'
                       }`}
                     >
                       <ItemIcon />
@@ -154,7 +148,7 @@ export function Layout({ children }: LayoutProps) {
           </nav>
 
           {/* User info and logout */}
-          <div className="border-t border-slate-800/60 px-4 py-4">
+          <div className="border-t border-white/10 px-4 py-4">
             {user && (
               <div className="mb-3 px-2">
                 <p className="text-slate-500 text-[11px] font-medium uppercase tracking-wider mb-0.5">
@@ -167,7 +161,7 @@ export function Layout({ children }: LayoutProps) {
             )}
             <button
               onClick={logout}
-              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-all text-sm"
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-all text-sm"
             >
               <LogOut size={16} />
               Sign Out

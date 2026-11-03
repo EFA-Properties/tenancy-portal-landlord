@@ -169,8 +169,8 @@ export default function InviteTenant() {
             <div className="p-6 bg-teal-50 border border-teal-200 rounded-lg text-center">
               <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-3">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="#0f766e" strokeWidth="2" />
-                  <path d="M8 12l2.5 2.5L16 9" stroke="#0f766e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="12" r="10" stroke="#642E3D" strokeWidth="2" />
+                  <path d="M8 12l2.5 2.5L16 9" stroke="#642E3D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
               <p className="text-sm font-medium text-teal-900">Invitation sent to {formData.email}</p>

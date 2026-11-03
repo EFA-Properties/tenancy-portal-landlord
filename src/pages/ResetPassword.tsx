@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Card, CardBody } from '../components/ui/Card'
+import { BrandLogo } from '../components/BrandLogo'
 import { AuthFooter } from '../components/AuthFooter'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
@@ -73,29 +74,20 @@ export default function ResetPassword() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center" style={{ backgroundColor: '#f8fafb' }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600" />
+      <div className="brand-auth min-h-screen bg-brand-oat flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand" />
       </div>
     )
   }
 
   if (!hasSession) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ backgroundColor: '#f8fafb' }}>
+      <div className="brand-auth min-h-screen bg-brand-oat flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <div className="flex items-center gap-2.5 justify-center mb-8">
-            <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center shrink-0">
-              <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2 9l7-7 7 7M4 8v7c0 .5.5 1 1 1h8c.5 0 1-.5 1-1V8" />
-              </svg>
-            </div>
-            <span className="text-xl font-fraunces font-semibold text-slate-900">
-              TenancyPortal
-            </span>
-          </div>
-          <Card>
+          <BrandLogo className="justify-center mb-8" />
+          <Card className="!bg-brand-card !border-2 !border-brand-rose !shadow-none">
             <CardBody className="!p-8 text-center">
-              <h2 className="text-xl font-fraunces font-semibold text-slate-900 mb-3">
+              <h2 className="text-xl font-manrope font-extrabold tracking-tight text-slate-900 mb-3">
                 Invalid or expired link
               </h2>
               <p className="text-slate-400 text-sm mb-6">
@@ -113,29 +105,20 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4" style={{ backgroundColor: '#f8fafb' }}>
+    <div className="brand-auth min-h-screen bg-brand-oat flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="flex items-center gap-2.5 justify-center mb-8">
-          <div className="w-10 h-10 bg-teal-600 rounded-xl flex items-center justify-center shrink-0">
-            <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 9l7-7 7 7M4 8v7c0 .5.5 1 1 1h8c.5 0 1-.5 1-1V8" />
-            </svg>
-          </div>
-          <span className="text-xl font-fraunces font-semibold text-slate-900">
-            TenancyPortal
-          </span>
-        </div>
+        <BrandLogo className="justify-center mb-8" />
 
-        <Card>
+        <Card className="!bg-brand-card !border-2 !border-brand-rose !shadow-none">
           <CardBody className="!p-8">
             {success ? (
               <div className="text-center">
-                <div className="w-14 h-14 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-5">
+                <div className="w-14 h-14 bg-brand-roseLight rounded-full flex items-center justify-center mx-auto mb-5">
                   <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                    <path d="M8 14l4 4L20 10" stroke="#0f766e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M8 14l4 4L20 10" stroke="#642E3D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-fraunces font-semibold text-slate-900 mb-2">
+                <h2 className="text-xl font-manrope font-extrabold tracking-tight text-slate-900 mb-2">
                   Password updated
                 </h2>
                 <p className="text-slate-400 text-sm mb-6">
@@ -147,7 +130,7 @@ export default function ResetPassword() {
               </div>
             ) : (
               <>
-                <h2 className="text-xl font-fraunces font-semibold text-slate-900 mb-1">
+                <h2 className="text-xl font-manrope font-extrabold tracking-tight text-slate-900 mb-1">
                   Set new password
                 </h2>
                 <p className="text-slate-400 text-sm mb-7">

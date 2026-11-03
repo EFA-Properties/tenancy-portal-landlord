@@ -34,15 +34,15 @@ export default function PaymentSuccess() {
   }, [isActive, pollCount, queryClient, refetch])
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="brand-auth min-h-screen bg-brand-oat flex items-center justify-center p-4">
       <div className="w-full max-w-md text-center">
         {/* Success icon */}
-        <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="w-16 h-16 bg-brand-roseLight rounded-full flex items-center justify-center mx-auto mb-6">
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="14" stroke="#0f766e" strokeWidth="2.5" />
+            <circle cx="16" cy="16" r="14" stroke="#642E3D" strokeWidth="2.5" />
             <path
               d="M10 16l4 4L22 12"
-              stroke="#0f766e"
+              stroke="#642E3D"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -50,7 +50,7 @@ export default function PaymentSuccess() {
           </svg>
         </div>
 
-        <h1 className="text-3xl font-fraunces font-semibold text-slate-900 mb-3">
+        <h1 className="text-3xl font-manrope font-extrabold tracking-tight text-slate-900 mb-3">
           Direct Debit Set Up
         </h1>
 
@@ -65,18 +65,18 @@ export default function PaymentSuccess() {
               few seconds.
             </p>
             {pollCount < 15 && (
-              <div className="flex items-center justify-center gap-2 text-sm text-teal-700">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-teal-600" />
+              <div className="flex items-center justify-center gap-2 text-sm text-brand">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand" />
                 Confirming mandate...
               </div>
             )}
             {pollCount >= 15 && (
-              <Card className="mt-4">
+              <Card className="!bg-brand-card !border-2 !border-brand-rose !shadow-none mt-4">
                 <CardBody className="p-4">
                   <p className="text-sm text-slate-600">
                     Your mandate is still being processed by your bank. This can
                     take up to 3 working days for Bacs Direct Debits. You can
-                    continue setting up your account — your Pro features will
+                    continue setting up your account. Your Pro features will
                     activate automatically once confirmed.
                   </p>
                 </CardBody>
