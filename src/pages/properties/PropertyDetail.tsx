@@ -572,7 +572,7 @@ export default function PropertyDetail() {
                               </span>
                             </td>
                             <td className="px-3 py-4 text-right">
-                              <div className="flex flex-col items-end gap-0.5">
+                              <div className="flex flex-col items-end gap-1.5">
                                 {item.hasIt && doc && (
                                   <Button
                                     variant="ghost"
@@ -636,20 +636,24 @@ export default function PropertyDetail() {
                                   </Link>
                                 )}
                                 {isNa ? (
-                                  <button
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => toggleOverride(item.docType)}
-                                    className="text-xs text-slate-400 hover:text-slate-600"
+                                    title="Mark as needed again"
                                   >
                                     Undo
-                                  </button>
+                                  </Button>
                                 ) : !item.hasIt && (
-                                  <button
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => toggleOverride(item.docType)}
-                                    className="text-xs text-slate-400 hover:text-slate-600"
-                                    title="Mark as not applicable"
+                                    title="Mark as not needed for this property"
+                                    className="whitespace-nowrap"
                                   >
-                                    N/A
-                                  </button>
+                                    Not needed
+                                  </Button>
                                 )}
                               </div>
                             </td>
